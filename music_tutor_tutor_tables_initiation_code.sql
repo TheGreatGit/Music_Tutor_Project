@@ -59,7 +59,7 @@ INSERT INTO teaching_format (teaching_format_name)
 VALUES ('online'), ('in_person')
 ON CONFLICT DO NOTHING;
 
--- Tutor-teaching format (online/in_person)
+-- Tutor-teaching format 
 CREATE TABLE IF NOT EXISTS tutor_teaching_formats (
   tutor_teaching_format_id SERIAL PRIMARY KEY,
   tutor_id            INTEGER  NOT NULL REFERENCES tutors(tutor_id) ON DELETE CASCADE,
@@ -77,7 +77,7 @@ INSERT INTO teaching_type (teaching_type_name)
 VALUES ('individual'), ('group')
 ON CONFLICT DO NOTHING;
 
--- Tutor- teaching type (individual/group)
+-- Tutor- teaching type (individu/group)
 CREATE TABLE IF NOT EXISTS tutor_teaching_types (
   tutor_teaching_type_id SERIAL PRIMARY KEY,
   tutor_id          INTEGER  NOT NULL REFERENCES tutors(tutor_id) ON DELETE CASCADE,
@@ -85,61 +85,31 @@ CREATE TABLE IF NOT EXISTS tutor_teaching_types (
   CONSTRAINT uniq_tutor_type UNIQUE (tutor_id, teaching_type_id)
 );
 
--- Instruments table
-CREATE TABLE IF NOT EXISTS instruments (
-  instrument_id   SERIAL PRIMARY KEY,
-  instrument_name TEXT NOT NULL UNIQUE
+-- 1) Countries table
+CREATE TABLE IF NOT EXISTS countries (
+  country_id SERIAL PRIMARY KEY,
+  country_name TEXT NOT NULL UNIQUE
 );
 
-INSERT INTO instruments (instrument_name)
-VALUES
-  ('electric guitar'),
-  ('classical guitar'),
-  ('acoustic guitar'),
-  ('bass guitar'),
-  ('flamenco guitar'),
-  ('slide guitar'),
-  ('piano'),
-  ('classical piano'),
-  ('jazz piano'),
-  ('keyboard'),
-  ('drums'),
-  ('steel drums'),
-  ('voice'),
-  ('accordion'),
-  ('flute'),
-  ('violin'),
-  ('viola'),
-  ('cello'),
-  ('double-bass'),
-  ('fiddle'),
-  ('harpsichord'),
-  ('organ'),
-  ('trombone'),
-  ('saxophone'),
-  ('banjo'),
-  ('didgeridoo'),
-  ('mandolin'),
-  ('synthesiser'),
-  ('trumpet'),
-  ('ukulele'),
-  ('oboe'),
-  ('bassoon'),
-  ('harmonica'),
-  ('xylophone'),
-  ('sitar'),
-  ('tuba'),
-  ('bagpipes'),
-  ('clarinet')
+-- 2) Insert example country
+INSERT INTO countries (country_name)
+VALUES ('United Kingdom')
 ON CONFLICT DO NOTHING;
 
-
--- Tutor--instruments
-CREATE TABLE IF NOT EXISTS tutor_instruments (
-  tutor_instrument_id SERIAL PRIMARY KEY,
-  tutor_id      INTEGER NOT NULL REFERENCES tutors(tutor_id) ON DELETE CASCADE,
-  instrument_id INTEGER NOT NULL REFERENCES instruments(instrument_id),
-  CONSTRAINT uniq_tutor_instrument UNIQUE (tutor_id, instrument_id)
+-- 3) Cities table linked to countries
+CREATE TABLE IF NOT EXISTS cities (
+  city_id SERIAL PRIMARY KEY,
+  city_name TEXT NOT NULL UNIQUE,
+  country_id INT NOT NULL REFERENCES countries(country_id)
 );
 
+-- 4) Insert cities and link them to the United Kingdom
+INSERT INTO cities (city_name, country_id)
+VALUES
+  ('London', 1),
+  ('Manchester', 1),
+  ('Birmingham', 1),
+  ('Liverpool', 1),
+  ('Leeds', 1)
+ON CONFLICT DO NOTHING;
 

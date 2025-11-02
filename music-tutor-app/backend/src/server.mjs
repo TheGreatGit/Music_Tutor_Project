@@ -4,6 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import authRouter from "./routes/auth.mjs";
 import { errorHandler } from "./middleware/errorHandler.mjs";
+import tutorRouter from "./routes/searchTutorRoutes.mjs";
 
 
 // load environment variables in to process.ENV
@@ -15,7 +16,7 @@ const app = express();
 // basic middleware
 app.use(express.json()); // process json-formatted client requests
 app.use(cookieParser()); // needed  for reading client-sent cokkies with JWT in it
-app.use(urlencoded({ extended: true }));
+app.use(express.urlencoded({ extended: true }));
 
 // Allow CORS between express server and React fontend
 app.use(
@@ -29,6 +30,7 @@ app.use(
 // ROUTES
 // by using app.use instead of e.g. app.post, this mounts the router (and handlers) from the router defined in routes/auth.mjs for all http request types
 app.use("/api/auth", authRouter);
+app.use("/api/tutors", tutorRouter);
 
 // api health check
 app.get('/api/health', (req, res)=> {res.json({ok:true})});
