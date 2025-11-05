@@ -21,6 +21,7 @@ const NavBar = () => {
         <li className='m-4'><NavLink to="/products">Products</NavLink></li>
         <li className='m-4'><NavLink to="/about">About</NavLink></li>
         <li className='m-4'><NavLink to="/contact">Contact</NavLink></li>
+        <li className='m-4'><NavLink to="/findTutors">Find a tutor</NavLink></li>
         { user ? (<></>):(<>        <li className='m-4'><NavLink to="/registerUser">Register as user</NavLink></li>
         <li className='m-4'><NavLink to="/loginUser">Log in as user</NavLink></li></>)}
       </ul>

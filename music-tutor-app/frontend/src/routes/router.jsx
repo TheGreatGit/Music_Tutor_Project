@@ -12,6 +12,7 @@ import About from "../pages/About";
 import ContactLayout from "../Layout/ContactLayout";
 import RegisterUserForm from "../components/RegisterUserForm";
 import LoginUserForm from "../pages/Login";
+import FindTutors from "../pages/FindTutors";
 
 const router =  createBrowserRouter(
   createRoutesFromElements(
@@ -22,6 +23,8 @@ const router =  createBrowserRouter(
       <Route path="contact" element={<ContactLayout />}/>
       <Route path='registerUser' element={<RegisterUserForm/>} />
       <Route path="loginUser" element={<LoginUserForm />}/>
+      <Route path="loginUser" element={<LoginUserForm />}/>
+      <Route path="findTutors" element={<FindTutors />}/>
     </Route>
   )
 );
