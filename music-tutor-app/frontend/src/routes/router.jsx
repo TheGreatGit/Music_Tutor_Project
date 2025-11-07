@@ -6,7 +6,6 @@ import {
 
 import RootLayout from "../Layout/RootLayout";
 import Home from "../pages/Home";
-import Products from "../pages/Products";
 import About from "../pages/About";
 
 import ContactLayout from "../Layout/ContactLayout";
@@ -18,7 +17,6 @@ const router =  createBrowserRouter(
   createRoutesFromElements(
     <Route path="/" element={<RootLayout/>}>
       <Route index element={<Home />} />
-      <Route path="products" element={<Products />} />
       <Route path="about" element={<About />} />
       <Route path="contact" element={<ContactLayout />}/>
       <Route path='registerUser' element={<RegisterUserForm/>} />

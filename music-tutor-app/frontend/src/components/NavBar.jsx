@@ -18,7 +18,6 @@ const NavBar = () => {
       <Logo className="w-6 h-6 "/>
       <ul className='flex flex-row  rounded-3xl shadow-[0_0_30px_0_rgba(0,0,0,0.1)]'>
         <li className='m-4'><NavLink to="/">Home</NavLink></li>
-        <li className='m-4'><NavLink to="/products">Products</NavLink></li>
         <li className='m-4'><NavLink to="/about">About</NavLink></li>
         <li className='m-4'><NavLink to="/contact">Contact</NavLink></li>
         <li className='m-4'><NavLink to="/findTutors">Find a tutor</NavLink></li>

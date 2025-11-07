@@ -34,7 +34,16 @@ left join tutor_teaching_levels as ttl on ttl.tutor_id = t.tutor_id
 left join skill_levels as s on s.skill_level_id = ttl.skill_level_id
 left join tutor_contact_details as tcd ON t.tutor_id = tcd.tutor_id
 left join contact_type as ct ON tcd.contact_type_id = ct.contact_type_id
--- REMEMEMBER THE GROUP-BY FOR STRING-AGG FUNCTION TO WORK -- include every column that is NOT in an aggregate
+-- add filters
+where
+--$1,2,3 etc is just the flag for the nth-parameter supplied in a parameterised query
+-- explicitly cast parameter as text so postgres will treat it as text (even if it's null) rather than relying on type inference
+-- The logic is 'or' so you send either a null or the parameter value from front-end
+-- ILIKE is postgres funcion that matches strings but not case sensitive
+(CAST($1 as text) is null or i.instrument_name   ILIKE $1)
+and
+(CAST($2 as text) is null or c.city_name ILIKE $2)
+-- REMEMEMBER TO USE THE GROUP-BY FOR STRING-AGG FUNCTION TO WORK -- include every column that is NOT in an aggregate
 group by
 t.tutor_id, t.first_name, t.last_name, c.city_name
 order by t.tutor_id;

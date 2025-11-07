@@ -33,4 +33,5 @@ pool.on('error', ()=>{
 })
 // useful custom wrapper function so you don't have to connect to pool in other files
 // pool.query returns a promise so whatever calls it , e.g. route handler middleware, should use async/await
+// in pool.query() text is just sql query text and 'params' is an array of parameters inserted into the $1,2 etc placeholders in the text query
 export const query = (text, params) => pool.query(text, params); // pool.query handles the opening and closing of inidivdual connections

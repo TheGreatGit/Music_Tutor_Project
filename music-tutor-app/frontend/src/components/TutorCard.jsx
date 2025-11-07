@@ -12,6 +12,7 @@ const TutorCard = ({ tutor }) => {
             </div>
         </div>
 
+    {/* div wrapper for main card content */}
       <div className="p-5 flex flex-col flex-1">
           <header className="mb-2">
             <h3 className="text-lg font-semibold text-slate-900 leading-tight">

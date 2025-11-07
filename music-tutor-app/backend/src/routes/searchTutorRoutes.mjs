@@ -1,8 +1,8 @@
 import { Router } from "express";
-import { getAllTutors } from "../controllers/getAllTutorsController.mjs";
+import { getTutors } from "../controllers/getTutorsController.mjs";
 
 const router = Router();
 
-router.get('/', getAllTutors);
+router.get('/', getTutors);
 
 export default router;
