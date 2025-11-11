@@ -7,12 +7,63 @@ const FindTutors = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(false);
 
+  // set up state for real-time input filters
+  const [dbCities, setDBCities] = useState([]);
+  const [dbInstruments, setDBInstruments] = useState([]);
+
   // placeholder for real-time search input values:
   const [inputs, setInputs] = useState({instrument:"", city:""});
 
   // text-processed placeholder data ready for adding  to DB query:
   const [filters, setFilters] = useState({instrument:"", city:""})
 
+  // useEffects() to get DB cities and instruments for real-time filters
+  useEffect(()=>{
+    const controller = new AbortController();
+
+    const getCities = async() =>{
+      try {
+        const res = await fetch('http://localhost:3000/api/filters/cities', {signal: controller.signal});
+        if(!res.ok){ throw new Error('Failed to fetch cities')};
+        const cities = await res.json();
+        console.log(cities);
+        setDBCities(cities);
+      } catch (error) {
+        if(error.name !== "AbortError"){
+          console.error('Cities fetch error: ', error);
+          setDBCities([]);
+        }
+      }finally{
+
+      }
+    }
+    getCities();
+    return ()=> controller.abort();
+  }, []);
+
+  useEffect(()=>{
+    const controller = new AbortController();
+
+    const getInstruments = async() =>{
+      try {
+        const res = await fetch('http://localhost:3000/api/filters/instruments', {signal: controller.signal});
+        if(!res.ok){ throw new Error('Failed to fetch instruments')};
+        const instruments = await res.json();
+        setDBInstruments(instruments);
+      } catch (error) {
+        if(error.name !== "AbortError"){
+          console.error('Instruments fetch error: ', error);
+          setDBInstruments([]);
+        }
+      }finally{
+
+      }
+    }
+    getInstruments();
+    return ()=> controller.abort();
+  }, []);
+
+  
   useEffect(() => {
     const controller = new AbortController();
 
@@ -90,7 +141,6 @@ const FindTutors = () => {
           <label htmlFor="instrument" className="text-sm text-slate-600 mb-1">Instrument</label>
           <input type="text" id="instrument" name="instrument" value={inputs.instrument} onChange={handleChange} onKeyDown={handleKeyDown}
           placeholder="search instrument" className="rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"/>
-        
         </div>
 
         <div className="flex flex-col">
@@ -98,7 +148,14 @@ const FindTutors = () => {
           <label htmlFor="city" className="text-sm text-slate-600 mb-1">City</label>
           <input type="text" id="city" name="city" value={inputs.city} onChange={handleChange} onKeyDown={handleKeyDown}
           placeholder="search city" className="rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"/>
-        
+          <div className="dropdown">
+            { dbCities.filter(dbCity =>{
+              const userInput = inputs.city.toLowerCase();
+              const  matchCity = dbCity.city_name.toLowerCase();
+
+              return matchCity && matchCity.startsWith(userInput);
+            }).map((dbCity)=>( <div className="dropdown-row" key={dbCity.city_id}>{dbCity.city_name}</div>)) }
+          </div>       
         </div>
       </div>
 

@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import authRouter from "./routes/auth.mjs";
 import { errorHandler } from "./middleware/errorHandler.mjs";
 import tutorRouter from "./routes/searchTutorRoutes.mjs";
-
+import filterRouter from './routes/getFilterRoutes.mjs'
 
 // load environment variables in to process.ENV
 dotenv.config();
@@ -31,6 +31,9 @@ app.use(
 // by using app.use instead of e.g. app.post, this mounts the router (and handlers) from the router defined in routes/auth.mjs for all http request types
 app.use("/api/auth", authRouter);
 app.use("/api/tutors", tutorRouter);
+
+// routes for getting real-time input filters
+app.use('/api/filters', filterRouter);
 
 // api health check
 app.get('/api/health', (req, res)=> {res.json({ok:true})});
