@@ -5,7 +5,7 @@ import TutorCard from "../components/TutorCard";
 const FindTutors = () => {
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState(false);
+  const [err, setErr] = useState( null);
 
   // set up state for real-time input filters
   const [dbCities, setDBCities] = useState([]);
@@ -17,59 +17,62 @@ const FindTutors = () => {
   // text-processed placeholder data ready for adding  to DB query:
   const [filters, setFilters] = useState({instrument:"", city:""})
 
-  // useEffects() to get DB cities and instruments for real-time filters
+  // useEffect() to get DB cities  for real-time filters
   useEffect(()=>{
     const controller = new AbortController();
 
     const getCities = async() =>{
       try {
-        const res = await fetch('http://localhost:3000/api/filters/cities', {signal: controller.signal});
+        const res = await fetch('http://localhost:3000/api/filters/cities', { credentials: "include", signal: controller.signal});
         if(!res.ok){ throw new Error('Failed to fetch cities')};
         const cities = await res.json();
         console.log(cities);
         setDBCities(cities);
       } catch (error) {
-        if(error.name !== "AbortError"){
+        if(error.name === "AbortError"){
+          console.log('city fetch aborted');
+        }else{
           console.error('Cities fetch error: ', error);
+          setErr(error.message || 'error in city fetch')
           setDBCities([]);
         }
-      }finally{
-
       }
     }
     getCities();
     return ()=> controller.abort();
   }, []);
 
+  // useEffect to get instruments for real-time search filter.
   useEffect(()=>{
     const controller = new AbortController();
 
     const getInstruments = async() =>{
       try {
-        const res = await fetch('http://localhost:3000/api/filters/instruments', {signal: controller.signal});
+        const res = await fetch('http://localhost:3000/api/filters/instruments', { credentials: "include", signal: controller.signal});
         if(!res.ok){ throw new Error('Failed to fetch instruments')};
         const instruments = await res.json();
         setDBInstruments(instruments);
       } catch (error) {
-        if(error.name !== "AbortError"){
+        if(error.name === "AbortError"){
+          console.log('instruments fetch aborted');
+        }else{
           console.error('Instruments fetch error: ', error);
+          setErr(error.message || 'error in fetching instruments')
           setDBInstruments([]);
         }
-      }finally{
-
       }
     }
     getInstruments();
     return ()=> controller.abort();
   }, []);
 
-  
+  // useEffect for getting tutors- gets all tutors initially and gets filtered tutors upon search
   useEffect(() => {
     const controller = new AbortController();
 
     const getTutors = async () => {
       setLoading(true);
-      setErr("");
+      setErr(null);
       try {
         const params = new URLSearchParams(); // used to build url query string (the stuff after '?' in a url)
         let instrument = filters.instrument.trim();
@@ -133,6 +136,11 @@ const FindTutors = () => {
       commitFilters();
     }
   }
+
+  const handleClick = ( searchTerm, fieldName)=>{
+    setInputs(current => ({...current, [fieldName]: searchTerm}));
+  }
+
   return (
     <div className="p-6 space-y-6">
       <div className=" grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -140,21 +148,32 @@ const FindTutors = () => {
 
           <label htmlFor="instrument" className="text-sm text-slate-600 mb-1">Instrument</label>
           <input type="text" id="instrument" name="instrument" value={inputs.instrument} onChange={handleChange} onKeyDown={handleKeyDown}
-          placeholder="search instrument" className="rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"/>
+          placeholder="search instrument" className="placeholder:text-gray-600 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"/>
+         {/* /* approach adapted from https://www.youtube.com/watch?v=Jd7s7egjt30 */ }
+          <div className="dropdown">
+            {dbInstruments.filter(instrumentRow =>{    
+              const userInput = (inputs.instrument || "").toLowerCase();
+              const matchInstrument = (instrumentRow.instrument_name || "").toLowerCase();
+              
+              return userInput && matchInstrument.includes(userInput) && matchInstrument !== userInput;
+            }).slice(0,10)
+            .map((instrumentRow) => (<div onClick={()=>handleClick(instrumentRow.instrument_name, 'instrument')} className="dropdown-row" key={instrumentRow.instrument_id}>{instrumentRow.instrument_name}</div>))}
+          </div>
         </div>
 
         <div className="flex flex-col">
 
           <label htmlFor="city" className="text-sm text-slate-600 mb-1">City</label>
           <input type="text" id="city" name="city" value={inputs.city} onChange={handleChange} onKeyDown={handleKeyDown}
-          placeholder="search city" className="rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"/>
+          placeholder="search city" className=" placeholder:text-gray-600 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"/>
           <div className="dropdown">
-            { dbCities.filter(dbCity =>{
-              const userInput = inputs.city.toLowerCase();
-              const  matchCity = dbCity.city_name.toLowerCase();
+            { dbCities.filter(cityRow =>{
+              const userInput = (inputs.city || "").toLowerCase();
+              const  matchCity = (cityRow.city_name || "").toLowerCase();
 
-              return matchCity && matchCity.startsWith(userInput);
-            }).map((dbCity)=>( <div className="dropdown-row" key={dbCity.city_id}>{dbCity.city_name}</div>)) }
+              return userInput && matchCity.startsWith(userInput) && matchCity !== userInput;
+            }).slice(0,10)
+            .map((cityRow)=>( <div onClick={()=>handleClick(cityRow.city_name, 'city')} className="dropdown-row" key={cityRow.city_id}>{cityRow.city_name}</div>)) }
           </div>       
         </div>
       </div>
