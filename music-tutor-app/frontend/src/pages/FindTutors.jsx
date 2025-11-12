@@ -28,6 +28,7 @@ const FindTutors = () => {
 
     setInputs({instrument: urlInstrument, city: urlCity});
     setFilters({instrument: urlInstrument, city: urlCity})
+    // console.log('search param effect run');
   },[searchParams])
 
   // useEffect() to get DB cities  for real-time filters
@@ -149,12 +150,12 @@ const FindTutors = () => {
     setInputs((current) => ({ ...current, [name]: value })); // don't use trim here as it would prevent user from adding a space
   };
 
-  // sets the serach filters to match the user input; this is run in the handler for the enter-key keydown event
+  // sets the serach parameters and serach filters to match the user input; this is run in the handler for the enter-key keydown event
   const commitFilters = () => {
     const newSearchParams = {};
     if(inputs.instrument.trim()){ newSearchParams.instrument = inputs.instrument.trim()};
     if(inputs.city.trim()){newSearchParams.city = inputs.city.trim()};
-    setSearchParams(newSearchParams); // due to useEffect() earlier in code, changing searchParams uodates inputs and filters
+    setSearchParams(newSearchParams); // due to useEffect() earlier in code, changing searchParams uodates inputs and filters; updaying filters causes new  tutor fetch
   };
 
   // commits the trimmed user input to filters to be used in fetch to DB. Filters are dependecies in the fetchTutor useEffect()
