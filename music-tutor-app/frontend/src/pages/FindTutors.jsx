@@ -5,65 +5,75 @@ import TutorCard from "../components/TutorCard";
 const FindTutors = () => {
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState( null);
+  const [err, setErr] = useState(null);
 
   // set up state for real-time input filters
   const [dbCities, setDBCities] = useState([]);
   const [dbInstruments, setDBInstruments] = useState([]);
 
   // placeholder for real-time search input values:
-  const [inputs, setInputs] = useState({instrument:"", city:""});
+  const [inputs, setInputs] = useState({ instrument: "", city: "" });
 
   // text-processed placeholder data ready for adding  to DB query:
-  const [filters, setFilters] = useState({instrument:"", city:""})
+  const [filters, setFilters] = useState({ instrument: "", city: "" });
 
   // useEffect() to get DB cities  for real-time filters
-  useEffect(()=>{
+  useEffect(() => {
     const controller = new AbortController();
 
-    const getCities = async() =>{
+    const getCities = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/filters/cities', { credentials: "include", signal: controller.signal});
-        if(!res.ok){ throw new Error('Failed to fetch cities')};
+        const res = await fetch("http://localhost:3000/api/filters/cities", {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          throw new Error("Failed to fetch cities");
+        }
         const cities = await res.json();
         console.log(cities);
         setDBCities(cities);
       } catch (error) {
-        if(error.name === "AbortError"){
-          console.log('city fetch aborted');
-        }else{
-          console.error('Cities fetch error: ', error);
-          setErr(error.message || 'error in city fetch')
+        if (error.name === "AbortError") {
+          console.log("city fetch aborted");
+        } else {
+          console.error("Cities fetch error: ", error);
+          setErr(error.message || "error in city fetch");
           setDBCities([]);
         }
       }
-    }
+    };
     getCities();
-    return ()=> controller.abort();
+    return () => controller.abort();
   }, []);
 
   // useEffect to get instruments for real-time search filter.
-  useEffect(()=>{
+  useEffect(() => {
     const controller = new AbortController();
 
-    const getInstruments = async() =>{
+    const getInstruments = async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/filters/instruments', { credentials: "include", signal: controller.signal});
-        if(!res.ok){ throw new Error('Failed to fetch instruments')};
+        const res = await fetch(
+          "http://localhost:3000/api/filters/instruments",
+          { credentials: "include", signal: controller.signal }
+        );
+        if (!res.ok) {
+          throw new Error("Failed to fetch instruments");
+        }
         const instruments = await res.json();
         setDBInstruments(instruments);
       } catch (error) {
-        if(error.name === "AbortError"){
-          console.log('instruments fetch aborted');
-        }else{
-          console.error('Instruments fetch error: ', error);
-          setErr(error.message || 'error in fetching instruments')
+        if (error.name === "AbortError") {
+          console.log("instruments fetch aborted");
+        } else {
+          console.error("Instruments fetch error: ", error);
+          setErr(error.message || "error in fetching instruments");
           setDBInstruments([]);
         }
       }
-    }
+    };
     getInstruments();
-    return ()=> controller.abort();
+    return () => controller.abort();
   }, []);
 
   // useEffect for getting tutors- gets all tutors initially and gets filtered tutors upon search
@@ -77,21 +87,21 @@ const FindTutors = () => {
         const params = new URLSearchParams(); // used to build url query string (the stuff after '?' in a url)
         let instrument = filters.instrument.trim();
         let city = filters.city.trim();
-        if(instrument){
-          params.set("instrument", instrument )
+        if (instrument) {
+          params.set("instrument", instrument);
         }
-        if(city){
-          params.set('city', city);
+        if (city) {
+          params.set("city", city);
         }
-        console.log('search params are: ', params.toString());
+        console.log("search params are: ", params.toString());
 
         let url = "http://localhost:3000/api/tutors";
 
-        if(params.toString()){
-          // params.toString() gives you the string representation of serach params in the necessary string format for appending to the url. 
+        if (params.toString()) {
+          // params.toString() gives you the string representation of serach params in the necessary string format for appending to the url.
           // the'?' in the URL creates a query string; anything after it should be key-value pairs e.g. instrument=piano
           // fetch will send 'get' request and express handler will see everything after the ? in the req.query property
-          url = `http://localhost:3000/api/tutors?${params.toString()}`
+          url = `http://localhost:3000/api/tutors?${params.toString()}`;
         }
         const res = await fetch(url, {
           credentials: "include", // not strictly needed here, but useful for when a user is logged in
@@ -106,12 +116,12 @@ const FindTutors = () => {
       } catch (error) {
         if (error.name === "AbortError") {
           console.log("fetch aborted");
-        } else {          
-          setErr(error.message || 'something went wrong');
+        } else {
+          setErr(error.message || "something went wrong");
           setTutors([]);
           console.log(error);
         }
-      }finally{
+      } finally {
         setLoading(false);
       }
     };
@@ -119,62 +129,104 @@ const FindTutors = () => {
     return () => controller.abort();
   }, [filters.instrument, filters.city]);
 
-  const handleChange = (e) =>{
-    const {name, value} = e.target;
-    setInputs((current) => ({...current, [name]: value}))
-  }
-  const commitFilters = () =>{
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setInputs((current) => ({ ...current, [name]: value }));
+  };
+  const commitFilters = () => {
     setFilters({
       instrument: inputs.instrument,
-      city: inputs.city
+      city: inputs.city,
     });
-  }
+  };
 
-  const handleKeyDown = (e)=>{
-    if(e.key === "Enter"){
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
       e.preventDefault();
       commitFilters();
     }
-  }
+  };
 
-  const handleClick = ( searchTerm, fieldName)=>{
-    setInputs(current => ({...current, [fieldName]: searchTerm}));
+  const handleClick = (searchTerm, fieldName) => {
+    setInputs((current) => ({ ...current, [fieldName]: searchTerm }));
+  };
+
+  {
+    /* approach adapted from https://www.youtube.com/watch?v=Jd7s7egjt30 */
+    // to get conditional rendering of the container for matching search-input filters, create these variables that store matches then use it in div later on
   }
+  const instrumentMatches = dbInstruments.filter((instrumentRow) => {
+      const userInput = (inputs.instrument || "").toLowerCase();
+      const matchInstrument = (instrumentRow.instrument_name || "").toLowerCase();
+      return (userInput && matchInstrument.includes(userInput) && matchInstrument !== userInput )
+    })
+    .slice(0, 10);
+
+  const cityMatches = dbCities.filter((cityRow) => {
+      const userInput = (inputs.city || "").toLowerCase();
+      const matchCity = (cityRow.city_name || "").toLowerCase();
+      return (userInput && matchCity.startsWith(userInput) && matchCity !== userInput)
+    })
+    .slice(0, 10);
 
   return (
     <div className="p-6 space-y-6">
       <div className=" grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="flex flex-col">
-
-          <label htmlFor="instrument" className="text-sm text-slate-600 mb-1">Instrument</label>
-          <input type="text" id="instrument" name="instrument" value={inputs.instrument} onChange={handleChange} onKeyDown={handleKeyDown}
-          placeholder="search instrument" className="placeholder:text-gray-600 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"/>
-         {/* /* approach adapted from https://www.youtube.com/watch?v=Jd7s7egjt30 */ }
-          <div className="dropdown">
-            {dbInstruments.filter(instrumentRow =>{    
-              const userInput = (inputs.instrument || "").toLowerCase();
-              const matchInstrument = (instrumentRow.instrument_name || "").toLowerCase();
-              
-              return userInput && matchInstrument.includes(userInput) && matchInstrument !== userInput;
-            }).slice(0,10)
-            .map((instrumentRow) => (<div onClick={()=>handleClick(instrumentRow.instrument_name, 'instrument')} className="dropdown-row" key={instrumentRow.instrument_id}>{instrumentRow.instrument_name}</div>))}
-          </div>
+        {/* set the container of the inputs to relative */}
+        <div className="flex flex-col relative">
+          <label htmlFor="instrument" className="text-sm text-slate-600 mb-1">
+            Instrument
+          </label>
+          <input
+            type="text"
+            id="instrument"
+            name="instrument"
+            value={inputs.instrument}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder="search instrument"
+            className="placeholder:text-gray-600 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          {/* this only renders if instrument matches exist */}
+          {instrumentMatches.length > 0 && (
+            <div className="dropdown-rows-container-non-tailwind absolute top-full left-0 mt-1 w-full z-10 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-64 overflow-auto overflow-hidden">
+              {instrumentMatches.map((instrumentRow) => (
+                <div key={instrumentRow.instrument_id} onClick={() => handleClick(instrumentRow.instrument_name, "instrument")}
+                  className="dropdown-row-non-tailwind px-3 py-2 cursor-pointer hover:bg-indigo-50"
+                >
+                  {instrumentRow.instrument_name}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col">
-
-          <label htmlFor="city" className="text-sm text-slate-600 mb-1">City</label>
-          <input type="text" id="city" name="city" value={inputs.city} onChange={handleChange} onKeyDown={handleKeyDown}
-          placeholder="search city" className=" placeholder:text-gray-600 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"/>
-          <div className="dropdown">
-            { dbCities.filter(cityRow =>{
-              const userInput = (inputs.city || "").toLowerCase();
-              const  matchCity = (cityRow.city_name || "").toLowerCase();
-
-              return userInput && matchCity.startsWith(userInput) && matchCity !== userInput;
-            }).slice(0,10)
-            .map((cityRow)=>( <div onClick={()=>handleClick(cityRow.city_name, 'city')} className="dropdown-row" key={cityRow.city_id}>{cityRow.city_name}</div>)) }
-          </div>       
+        <div className="flex flex-col relative">
+          <label htmlFor="city" className="text-sm text-slate-600 mb-1">
+            City
+          </label>
+          <input
+            type="text"
+            id="city"
+            name="city"
+            value={inputs.city}
+            onChange={handleChange}
+            onKeyDown={handleKeyDown}
+            placeholder="search city"
+            className=" placeholder:text-gray-600 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+          />
+          {/* this only renders if city matches exist */}
+          {cityMatches.length > 0 && (
+            <div className="dropdown-rows-container-non-tailwind absolute top-full left-0 mt-1 w-full z-10 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-64 overflow-auto overflow-hidden">
+              {cityMatches.map((cityRow) => (
+                <div key ={cityRow.city_id} onClick={() =>handleClick(cityRow.city_name, "city")}
+                  className="dropdown-row-non-tailwind px-3 py-2 cursor-pointer hover:bg-indigo-50"
+                >
+                  {cityRow.city_name}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -185,17 +237,19 @@ const FindTutors = () => {
       {err && <p className="text-red-600">{err}</p>}
 
       {/* display results */}
-      {!loading && tutors.length> 0 && (
+      {!loading && tutors.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tutors.map((tutor)=>(
-            <TutorCard tutor={tutor} key={tutor.tutor_id}/>
+          {tutors.map((tutor) => (
+            <TutorCard tutor={tutor} key={tutor.tutor_id} />
           ))}
         </div>
       )}
 
       {/* if no results */}
       {!loading && tutors.length === 0 && !err && (
-        <p className="text-slate-500">No tutors found; adjust search and press enter</p>
+        <p className="text-slate-500">
+          No tutors found; adjust search and press enter
+        </p>
       )}
     </div>
   );
