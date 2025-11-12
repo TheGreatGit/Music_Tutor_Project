@@ -19,7 +19,16 @@ const FindTutors = () => {
   // separation of input values and SqL search filters is done so you don't have a DB fetch on every input keystroke
   const [filters, setFilters] = useState({ instrument: "", city: "" });
 
+  const [searchParams, setSearchParams] = useSearchParams();
 
+  // useEffect to keep inputs/filters and url in sync on initial load and navigation
+  useEffect(()=>{
+    const urlInstrument = (searchParams.get('instrument') || "").trim();
+    const urlCity = (searchParams.get('city') || "").trim();
+
+    setInputs({instrument: urlInstrument, city: urlCity});
+    setFilters({instrument: urlInstrument, city: urlCity})
+  },[searchParams])
 
   // useEffect() to get DB cities  for real-time filters
   useEffect(() => {
@@ -142,10 +151,10 @@ const FindTutors = () => {
 
   // sets the serach filters to match the user input; this is run in the handler for the enter-key keydown event
   const commitFilters = () => {
-    setFilters({
-      instrument: inputs.instrument.trim(),
-      city: inputs.city.trim(),
-    });
+    const newSearchParams = {};
+    if(inputs.instrument.trim()){ newSearchParams.instrument = inputs.instrument.trim()};
+    if(inputs.city.trim()){newSearchParams.city = inputs.city.trim()};
+    setSearchParams(newSearchParams); // due to useEffect() earlier in code, changing searchParams uodates inputs and filters
   };
 
   // commits the trimmed user input to filters to be used in fetch to DB. Filters are dependecies in the fetchTutor useEffect()
@@ -199,7 +208,7 @@ const FindTutors = () => {
           />
           {/* this only renders if instrument matches exist */}
           {instrumentMatches.length > 0 && (
-            <div className="dropdown-rows-container-non-tailwind absolute top-full left-0 mt-1 w-full z-10 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-64 overflow-auto overflow-hidden">
+            <div className="dropdown-rows-container-non-tailwind absolute top-full left-0 mt-1 w-full z-10 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-64 overflow-auto">
               {/* render a dropdown option for every insttuemnt from DB that matches current user input */}
               {instrumentMatches.map((instrumentRow) => (
                 // the handleClick() function sets the input field's value to match the insturment name clicked on in the real-time input filtering
@@ -229,7 +238,7 @@ const FindTutors = () => {
           />
           {/* this only renders if city matches exist */}
           {cityMatches.length > 0 && (
-            <div className="dropdown-rows-container-non-tailwind absolute top-full left-0 mt-1 w-full z-10 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-64 overflow-auto overflow-hidden">
+            <div className="dropdown-rows-container-non-tailwind absolute top-full left-0 mt-1 w-full z-10 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-64 overflow-auto">
               {cityMatches.map((cityRow) => (
                 <div key ={cityRow.city_id} onClick={() =>handleClick(cityRow.city_name, "city")}
                   className="dropdown-row-non-tailwind px-3 py-2 cursor-pointer hover:bg-indigo-50"
