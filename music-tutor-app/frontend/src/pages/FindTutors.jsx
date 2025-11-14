@@ -93,6 +93,7 @@ const FindTutors = () => {
   // useEffect for getting tutors- gets all tutors initially and gets filtered tutors upon search
   useEffect(() => {
     const controller = new AbortController();
+    let url = "http://localhost:3000/api/tutors";
 
     const getTutors = async () => {
       setLoading(true);
@@ -142,7 +143,7 @@ const FindTutors = () => {
     };
     getTutors();
     return () => controller.abort();
-  }, [filters.instrument, filters.city]);
+  }, [filters.instrument, filters.city]); // dependent on FILTER values  and not input values!
 
   // updates input value in-sync with user typing; primarily used to match input to instrument or city options from DB
   const handleChange = (e) => {
