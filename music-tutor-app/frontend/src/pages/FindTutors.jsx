@@ -155,7 +155,7 @@ const FindTutors = () => {
     const newSearchParams = {};
     if(inputs.instrument.trim()){ newSearchParams.instrument = inputs.instrument.trim()};
     if(inputs.city.trim()){newSearchParams.city = inputs.city.trim()};
-    setSearchParams(newSearchParams); // due to useEffect() earlier in code, changing searchParams uodates inputs and filters; updaying filters causes new  tutor fetch
+    setSearchParams(newSearchParams); // due to useEffect() earlier in code, changing searchParams uodates inputs and filters; updaying filters causes new  tutor fetch in another useEffect
   };
 
   // commits the trimmed user input to filters to be used in fetch to DB. Filters are dependecies in the fetchTutor useEffect()
@@ -172,7 +172,7 @@ const FindTutors = () => {
   };
 
   {
-    /* approach adapted from https://www.youtube.com/watch?v=Jd7s7egjt30 */
+    /* approach adapted from https://www.youtube.com/watch?v=Jd7s7egjt30  and https://www.youtube.com/watch?v=x7niho285qs */
     // to get conditional rendering of the container for matching search-input filters, create these variables that store matches then use it in div later on
   }
   const instrumentMatches = dbInstruments.filter((instrumentRow) => {
