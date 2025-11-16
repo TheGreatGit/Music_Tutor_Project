@@ -1,0 +1,1 @@
+select city_id, city_name from cities;

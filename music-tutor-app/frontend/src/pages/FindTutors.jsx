@@ -8,6 +8,10 @@ const FindTutors = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
+  // arrays to contain pre-fetched instrument and city info from DB
+  const [dbCities, setBDCities] = useState([]);
+  const [dbInstruments, setDBInstruments] = useState([]);
+
   // hook that can  be used to sync  search filters with url in browser
   // useSearchParams also 'listens' for client-side url changes
   const [searchParams, setSearchParams] = useSearchParams()
@@ -21,6 +25,18 @@ const FindTutors = () => {
   // the filters are finalised in the useEffect hook with searchPArams as a dependency
   const [filters, setFilters] = useState({instrument:"", city:""})
 
+  // a useEffect ograb instruments:
+  useEffect(()=>{
+    const controller = new AbortController();
+
+    const getInstruments = async() =>{
+      try {
+        const res = await fetch('http://localhost:3000/api/filters/instruments',{credentials:'include', signal:controller.signal})
+      } catch (error) {
+        
+      }
+    }
+  },[])
   // a useEffect that keeps the broswer's url and the actual search filters in-sync; a url -> state sync
   // this is acheived by using the srachParams as a dependency and updating the filters ()
   useEffect(()=>{

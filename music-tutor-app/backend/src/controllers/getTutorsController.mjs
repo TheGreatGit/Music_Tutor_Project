@@ -1,4 +1,4 @@
-import { pool } from "../config/pool.mjs";
+import { query } from "../config/pool.mjs";
 import { loadSql } from "../queries/loadSql.mjs";
 
 // read-in sql file with parameterised query
@@ -14,7 +14,7 @@ export const getTutors= async (req, res)=>{
         const citySearchParam = city ? `%${city.trim()}%` : null;
         
         // supply sql text then add search params in an array
-        const {rows} = await pool.query(dbQueryString, [instrumentSearchParam, citySearchParam]);
+        const {rows} = await query(dbQueryString, [instrumentSearchParam, citySearchParam]);
         res.json(rows);
     } catch (error) {
         console.error("Database error (get tutors):", error);

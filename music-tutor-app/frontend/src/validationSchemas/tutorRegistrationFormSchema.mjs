@@ -6,6 +6,11 @@ const removeBlanks = (message) => {
   return z.string().trim().nonempty({ message });
 };
 
+// create enums for the fields with multiple simultaneous options in the form
+const teachingFormatEnum = z.enum(['online', 'in_person']);
+const teachingTypeEnum = z.enum(['individual', 'group']);
+const skillLevelEnum = z.enum(['Beginner', 'Intermediate', 'Advanced', 'Professional']);
+
 const API_URL = "https://localhost:3000";
 
 const isEmailTaken = async (email) => {
@@ -15,8 +20,15 @@ const isEmailTaken = async (email) => {
 
 export const tutorRegistrationFormSchema = z
   .object({
+    instrument: removeBlanks("Instrument in required"),
+
+    teachingFormats: z.array(teachingFormatEnum).min(1,{message: 'Select at least one teaching format'}),
+    teachingTypes: z.array(teachingTypeEnum).min(1,{message: 'Select at least one teaching type'}),
+    skillLevels: z.array(skillLevelEnum).min(1,{message: 'Select at least one skill level'}),
+
     firstName: removeBlanks("First name required"),
     lastName: removeBlanks("Last name required"),
+    city: removeBlanks('City is required'),
 
     email: removeBlanks("Email required").email(),
     confirmEmail: removeBlanks("Confirm email"),

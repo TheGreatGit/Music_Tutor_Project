@@ -1,0 +1,1 @@
+select instrument_id, instrument_name from instruments;
