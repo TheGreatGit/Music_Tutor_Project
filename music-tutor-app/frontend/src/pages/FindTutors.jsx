@@ -6,7 +6,7 @@ import TutorCard from "../components/TutorCard";
 const FindTutors = () => {
   const [tutors, setTutors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
+  const [err, setErr] = useState(null);
 
   // arrays to contain pre-fetched instrument and city info from DB
   const [dbCities, setDBCities] = useState([]);
@@ -95,14 +95,43 @@ const FindTutors = () => {
     setInputs({ instrument, city }); // setInputs only so that the input fields are in-sync with what  has been searched for - even "" on reload
   }, [searchParams]);
 
-  // main useEffect hook for getting tutor details with or without filters
+  // useEffect to get instruments for real-time search filter.
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const getInstruments = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:3000/api/filters/instruments",
+          { credentials: "include", signal: controller.signal }
+        );
+        if (!res.ok) {
+          throw new Error("Failed to fetch instruments");
+        }
+        const instruments = await res.json();
+        setDBInstruments(instruments);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("instruments fetch aborted");
+        } else {
+          console.error("Instruments fetch error: ", error);
+          setErr(error.message || "error in fetching instruments");
+          setDBInstruments([]);
+        }
+      }
+    };
+    getInstruments();
+    return () => controller.abort();
+  }, []);
+
+  // useEffect for getting tutors- gets all tutors initially and gets filtered tutors upon search
   useEffect(() => {
     const controller = new AbortController();
     let url = "http://localhost:3000/api/tutors";
 
     const getTutors = async () => {
       setLoading(true);
-      setErr("");
+      setErr(null);
       try {
         const params = new URLSearchParams(); // used to build url query string (the stuff after '?' in a url)
         // URLSearchPArams() does NOT interfere with the useSearchPArams() hook!
@@ -131,7 +160,7 @@ const FindTutors = () => {
           throw new Error("Failed to fetch tutors");
         }
         const data = await res.json();
-        console.log(data);
+        // console.log(data);
         setTutors(data);
       } catch (error) {
         if (error.name === "AbortError") {

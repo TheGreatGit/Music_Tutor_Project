@@ -35,6 +35,9 @@ app.use("/api/tutors", tutorRouter);
 //routes for getting filter data
 app.use('/api/filters', filtersRouter);
 
+// routes for getting real-time input filters
+app.use('/api/filters', filterRouter);
+
 // api health check
 app.get('/api/health', (req, res)=> {res.json({ok:true})});
 
