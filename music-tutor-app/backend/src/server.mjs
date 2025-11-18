@@ -5,7 +5,7 @@ import dotenv from "dotenv";
 import authRouter from "./routes/auth.mjs";
 import { errorHandler } from "./middleware/errorHandler.mjs";
 import tutorRouter from "./routes/searchTutorRoutes.mjs";
-import filtersRouter from './routes/filterRoutes.mjs'
+import filterRouter from './routes/filterRoutes.mjs'
 
 
 // load environment variables in to process.ENV
@@ -33,9 +33,6 @@ app.use(
 app.use("/api/auth", authRouter);
 app.use("/api/tutors", tutorRouter);
 //routes for getting filter data
-app.use('/api/filters', filtersRouter);
-
-// routes for getting real-time input filters
 app.use('/api/filters', filterRouter);
 
 // api health check
