@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import {useSearchParams} from 'react-router-dom';
+import { useSearchParams } from "react-router-dom";
 import TutorCard from "../components/TutorCard";
 
 const FindTutors = () => {
@@ -8,33 +8,26 @@ const FindTutors = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
 
-  // set up state for data that will be compared to real-time input filters
+  // arrays to contain pre-fetched instrument and city info from DB
   const [dbCities, setDBCities] = useState([]);
   const [dbInstruments, setDBInstruments] = useState([]);
 
-  // placeholder for real-time search input values:
-  const [inputs, setInputs] = useState({ instrument: "", city: "" });
-
-  // text-processed placeholder data ready for adding  to DB query:
-  // separation of input values and SqL search filters is done so you don't have a DB fetch on every input keystroke
-  const [filters, setFilters] = useState({ instrument: "", city: "" });
-
+  // hook that can  be used to sync  search filters with url in browser
+  // useSearchParams also 'listens' for client-side url changes
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // useEffect to keep inputs/filters and url in sync on initial load and navigation
-  useEffect(()=>{
-    const urlInstrument = (searchParams.get('instrument') || "").trim();
-    const urlCity = (searchParams.get('city') || "").trim();
+  // placeholder for real-time search input values:
+  // to avoid fetches on each keystroke, fetches will not be run with input values directly
+  const [inputs, setInputs] = useState({ instrument: "", city: "" });
 
-    setInputs({instrument: urlInstrument, city: urlCity});
-    setFilters({instrument: urlInstrument, city: urlCity})
-    // console.log('search param effect run');
-  },[searchParams])
+  // text-processed placeholder data ready for adding  to DB query
+  // this state object is intended to separate input values from directly triggering fetches on each input key-stroke; instead, wait until inoput is finalised and then run fetch
+  // the filters are finalised in the useEffect hook with searchPArams as a dependency
+  const [filters, setFilters] = useState({ instrument: "", city: "" });
 
-  // useEffect() to get DB cities  for real-time filters
+  // useEffect() to get DB cities for real-time filters
   useEffect(() => {
     const controller = new AbortController();
-
     const getCities = async () => {
       try {
         const res = await fetch("http://localhost:3000/api/filters/cities", {
@@ -45,6 +38,7 @@ const FindTutors = () => {
           throw new Error("Failed to fetch cities");
         }
         const cities = await res.json();
+        console.log(cities);
         setDBCities(cities);
       } catch (error) {
         if (error.name === "AbortError") {
@@ -52,7 +46,6 @@ const FindTutors = () => {
         } else {
           console.error("Cities fetch error: ", error);
           setErr(error.message || "error in city fetch");
-          // set DB cities to empty array so no dodgy data is in it
           setDBCities([]);
         }
       }
@@ -60,6 +53,47 @@ const FindTutors = () => {
     getCities();
     return () => controller.abort();
   }, []);
+
+  // useEffect to get instruments for real-time search filter.
+  useEffect(() => {
+    const controller = new AbortController();
+    const getInstruments = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:3000/api/filters/instruments",
+          { credentials: "include", signal: controller.signal }
+        );
+        if (!res.ok) {
+          throw new Error("Failed to fetch instruments");
+        }
+        const instruments = await res.json();
+        setDBInstruments(instruments);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("instruments fetch aborted");
+        } else {
+          console.error("Instruments fetch error: ", error);
+          setErr(error.message || "error in fetching instruments");
+          setDBInstruments([]);
+        }
+      }
+    };
+    getInstruments();
+    return () => controller.abort();
+  }, []);
+
+  // a useEffect that keeps the broswer's url and the actual search filters in-sync; a url -> state sync
+  // this is acheived by using the srachParams as a dependency and updating the filters ()
+  useEffect(() => {
+    // the searchParams will be set in the commitFilters() function which is called in the keydown event handler function
+    // on initial component load (and when clicking on 'find a tutor' link) these params will be empty
+    const instrument = (searchParams.get("instrument") || "").trim();
+    const city = (searchParams.get("city") || "").trim();
+
+    // using setFilters triggers the main data-fetching useEffect() below
+    setFilters({ instrument, city });
+    setInputs({ instrument, city }); // setInputs only so that the input fields are in-sync with what  has been searched for - even "" on reload
+  }, [searchParams]);
 
   // useEffect to get instruments for real-time search filter.
   useEffect(() => {
@@ -100,8 +134,10 @@ const FindTutors = () => {
       setErr(null);
       try {
         const params = new URLSearchParams(); // used to build url query string (the stuff after '?' in a url)
-        let instrument = filters.instrument.trim(); // null on initial page load
-        let city = filters.city.trim(); // null on initial page load
+        // URLSearchPArams() does NOT interfere with the useSearchPArams() hook!
+        // URLSearchParams() is used only in this useEffect() hook to build strings to feed in to a fetch
+        let instrument = filters.instrument.trim();
+        let city = filters.city.trim();
         if (instrument) {
           params.set("instrument", instrument);
         }
@@ -109,8 +145,6 @@ const FindTutors = () => {
           params.set("city", city);
         }
         console.log("search params are: ", params.toString());
-
-        let url = "http://localhost:3000/api/tutors";
 
         if (params.toString()) {
           // params.toString() gives you the string representation of serach params in the necessary string format for appending to the url.
@@ -132,34 +166,38 @@ const FindTutors = () => {
         if (error.name === "AbortError") {
           console.log("fetch aborted");
         } else {
-          setErr(error.message || "something went wrong");
-          setTutors([]);
+          setErr(error?.message || "something went wrong");
+          setTutors([]); // clear tutor info so that no tutor info is shown by mistake
           console.log(error);
         }
       } finally {
-        // done so the UI will not just display ..loading message permanently
-        setLoading(false);
+        setLoading(false); // update loading state so the UI does not remain stuck even after results are obtained from DB
       }
     };
     getTutors();
     return () => controller.abort();
   }, [filters.instrument, filters.city]); // dependent on FILTER values  and not input values!
 
-  // updates input value in-sync with user typing; primarily used to match input to instrument or city options from DB
+  // handle user-input to the input fields
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setInputs((current) => ({ ...current, [name]: value })); // don't use trim here as it would prevent user from adding a space
+    setInputs((current) => ({ ...current, [name]: value }));
   };
 
-  // sets the serach parameters and serach filters to match the user input; this is run in the handler for the enter-key keydown event
   const commitFilters = () => {
     const newSearchParams = {};
-    if(inputs.instrument.trim()){ newSearchParams.instrument = inputs.instrument.trim()};
-    if(inputs.city.trim()){newSearchParams.city = inputs.city.trim()};
-    setSearchParams(newSearchParams); // due to useEffect() earlier in code, changing searchParams uodates inputs and filters; updaying filters causes new  tutor fetch in another useEffect
+    const instrument = inputs?.instrument.trim();
+    const city = inputs?.city.trim();
+    if (instrument) {
+      newSearchParams.instrument = instrument;
+    }
+    if (city) {
+      newSearchParams.city = city;
+    }
+    // this is crucial as it triggers the earlier useEffect hook that itself uses the setters for filters and inputs which then triggers the data fetching useEffect
+    setSearchParams(newSearchParams);
   };
 
-  // commits the trimmed user input to filters to be used in fetch to DB. Filters are dependecies in the fetchTutor useEffect()
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       e.preventDefault();
@@ -167,33 +205,40 @@ const FindTutors = () => {
     }
   };
 
-  // used to set input data when user clicks on any matching dropdown div when presented during real-time input matching
   const handleClick = (searchTerm, fieldName) => {
     setInputs((current) => ({ ...current, [fieldName]: searchTerm }));
   };
 
-  {
-    /* approach adapted from https://www.youtube.com/watch?v=Jd7s7egjt30  and https://www.youtube.com/watch?v=x7niho285qs */
-    // to get conditional rendering of the container for matching search-input filters, create these variables that store matches then use it in div later on
-  }
-  const instrumentMatches = dbInstruments.filter((instrumentRow) => {
+  // 
+  const instrumentDropdown = dbInstruments
+    .filter((instrumentRow) => {
       const userInput = (inputs.instrument || "").toLowerCase();
-      const matchInstrument = (instrumentRow.instrument_name || "").toLowerCase();
-      return (userInput && matchInstrument.includes(userInput) && matchInstrument !== userInput )
+      const matchInstrument = (
+        instrumentRow.instrument_name || ""
+      ).toLowerCase();
+
+      return (
+        userInput &&
+        matchInstrument.includes(userInput) &&
+        matchInstrument !== userInput
+      );
     })
     .slice(0, 10);
 
-  const cityMatches = dbCities.filter((cityRow) => {
+  const cityDropdown = dbCities
+    .filter((cityRow) => {
       const userInput = (inputs.city || "").toLowerCase();
       const matchCity = (cityRow.city_name || "").toLowerCase();
-      return (userInput && matchCity.startsWith(userInput) && matchCity !== userInput)
+
+      return (
+        userInput && matchCity.includes(userInput) && matchCity !== userInput
+      );
     })
     .slice(0, 10);
 
   return (
     <div className="p-6 space-y-6">
       <div className=" grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* set the container of the inputs to relative */}
         <div className="flex flex-col relative">
           <label htmlFor="instrument" className="text-sm text-slate-600 mb-1">
             Instrument
@@ -206,16 +251,18 @@ const FindTutors = () => {
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="search instrument"
-            className="placeholder:text-gray-600 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="placeholder:text-slate-400 text-slate-900 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
-          {/* this only renders if instrument matches exist */}
-          {instrumentMatches.length > 0 && (
-            <div className="dropdown-rows-container-non-tailwind absolute top-full left-0 mt-1 w-full z-10 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-64 overflow-auto">
-              {/* render a dropdown option for every insttuemnt from DB that matches current user input */}
-              {instrumentMatches.map((instrumentRow) => (
-                // the handleClick() function sets the input field's value to match the insturment name clicked on in the real-time input filtering
-                <div key={instrumentRow.instrument_id} onClick={() => handleClick(instrumentRow.instrument_name, "instrument")}
-                  className="dropdown-row-non-tailwind px-3 py-2 cursor-pointer hover:bg-indigo-50"
+          {/* /* approach adapted from https://www.youtube.com/watch?v=Jd7s7egjt30 */}
+          {inputs.instrument.trim() && instrumentDropdown.length > 0 && (
+            <div className="absolute top-full left-0 mt-1 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
+              {instrumentDropdown.map((instrumentRow) => (
+                <div
+                  onClick={() =>
+                    handleClick(instrumentRow.instrument_name, "instrument")
+                  }
+                  className="px-3 py-2 cursor-pointer hover:bg-slate-100"
+                  key={instrumentRow.instrument_id}
                 >
                   {instrumentRow.instrument_name}
                 </div>
@@ -223,7 +270,7 @@ const FindTutors = () => {
             </div>
           )}
         </div>
-        {/* repeat the above but for cities */}
+
         <div className="flex flex-col relative">
           <label htmlFor="city" className="text-sm text-slate-600 mb-1">
             City
@@ -236,14 +283,15 @@ const FindTutors = () => {
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="search city"
-            className=" placeholder:text-gray-600 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="placeholder:text-slate-400 text-slate-900 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
-          {/* this only renders if city matches exist */}
-          {cityMatches.length > 0 && (
-            <div className="dropdown-rows-container-non-tailwind absolute top-full left-0 mt-1 w-full z-10 bg-white border border-slate-200 rounded-2xl shadow-lg max-h-64 overflow-auto">
-              {cityMatches.map((cityRow) => (
-                <div key ={cityRow.city_id} onClick={() =>handleClick(cityRow.city_name, "city")}
-                  className="dropdown-row-non-tailwind px-3 py-2 cursor-pointer hover:bg-indigo-50"
+          {inputs.city.trim() && cityDropdown.length > 0 && (
+            <div className="absolute top-full left-0 mt-1 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
+              {cityDropdown.map((cityRow) => (
+                <div
+                  onClick={() => handleClick(cityRow.city_name, "city")}
+                  className="px-3 py-2 cursor-pointer hover:bg-slate-100"
+                  key={cityRow.city_id}
                 >
                   {cityRow.city_name}
                 </div>

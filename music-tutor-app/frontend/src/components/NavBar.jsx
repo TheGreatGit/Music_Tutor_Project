@@ -15,17 +15,22 @@ const NavBar = () => {
 
   return (
     <nav className='flex flex-row justify-between px-4 py-2'>
-      <Logo className="w-6 h-6 "/>
+      <div className="flex-shrink-0">
+        <Logo className="w-6 h-6 "/>
+      </div>
+  
       <ul className='flex flex-row  rounded-3xl shadow-[0_0_30px_0_rgba(0,0,0,0.1)]'>
         <li className='m-4'><NavLink to="/">Home</NavLink></li>
         <li className='m-4'><NavLink to="/about">About</NavLink></li>
         <li className='m-4'><NavLink to="/contact">Contact</NavLink></li>
         <li className='m-4'><NavLink to="/findTutors">Find a tutor</NavLink></li>
-        { user ? (<></>):(<>        <li className='m-4'><NavLink to="/registerUser">Register as user</NavLink></li>
-        <li className='m-4'><NavLink to="/loginUser">Log in as user</NavLink></li></>)}
       </ul>
-      {user? (<LogOutButton />) : (<></>)}
-      <button onClick={()=>navigate('/about')} className="text-white px-3  rounded-3xl bg-black  hover:bg-sky-600">Get Started</button>
+      
+      <div className=" flex items-center gap-3">
+        <NavLink to="/register" className="px-4 py-2 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 transition"> Register</NavLink>
+        {user? (<LogOutButton />) : (<><button className='px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 transition cursor-pointer'>Log in</button></>)}
+      </div>
+
     </nav>
   )
 }

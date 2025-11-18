@@ -1,15 +1,21 @@
 import { query } from "../config/pool.mjs";
+import { loadSql } from "../queries/loadSql.mjs";
 import bcrypt from "bcrypt";
 
 export const findUserByEmail = async (email) => {
-  const { rows } = await query("Select * from users where email = $1", [email]);
+  const queryString = loadSql('checkEmails.sql');
+  console.log(queryString);
+  
+  const { rows } = await query(queryString, [email]);
+  console.log(rows);
+  
   // rows is an array of all rows matched by the query where each row is an individual object
   // console.log('find user by email result: ', rows[0]);
 
   return rows[0] || null;
 };
 
-export const createNewUser = async ({ name, email, password }) => {
+export const createNewUser = async ({ firstName, lastName, email, password, phoneNumber }) => {
   // hash the supplied password
   const hashedPassword = await bcrypt.hash(password, 10);
 

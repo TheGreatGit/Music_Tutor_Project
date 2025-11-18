@@ -7,17 +7,26 @@ import {
 import { cookieOptions, setAuthCookie } from "../utils/cookie.mjs";
 
 // handler for the /register route
-export const register = async (req, res, next) => {
+export const registerAsTutor = async (req, res, next) => {
   try {
     // get form data and use || {} to safely handle there being no req.body from client
-    const { name, email, password } = req.body || {};
+    const { firstName, lastName, email, confirmEmail, password, confirmPassword, phoneNumber } = req.body || {};
 
-    //check if data missing and send error to global error handler
-    if (!name || !email || !password) {
+    //check if data missing and send error to express global error handler
+    if (!firstName || !lastName || !email ||!confirmEmail || !password ||!confirmPassword ||!phoneNumber) {
       res.status(400);
       return next(new Error("Provide required fields"));
     }
 
+    if(confirmEmail !== email){
+      res.status(400);
+      return next(new Error('Emails do not match'));
+    }
+
+    if(confirmPassword !== password){
+      res.status(400);
+      return next(new Error('Passwords do not match'));
+    }
     // if data present, check if user already registered by email (emails are to be unique per user)
     // find user bhy email returns entire DB row if matched
     const userExists = await findUserByEmail(email);
@@ -113,3 +122,4 @@ export const getCurrentUser = (req, res, next) => {
     return next(error);
   }
 };
+

@@ -1,27 +1,33 @@
-import { pool } from "../config/pool.mjs";
-import { loadSql } from "../queries/loadSql.mjs";
+import { query } from "../config/pool.mjs"
+import { loadSql } from "../queries/loadSql.mjs"
 
-// note that loadSql is pointing at src/queries, so you add route to sql files from there
-const dbCitiesQueryString = loadSql('getCities.sql');
-const dbInstrumentsQueryString = loadSql('getInstruments.sql');
+const instrumentQueryString = loadSql('getInstruments.sql');
+console.log(instrumentQueryString);
+const cityQueryString = loadSql('getCities.sql');
+console.log('city query string:', cityQueryString);
 
-export const getCitiesController = async(req, res)=>{
+
+export const  getInstruments = async (req,res, next)=>{
     try {
-        const {rows} = await pool.query(dbCitiesQueryString);
-        // console.log(rows);
-        res.json(rows);
+        const {rows} = await query(instrumentQueryString);
+        console.log(rows);
+        return res.json(rows)
+        
     } catch (error) {
-        console.error('Database error in getCityController ', error);
-        res.status(500).json({message:"database error"});
+        console.error('Error in getInstruments: ', error);
+        // pass error out to global handler
+        next(error);
     }
 }
 
-export const getInstrumentsController = async(req, res) =>{
+export const getCities = async(req,res,next)=>{
     try {
-        const {rows} = await pool.query(dbInstrumentsQueryString);
-        res.json(rows);
+        const {rows} = await query(cityQueryString);
+        console.log(rows);
+        return res.json(rows);
+        
     } catch (error) {
-        console.error('error in getInstrumentsController ', error);
-        res.status(500).json({message:"database error"});
+        console.error('error in get cities: ', error);
+        next(error);
     }
 }

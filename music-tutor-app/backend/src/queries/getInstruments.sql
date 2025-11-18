@@ -1,2 +1,1 @@
--- get all instruments for real-time input filter
-select * from instruments
+select instrument_id, instrument_name from instruments;
