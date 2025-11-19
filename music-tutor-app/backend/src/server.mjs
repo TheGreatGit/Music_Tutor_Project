@@ -6,6 +6,7 @@ import authRouter from "./routes/auth.mjs";
 import { errorHandler } from "./middleware/errorHandler.mjs";
 import tutorRouter from "./routes/searchTutorRoutes.mjs";
 import filterRouter from './routes/filterRoutes.mjs'
+import registerRouter from './routes/registerRoutes.mjs';
 
 
 // load environment variables in to process.ENV
@@ -32,8 +33,12 @@ app.use(
 // by using app.use instead of e.g. app.post, this mounts the router (and handlers) from the router defined in routes/auth.mjs for all http request types
 app.use("/api/auth", authRouter);
 app.use("/api/tutors", tutorRouter);
-//routes for getting filter data
+
+//routes for getting filter data for real-time inout filtering
 app.use('/api/filters', filterRouter);
+
+// route for registering tutors.
+app.use('/api/register', registerRouter);
 
 // api health check
 app.get('/api/health', (req, res)=> {res.json({ok:true})});

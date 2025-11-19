@@ -15,6 +15,7 @@ export const findUserByEmail = async (email) => {
   return rows[0] || null;
 };
 
+// NEED TO REMOVE AFTER PROPER REGISTRATION IS SET UP!
 export const createNewUser = async ({ firstName, lastName, email, password, phoneNumber }) => {
   // hash the supplied password
   const hashedPassword = await bcrypt.hash(password, 10);

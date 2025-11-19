@@ -10,7 +10,7 @@ console.log('city query string:', cityQueryString);
 export const  getInstruments = async (req,res, next)=>{
     try {
         const {rows} = await query(instrumentQueryString);
-        console.log(rows);
+        //console.log(rows);
         return res.json(rows)
         
     } catch (error) {
@@ -23,7 +23,7 @@ export const  getInstruments = async (req,res, next)=>{
 export const getCities = async(req,res,next)=>{
     try {
         const {rows} = await query(cityQueryString);
-        console.log(rows);
+        //console.log(rows);
         return res.json(rows);
         
     } catch (error) {

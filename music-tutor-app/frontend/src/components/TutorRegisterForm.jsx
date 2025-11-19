@@ -1,11 +1,84 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { tutorRegistrationFormSchema } from "../validationSchemas/tutorRegistrationFormSchema.mjs";
 
 function TutorRegistrationForm() {
+  // state object for selectively rendering form section i.e. looks like multi-page form
   const [step, setStep] = useState(1);
+  // same approach as from FindTutor component: fetch instrument and city info for real-time search dropdowns
+  const [dbCities, setDBCities] = useState([]);
+  const [dbInstruments, setDBInstruments] = useState([]);
+
+  // error tracking for fetch calls- ERRORS ARE NOT CURRENTLY RNEDERED TO UI
+  // these are separate from form errors due to user input problems
+  const [fetchErrors, setFetchErrors] = useState({instrumentError: null, cityError:null});
+
+  // useEffect() to get DB cities for real-time filters
+  useEffect(() => {
+    const controller = new AbortController();
+    const getCities = async () => {
+      try {
+        const res = await fetch("http://localhost:3000/api/filters/cities", {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          throw new Error("Failed to fetch cities");
+        }
+        const cities = await res.json();
+        console.log(cities);
+        setDBCities(cities);
+        // clear any previous errors that might be in the object from previous render
+        setFetchErrors((current)=>({
+          ...current, cityError: null
+        }))
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("city fetch aborted");
+        } else {
+          console.error("Cities fetch error: ", error);
+         setFetchErrors((current)=>(
+          {...current, cityError: error.message || 'City fetch error'}
+         ))
+          setDBCities([]);
+        }
+      }
+    };
+    getCities();
+    return () => controller.abort();
+  }, []);
+
+  // useEffect to get instruments for real-time search filter.
+  useEffect(() => {
+    const controller = new AbortController();
+    const getInstruments = async () => {
+      try {
+        const res = await fetch(
+          "http://localhost:3000/api/filters/instruments",
+          { credentials: "include", signal: controller.signal }
+        );
+        if (!res.ok) {
+          throw new Error("Failed to fetch instruments");
+        }
+        const instruments = await res.json();
+        setDBInstruments(instruments);
+        // clear any previous error that might be there:
+        setFetchErrors((current)=>({...current, instrumentError: null}));
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("instruments fetch aborted");
+        } else {
+          console.error("Instruments fetch error: ", error);
+          setFetchErrors((current)=>({...current, instrumentError: error.message || 'Instrument fetch error'}));
+          setDBInstruments([]);
+        }
+      }
+    };
+    getInstruments();
+    return () => controller.abort();
+  }, []);
 
   const form = useForm({
     defaultValues: {
@@ -38,16 +111,27 @@ function TutorRegistrationForm() {
     formState,
     control,
     trigger,
+    watch,
+    setValue,
     reset,
     setError,
   } = form;
 
+  // destructure RHF's 'errors' object for form errors
   const { errors, isSubmitting, isSubmitSuccessful } = formState;
 
   const onSubmit = async (formData) => {
     console.log("Submitted:", formData);
-    // code for submitting to server
-    // reset();
+    // code for submitting to server - fetch POST request
+   try {
+    const res = await fetch('http://localhost:3000/api/register/tutor', {method:'POST', credentials:'include',headers:{"Content-Type":"application/json" }, body: JSON.stringify(formData)})
+    const data = await res.json();
+    //reset()
+    console.log('server response to form data: ', data);
+   } catch (error) {
+    console.error('Error submitting form data: ', error);
+    //reset();
+   }
   };
 
   // this function is used to access the state of the errors object just after validation is run
@@ -74,6 +158,36 @@ function TutorRegistrationForm() {
   // function to allow user to navigate baxk to step 1
   const handleBack = () => setStep(1);
 
+  // as RHF is managing inouts via useRef() hook, use RHF's 'watch()' function to access input values.
+  const instrumentInput = (watch("instrument") || "").trim();
+  const cityInput = (watch("city") || "").trim();
+
+  const instrumentDropdown = dbInstruments
+    .filter((instrumentRow) => {
+      const userInput = instrumentInput.toLowerCase();
+      const matchInstrument = (
+        instrumentRow.instrument_name || ""
+      ).toLowerCase();
+
+      return (
+        userInput &&
+        matchInstrument.includes(userInput) &&
+        matchInstrument !== userInput
+      );
+    })
+    .slice(0, 10);
+
+  const cityDropdown = dbCities
+    .filter((cityRow) => {
+      const userInput = cityInput.toLowerCase();
+      const matchCity = (cityRow.city_name || "").toLowerCase();
+
+      return (
+        userInput && matchCity.includes(userInput) && matchCity !== userInput
+      );
+    })
+    .slice(0, 10);
+
   return (
     <div className=" bg-slate-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-6 md:p-8">
@@ -90,7 +204,7 @@ function TutorRegistrationForm() {
           {step === 1 && (
             <>
               {/* instrument */}
-              <div>
+              <div className="relative">
                 <label htmlFor="instrument">Instrument taught</label>
                 <input
                   type="text"
@@ -98,6 +212,21 @@ function TutorRegistrationForm() {
                   {...register("instrument")}
                   className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
+                {instrumentDropdown.length >0 && (
+                  <div className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-10">
+                    {instrumentDropdown.map((instrumentRow)=>(
+                      <div key={instrumentRow.instrument_id} onClick={()=>setValue('instrument', instrumentRow.instrument_name,{
+                        shouldValidate: true,
+                        shouldDirty:true,
+                      })
+                      } className="px-3 py-1 cursor-pointer hover:bg-slate-100">
+                        {instrumentRow.instrument_name}
+                      </div>
+                    )
+
+                    )}
+                  </div>
+                )}
                 <p className="mt-1 text-sm text-red-600 h-2">
                   {errors.instrument?.message}
                 </p>
@@ -248,7 +377,7 @@ function TutorRegistrationForm() {
                 </p>
               </div>
               {/* city */}
-              <div>
+              <div className="relative">
                 <label htmlFor="city">City</label>
                 <input
                   type="text"
@@ -256,6 +385,16 @@ function TutorRegistrationForm() {
                   {...register("city")}
                   className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
+                {cityDropdown.length >0 && (
+                  <div className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-10">
+                    {cityDropdown.map((cityRow) =>(
+                      <div key={cityRow.city_id} onClick={()=>setValue('city', cityRow.city_name, {shouldValidate:true, shouldDirty:true,})}
+                      className="px-3 py-1 cursor-pointer hover:bg-slate-100">
+                        {cityRow.city_name}
+                      </div>
+                    ))}
+                  </div>
+                )}
                 <p className="mt-1 text-sm text-red-600 h-2">
                   {errors.city?.message}
                 </p>
