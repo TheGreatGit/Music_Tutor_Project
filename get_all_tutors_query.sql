@@ -19,7 +19,7 @@ STRING_AGG(DISTINCT tt.teaching_type_name, ', ' ) as teaching_types,
 STRING_AGG(DISTINCT s.skill_level_name, ', ' ) as tutor_skill_levels,
 
 -- aggregate contacts (e.g. "email: x; mobile: y")
-STRING_AGG(DISTINCT ct.contact_type || ': ' || tcd.contact_info, '; ') AS contacts
+STRING_AGG(DISTINCT  tcd.contact_info,';') AS contacts
 
 from tutors as t
 left join cities as c on c.city_id = t.city_id

@@ -1,3 +1,3 @@
-select contact_info 
-from tutor_contact_details 
-where contact_info = $1
+select email 
+from app_users
+where email = $1

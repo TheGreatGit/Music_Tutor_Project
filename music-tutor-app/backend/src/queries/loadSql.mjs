@@ -14,7 +14,7 @@ export function loadSql(fileName){
     // note that resolve adds the / to CWD so you don't write "/src/queries"
 
     const filePath = resolve("src/queries", fileName);
-    console.log(filePath);
+    // console.log(filePath);
     // this is reading the Sql query file and returning ot as a string by specifiying utf8 encoding
     return readFileSync(filePath, "utf8");
 }

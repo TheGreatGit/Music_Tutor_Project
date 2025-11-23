@@ -135,14 +135,14 @@ function TutorRegistrationForm() {
   };
 
   // this function is used to access the state of the errors object just after validation is run
-  // if validation  errors exist, handleSubmit will run this onError function and pass to it the formState.errors object
+  // if validation  errors exist, handleSubmit will run this onError function- instead of the onSubmit() function- and pass to it the formState.errors object
   function onError(formErrors) {
     console.log("Validation errors: ", formErrors);
   }
 
   // validate form data from step 1 before going to step 2
   const checkStepOne = async () => {
-    // the trigger methos is a manual way of running the zod validation checks for only the named fields.
+    // the trigger method is a manual way of running the zod validation checks for only the named fields.
     // this is needed because, if the normal validation check ran here, the unset fields in section 2 would trigger errors even though user has not had chance to set them yet.
     const isValid = await trigger([
       "instrument",
@@ -162,6 +162,7 @@ function TutorRegistrationForm() {
   const instrumentInput = (watch("instrument") || "").trim();
   const cityInput = (watch("city") || "").trim();
 
+  // get computed data from the instrument and city state data
   const instrumentDropdown = dbInstruments
     .filter((instrumentRow) => {
       const userInput = instrumentInput.toLowerCase();
@@ -241,6 +242,7 @@ function TutorRegistrationForm() {
                     <input
                       type="checkbox"
                       value="Beginner"
+                      // the multiple options are all tied to the same section of form input data by using the same formData field name in the register function ;)
                       {...register("skillLevels")}
                     />
                     Beginner
@@ -315,7 +317,8 @@ function TutorRegistrationForm() {
                       type="checkbox"
                       value="individual"
                       {...register("teachingTypes")}
-                    />{" "}
+                      // add the {" "} to create a space between label and text
+                    />{" "}    
                     Individual lessons
                   </label>
                   <label className="inline-flex items-center gap-2">

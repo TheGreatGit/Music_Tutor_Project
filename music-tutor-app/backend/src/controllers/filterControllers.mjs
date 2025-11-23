@@ -2,9 +2,9 @@ import { query } from "../config/pool.mjs"
 import { loadSql } from "../queries/loadSql.mjs"
 
 const instrumentQueryString = loadSql('getInstruments.sql');
-console.log(instrumentQueryString);
+// console.log(instrumentQueryString);
 const cityQueryString = loadSql('getCities.sql');
-console.log('city query string:', cityQueryString);
+// console.log('city query string:', cityQueryString);
 
 
 export const  getInstruments = async (req,res, next)=>{

@@ -4,6 +4,7 @@ import { tutorRegistrationController } from "../controllers/registrationControll
 
 const router = Router();
 
+// router.get('/check-email')
 router.post('/tutor', tutorRegistrationController);
 
 export default router;

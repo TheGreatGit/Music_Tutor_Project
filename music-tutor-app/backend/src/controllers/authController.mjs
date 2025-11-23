@@ -1,3 +1,5 @@
+//NOTE THAT THESE ARE NO LONGER USED
+
 import { signUserToken } from "../services/tokenService.mjs";
 import {
   createNewUser,
