@@ -1,5 +1,6 @@
 import { pool } from "../config/pool.mjs";
 import { validateTutorRegistrationFormData } from "../validation/validateTutorRegistrationForm.mjs";
+import { validateStudentRegistrationFormData } from "../validation/validateStudentRegistrationForm.mjs";
 import { findUserByEmail } from "../services/userService.mjs";
 import bcrypt from "bcrypt";
 
@@ -21,6 +22,7 @@ export const checkEmail = async (req, res, next) => {
 
 // this handler is for actual tutor registration attempt; it will also check email availability
 // requests go to http://localhost:3000/api/register/tutor  (post request)
+
 export const tutorRegistrationController = async (req, res, next) => {
   // check form data in req.body
   const formData = req.body || {};
@@ -105,7 +107,7 @@ export const tutorRegistrationController = async (req, res, next) => {
       // get returned tutor_id
       const tutorId = tutorResult.rows[0].tutor_id;
 
-      //get contact type for 'mobile' and add phoen number to tutor_contact_details
+      //get contact type for 'mobile' and add phoen number to user_contact_details
       const contactTypeResult = await client.query(
         `
       select contact_type_id
@@ -113,14 +115,13 @@ export const tutorRegistrationController = async (req, res, next) => {
       where contact_type = $1`,
         ["mobile"]
       );
-      console.log(contactTypeResult.rows[0]);
-      
+
       const phoneTypeId = contactTypeResult.rows[0].contact_type_id;
 
-      // insert into tutor_contact_details
+      // insert into USER_contact_details
       await client.query(
-        `insert into tutor_contact_details (tutor_id, contact_type_id, contact_info) values ($1, $2, $3)`,
-        [tutorId, phoneTypeId, phoneNumber]
+        `insert into user_contact_details (user_id, contact_type_id, contact_info) values ($1, $2, $3)`,
+        [userId, phoneTypeId, phoneNumber]
       );
 
       // get instrument details
@@ -232,7 +233,7 @@ export const tutorRegistrationController = async (req, res, next) => {
         .status(201)
         .json({ message: "tutor registered successfully", tutorId });
     } catch (err) {
-      // roll back if anythign went wrong
+      // in the midst of an error, roll back if anythign went wrong
       try {
         await client.query("ROLLBACK");
       } catch (rollbackErr) {
@@ -241,7 +242,7 @@ export const tutorRegistrationController = async (req, res, next) => {
           rollbackErr
         );
       }
-      // error for email being already registered
+      // error for email being already registered. postgreSQL has the error code 23505 for a unique_violation error i.e. email breachers the app_user table's constraint of having unique email
       if (err.code === "23505") {
         return res
           .status(409)
@@ -258,6 +259,139 @@ export const tutorRegistrationController = async (req, res, next) => {
     // catches errors from e.g. findUSerByEmail or pool.connect()
     console.error(
       "Outer error before transaction begins in registering tutor: ",
+      outerError
+    );
+    return next(outerError);
+  }
+};
+
+export const studentRegistrationController = async (req, res, next) => {
+  // check form data in req.body
+  const formData = req.body || {};
+  // console.log(formData);
+
+  // validate form data- TO BE REPLACED WITH ZOD LATER
+  // the validation function returns an object of either {ok: false, errors} or {ok:true, data:cleaned}
+  const validationResult = validateStudentRegistrationFormData(formData);
+
+  if (!validationResult.ok) {
+    return res.status(400).json({ errors: validationResult.errors });
+  }
+
+  // destructure the cleaned data returned in validateStudentRegistrationFormData.data
+  const {
+    firstName,
+    lastName,
+    city,
+    email,
+    phoneNumber,
+    password,
+  } = validationResult.data;
+
+  // create outer try block
+  try {
+    // since data is validated, check that the email is not in use already
+    const isEmailRegistered = await findUserByEmail(email);
+    if (isEmailRegistered) {
+      console.log(isEmailRegistered.email + " is not available");
+      return res
+        .status(409)
+        .json({ message: "email already registered!", field: "email" });
+    }
+
+    // use the 'client' method from the pool object rather than the 'query' method because the sql will use a transaction
+    const client = await pool.connect();
+
+    // inner try for attempting the transaction
+    try {
+      // get a client connection and begin transaction
+      await client.query("BEGIN");
+
+      // hash user password
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      // get role id for STUDENT
+      const roleResult = await client.query(
+        `select role_id from roles where role_name = $1`,
+        ["student"]
+      );
+      const roleId = roleResult.rows[0].role_id;
+
+      // insert email, roleId, and hashed password in to app_users table and return the system-generated user id (from the user_id column)
+      const appUserResult = await client.query(
+        `insert into app_users (email, password_hash, role_id) 
+      values ($1, $2, $3) returning user_id`,
+        [email, passwordHash, roleId]
+      );
+      // get  user Id from appUserResult
+      const userId = appUserResult.rows[0].user_id;
+
+      // get city id from city table
+      const cityResult = await client.query(
+        `select city_id from cities where city_name = $1`,
+        [city]
+      );
+      const cityId = cityResult.rows[0].city_id;
+
+      // insert in to STUDENTS
+      const studentResult = await client.query(
+        `insert into students (first_name, last_name, city_id, user_id) values ($1, $2, $3, $4) returning student_id`,
+        [firstName, lastName, cityId, userId]
+      );
+      // get returned tutor_id
+      const studentId = studentResult.rows[0].student_id;
+
+      //get contact type for 'mobile' and add phoen number to tutor_contact_details
+      const contactTypeResult = await client.query(
+        `
+      select contact_type_id
+      from contact_type
+      where contact_type = $1`,
+        ["mobile"]
+      );
+
+      const contactTypeId = contactTypeResult.rows[0].contact_type_id;
+
+      // insert into USER_contact_details
+      await client.query(
+        `insert into user_contact_details (user_id, contact_type_id, contact_info) values ($1, $2, $3)`,
+        [userId, contactTypeId, phoneNumber]
+      );
+
+      // COMMIT TRANSACTION
+      await client.query("COMMIT");
+
+      // confirm success
+      return res
+        .status(201)
+        .json({ message: "student registered successfully", studentId });
+    } catch (err) {
+      // in the midst of an error, roll back if anythign went wrong
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackErr) {
+        console.error(
+          "Error rolling back transaction in studentRegistrationController: ",
+          rollbackErr
+        );
+      }
+      // error for email being already registered. postgreSQL has the error code 23505 for a unique_violation error i.e. email breachers the app_user table's constraint of having unique email
+      if (err.code === "23505") {
+        return res
+          .status(409)
+          .json({ message: "Email already registered", field: "email" });
+      }
+
+      console.error("Error in studentRegistrationController: ", err);
+      return next(err);
+    } finally {
+      // release the client
+      client.release();
+    }
+  } catch (outerError) {
+    // catches errors from e.g. findUSerByEmail or pool.connect()
+    console.error(
+      "Outer error before transaction begins in registering student: ",
       outerError
     );
     return next(outerError);
