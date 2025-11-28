@@ -5,7 +5,7 @@ import { loadSql } from "../queries/loadSql.mjs";
 const dbQueryString = loadSql("tutors/getTutors.sql");
 
 // create the actual controller
-
+// this controller also frabs any url params for coty or instrument (if present) and adds them to SQL query as params
 export const getTutors= async (req, res)=>{
     try {
         // attempt to grab url query params from front-end (anything after the'?' in url)

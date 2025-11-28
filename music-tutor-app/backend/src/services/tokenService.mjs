@@ -3,7 +3,6 @@ import jwt from "jsonwebtoken";
 export function signUserToken(userId) {
     //create JWT with user's DB id signed using secret key and hashing algorithm
     // the data is NOT encrypted! Instead, it is hashed using algorithm that uses the JWT_SECRET and any alteration to the JWT client-side will produce different hash and will expose alteration
-    // maybe add user's role later?
     // method signjature is sign(payload, secret, options)
     // it creates a hashed header that specifies the hasing algorithm and token type (JWT)
     // then hashes the payload. Then creates a 'signature' by hasing payload and signature with secret key

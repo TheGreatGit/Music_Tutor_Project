@@ -2,12 +2,12 @@ import express, { urlencoded } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import authRouter from "./routes/auth.mjs";
 import { errorHandler } from "./middleware/errorHandler.mjs";
 import tutorRouter from "./routes/searchTutorRoutes.mjs";
 import filterRouter from './routes/filterRoutes.mjs'
 import registerRouter from './routes/registerRoutes.mjs';
-
+import loginRouter from './routes/loginRoute.mjs';
+import logoutRouter from './routes/logOutRoute.mjs';
 
 // load environment variables in to process.ENV
 dotenv.config();
@@ -31,14 +31,21 @@ app.use(
 
 // ROUTES
 // by using app.use instead of e.g. app.post, this mounts the router (and handlers) from the router defined in routes/auth.mjs for all http request types
-app.use("/api/auth", authRouter);
+
+// this route is simply for searching for tutors
 app.use("/api/tutors", tutorRouter);
 
-//routes for getting filter data for real-time inout filtering
+//routes for getting filter data for real-time inout filtering (currently for cities and instruments only)
 app.use('/api/filters', filterRouter);
 
-// route for registering tutors.
+// route for REGISTERING tutors and students.
 app.use('/api/register', registerRouter);
+
+// route for login any user
+app.use('/api', loginRouter);
+
+//logout route
+app.use('/api', logoutRouter);
 
 // api health check
 app.get('/api/health', (req, res)=> {res.json({ok:true})});

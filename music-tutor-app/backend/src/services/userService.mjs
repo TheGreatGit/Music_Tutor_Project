@@ -12,25 +12,12 @@ export const findUserByEmail = async (email) => {
   return rows[0] || null;
 };
 
-// NEED TO REMOVE AFTER PROPER REGISTRATION IS SET UP!
-export const createNewUser = async ({ firstName, lastName, email, password, phoneNumber }) => {
-  // hash the supplied password
-  const hashedPassword = await bcrypt.hash(password, 10);
-
-  // create user in DB and get info returned
-  const { rows } = await query(
-    `INSERT INTO users (name, email, password)
-     VALUES ($1, $2, $3)
-     RETURNING id, name, email`,
-    [name, email, hashedPassword]
-  );
-  return rows[0];
-};
 
 export const validatePassword = async (plain, hashed) => {
   return bcrypt.compare(plain, hashed);
 };
 
+// needs refactored
 export const findUserById = async (id) => {
   const { rows } = await query(
     "SELECT id, name, email FROM users WHERE id = $1",

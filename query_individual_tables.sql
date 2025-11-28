@@ -15,8 +15,5 @@ select * from tutor_teaching_types; --empty
 select * from tutors; --empty
 select * from user_contact_details; -- empty
 
--- DELETE FROM tutors
--- WHERE first_name = 'Adam' AND last_name = 'Smith';
-
 
 

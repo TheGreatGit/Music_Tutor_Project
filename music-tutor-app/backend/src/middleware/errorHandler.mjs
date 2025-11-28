@@ -2,6 +2,7 @@ export function errorHandler(err, req, res, next) {
   console.error("Global error handler caught:", err);
 
   // If a response status hasn't already been set, default to 500
+  // i.e. if status code is not 200, leave it as it is; otherwise, set to 500
   const statusCode =
     res.statusCode && res.statusCode !== 200 ? res.statusCode : 500;
 

@@ -4,7 +4,7 @@ import { validateStudentRegistrationFormData } from "../validation/validateStude
 import { findUserByEmail } from "../services/userService.mjs";
 import bcrypt from "bcrypt";
 
-// this handler is for the front-end turor and student registration forms to fetch.
+// this handler is for the front-end turor and student registration forms to fetch.(NOT IN USE CURRENTLY)
 export const checkEmail = async (req, res, next) => {
   //grab the email from url search param
   const email = req.query.email;
@@ -22,7 +22,6 @@ export const checkEmail = async (req, res, next) => {
 
 // this handler is for actual tutor registration attempt; it will also check email availability
 // requests go to http://localhost:3000/api/register/tutor  (post request)
-
 export const tutorRegistrationController = async (req, res, next) => {
   // check form data in req.body
   const formData = req.body || {};
