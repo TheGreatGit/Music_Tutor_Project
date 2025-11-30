@@ -28,7 +28,7 @@ const NavBar = () => {
       
       <div className=" flex items-center gap-3">
         <NavLink to="/register" className="px-4 py-2 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 transition"> Register</NavLink>
-        {user? (<LogOutButton />) : (<><button className='px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 transition cursor-pointer'>Log in</button></>)}
+        {user? (<LogOutButton />) : (<NavLink to="/login" className='px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 transition cursor-pointer'>Log in</NavLink>)}
       </div>
 
     </nav>

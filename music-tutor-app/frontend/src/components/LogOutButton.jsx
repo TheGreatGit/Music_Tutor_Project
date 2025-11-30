@@ -8,8 +8,7 @@ const LogOutButton = () => {
 
   const logout = async () => {
     try {
-      await fetch("http://localhost:3000/api/auth/logout", {
-        method: "POST",
+      await fetch("http://localhost:3000/api/logout", {
         credentials: "include",
       });
     } catch (error) {

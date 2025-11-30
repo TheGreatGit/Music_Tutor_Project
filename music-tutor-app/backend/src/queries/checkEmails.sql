@@ -1,3 +1,3 @@
 select * 
 from app_users
-where email = $1
+where LOWER(email) = LOWER($1);

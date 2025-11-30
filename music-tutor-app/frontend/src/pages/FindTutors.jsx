@@ -38,7 +38,7 @@ const FindTutors = () => {
           throw new Error("Failed to fetch cities");
         }
         const cities = await res.json();
-        console.log(cities);
+        // console.log(cities);
         setDBCities(cities);
       } catch (error) {
         if (error.name === "AbortError") {
@@ -95,34 +95,7 @@ const FindTutors = () => {
     setInputs({ instrument, city }); // setInputs only so that the input fields are in-sync with what  has been searched for - even "" on reload
   }, [searchParams]);
 
-  // useEffect to get instruments for real-time search filter.
-  useEffect(() => {
-    const controller = new AbortController();
 
-    const getInstruments = async () => {
-      try {
-        const res = await fetch(
-          "http://localhost:3000/api/filters/instruments",
-          { credentials: "include", signal: controller.signal }
-        );
-        if (!res.ok) {
-          throw new Error("Failed to fetch instruments");
-        }
-        const instruments = await res.json();
-        setDBInstruments(instruments);
-      } catch (error) {
-        if (error.name === "AbortError") {
-          console.log("instruments fetch aborted");
-        } else {
-          console.error("Instruments fetch error: ", error);
-          setErr(error.message || "error in fetching instruments");
-          setDBInstruments([]);
-        }
-      }
-    };
-    getInstruments();
-    return () => controller.abort();
-  }, []);
 
   // useEffect for getting tutors- gets all tutors initially and gets filtered tutors upon search
   useEffect(() => {
@@ -209,32 +182,28 @@ const FindTutors = () => {
     setInputs((current) => ({ ...current, [fieldName]: searchTerm }));
   };
 
-  // 
-  const instrumentDropdown = dbInstruments
-    .filter((instrumentRow) => {
-      const userInput = (inputs.instrument || "").toLowerCase();
-      const matchInstrument = (
-        instrumentRow.instrument_name || ""
-      ).toLowerCase();
+  // code amended to fix issue where ,when typing piano, e.g. classical piano remained as dropdowns
+  // add a check to remove a dropdown when the user input (post-click) matches the dropdown values exactly
 
-      return (
-        userInput &&
-        matchInstrument.includes(userInput) &&
-        matchInstrument !== userInput
-      );
-    })
-    .slice(0, 10);
+  // get user's input
+  const userInstrumentInput = (inputs.instrument || "").toLowerCase().trim();
+  // check if the user input matches any instrument name  in any row of dbInstruments 
+  const hasExactInstrumentMatch = userInstrumentInput && dbInstruments.some((instrumentRow)=>(instrumentRow.instrument_name || "").toLowerCase().trim()=== userInstrumentInput)
+  
+  // now create a dropdown only when there is user input but with no exact match; otherwise, the dropdown is an empty array
+  // when there is an exact match(i.e. user clicks on an instrument dropdown option, the instrument dropdown becomes [])
+  const instrumentDropdown = userInstrumentInput && !hasExactInstrumentMatch ? dbInstruments.filter((instrumentRow)=>{
+    const matchInstrument = (instrumentRow.instrument_name ||"").toLowerCase();
+    return (matchInstrument.includes(userInstrumentInput) && matchInstrument!== userInstrumentInput);
+  }).slice(0,10) : [];
 
-  const cityDropdown = dbCities
-    .filter((cityRow) => {
-      const userInput = (inputs.city || "").toLowerCase();
-      const matchCity = (cityRow.city_name || "").toLowerCase();
+  const userCityInput = (inputs.city || "").toLowerCase().trim();
+  const hasExactCityMatch = userCityInput && dbCities.some((cityRow)=>(cityRow.city_name ||"").toLowerCase() === userCityInput);
 
-      return (
-        userInput && matchCity.includes(userInput) && matchCity !== userInput
-      );
-    })
-    .slice(0, 10);
+  const cityDropdown = userCityInput && !hasExactCityMatch ? dbCities.filter((cityRow)=>{
+    const matchCity = (cityRow.city_name || "").toLowerCase();
+    return(matchCity.includes(userCityInput) && matchCity !== userCityInput)
+  }).slice(0,10):[];
 
   return (
     <div className="p-6 space-y-6">

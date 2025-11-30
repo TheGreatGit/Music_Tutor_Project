@@ -53,10 +53,11 @@ export const tutorRegistrationController = async (req, res, next) => {
     password,
   } = validationResult.data;
 
+  const lowerCasedEmail = email.toLowerCase();
   // create outer try block
   try {
     // since data is validated, check that the email is not in use already
-    const isEmailRegistered = await findUserByEmail(email);
+    const isEmailRegistered = await findUserByEmail(lowerCasedEmail);
     if (isEmailRegistered) {
       console.log(isEmailRegistered.email + " is not available");
       return res
@@ -86,7 +87,7 @@ export const tutorRegistrationController = async (req, res, next) => {
       const appUserResult = await client.query(
         `insert into app_users (email, password_hash, role_id) 
       values ($1, $2, $3) returning user_id`,
-        [email, passwordHash, roleId]
+        [lowerCasedEmail, passwordHash, roleId]
       );
       // get  user Id from appUserResult
       const userId = appUserResult.rows[0].user_id;
@@ -230,7 +231,7 @@ export const tutorRegistrationController = async (req, res, next) => {
       // confirm success
       return res
         .status(201)
-        .json({ message: "tutor registered successfully", tutorId });
+        .json({ message: "tutor registered successfully", userId });
     } catch (err) {
       // in the midst of an error, roll back if anythign went wrong
       try {
@@ -287,10 +288,12 @@ export const studentRegistrationController = async (req, res, next) => {
     password,
   } = validationResult.data;
 
+   const lowerCasedEmail = email.toLowerCase();
+
   // create outer try block
   try {
     // since data is validated, check that the email is not in use already
-    const isEmailRegistered = await findUserByEmail(email);
+    const isEmailRegistered = await findUserByEmail(lowerCasedEmail);
     if (isEmailRegistered) {
       console.log(isEmailRegistered.email + " is not available");
       return res
@@ -320,7 +323,7 @@ export const studentRegistrationController = async (req, res, next) => {
       const appUserResult = await client.query(
         `insert into app_users (email, password_hash, role_id) 
       values ($1, $2, $3) returning user_id`,
-        [email, passwordHash, roleId]
+        [lowerCasedEmail, passwordHash, roleId]
       );
       // get  user Id from appUserResult
       const userId = appUserResult.rows[0].user_id;

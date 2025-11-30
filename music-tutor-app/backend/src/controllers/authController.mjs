@@ -14,10 +14,13 @@ export const login = async (req, res, next) => {
       res.status(400);
       return next(new Error("Provide all required fields"));
     }
-
+    
+    const lowerCasedEmail = email.toLowerCase();
     // find user in DB
-    const user = await findUserByEmail(email.toLowerCase()); // will return a matching  DB row from APP_USERS table as an object. It will include entire row including password
+    const user = await findUserByEmail(lowerCasedEmail); // will return a matching  DB row from APP_USERS table as an object. It will include entire row including password
     if (!user) {
+      console.log(("no user with email ", lowerCasedEmail));
+      
       res.status(400);
       return next(new Error("Invalid credentials"));
     }

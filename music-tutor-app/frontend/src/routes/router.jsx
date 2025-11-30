@@ -11,7 +11,7 @@ import FindTutors from "../pages/FindTutors";
 import Register from '../pages/Register';
 import TutorRegisterForm from "../components/TutorRegisterForm";
 import StudentRegisterForm from "../components/StudentRegisterForm";
-
+import LoginUserForm from "../pages/LoginUserForm"
 
 const router =  createBrowserRouter(
   createRoutesFromElements(
@@ -25,7 +25,7 @@ const router =  createBrowserRouter(
       {/* links to registration forms */}
       <Route path="register/tutor" element={<TutorRegisterForm/>}/>
       <Route path="register/student" element={<StudentRegisterForm/>}/>
-
+      <Route path="login" element={<LoginUserForm/>}/>
     </Route>
   )
 );

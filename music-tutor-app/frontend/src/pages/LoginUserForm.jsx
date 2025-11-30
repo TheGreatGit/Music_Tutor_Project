@@ -47,7 +47,7 @@ const LoginUserForm = () => {
         password: form.password.trim(),
       };
 
-      const res = await fetch("http://localhost:3000/api/auth/login", {
+      const res = await fetch("http://localhost:3000/api/login", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
