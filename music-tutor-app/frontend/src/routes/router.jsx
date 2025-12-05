@@ -12,6 +12,7 @@ import Register from '../pages/Register';
 import TutorRegisterForm from "../components/TutorRegisterForm";
 import StudentRegisterForm from "../components/StudentRegisterForm";
 import LoginUserForm from "../pages/LoginUserForm"
+import CalendarTestPage from "../pages/CalendarTestPage";
 
 const router =  createBrowserRouter(
   createRoutesFromElements(
@@ -26,6 +27,7 @@ const router =  createBrowserRouter(
       <Route path="register/tutor" element={<TutorRegisterForm/>}/>
       <Route path="register/student" element={<StudentRegisterForm/>}/>
       <Route path="login" element={<LoginUserForm/>}/>
+      <Route path="testCalendar" element={<CalendarTestPage />}/>
     </Route>
   )
 );

@@ -366,7 +366,7 @@ export const studentRegistrationController = async (req, res, next) => {
       // confirm success
       return res
         .status(201)
-        .json({ message: "student registered successfully", studentId });
+        .json({ message: "student registered successfully", userId });
     } catch (err) {
       // in the midst of an error, roll back if anythign went wrong
       try {

@@ -128,6 +128,9 @@ function TutorRegistrationForm() {
     const data = await res.json();
     //reset()
     console.log('server response to form data: ', data);
+    if(data?.userId){
+      window.alert('Tutor registered ok ;)');
+    }
    } catch (error) {
     console.error('Error submitting form data: ', error);
     //reset();
@@ -162,32 +165,24 @@ function TutorRegistrationForm() {
   const instrumentInput = (watch("instrument") || "").trim();
   const cityInput = (watch("city") || "").trim();
 
-  // get computed data from the instrument and city state data
-  const instrumentDropdown = dbInstruments
-    .filter((instrumentRow) => {
-      const userInput = instrumentInput.toLowerCase();
-      const matchInstrument = (
-        instrumentRow.instrument_name || ""
-      ).toLowerCase();
+  const userInstrumentInput = (instrumentInput || "").toLowerCase().trim();
+  // check if the user input matches any instrument name  in any row of dbInstruments 
+  const hasExactInstrumentMatch = userInstrumentInput && dbInstruments.some((instrumentRow)=>(instrumentRow.instrument_name || "").toLowerCase().trim()=== userInstrumentInput)
+  
+  // now create a dropdown only when there is user input but with no exact match; otherwise, the dropdown is an empty array
+  // when there is an exact match(i.e. user clicks on an instrument dropdown option, the instrument dropdown becomes [])
+  const instrumentDropdown = userInstrumentInput && !hasExactInstrumentMatch ? dbInstruments.filter((instrumentRow)=>{
+    const matchInstrument = (instrumentRow.instrument_name ||"").toLowerCase();
+    return (matchInstrument.includes(userInstrumentInput) && matchInstrument!== userInstrumentInput);
+  }).slice(0,10) : [];
 
-      return (
-        userInput &&
-        matchInstrument.includes(userInput) &&
-        matchInstrument !== userInput
-      );
-    })
-    .slice(0, 10);
+  const userCityInput = (cityInput || "").trim().toLowerCase();
+    const hasExactCityMatch = userCityInput && dbCities.some((cityRow)=>(cityRow.city_name ||"").toLowerCase() === userCityInput);
 
-  const cityDropdown = dbCities
-    .filter((cityRow) => {
-      const userInput = cityInput.toLowerCase();
-      const matchCity = (cityRow.city_name || "").toLowerCase();
-
-      return (
-        userInput && matchCity.includes(userInput) && matchCity !== userInput
-      );
-    })
-    .slice(0, 10);
+  const cityDropdown = userCityInput && !hasExactCityMatch ? dbCities.filter((cityRow)=>{
+    const matchCity = (cityRow.city_name || "").toLowerCase();
+    return(matchCity.includes(userCityInput) && matchCity !== userCityInput)
+  }).slice(0,10):[];
 
   return (
     <div className=" bg-slate-50 flex items-center justify-center px-4">

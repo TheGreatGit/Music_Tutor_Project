@@ -92,6 +92,9 @@ const StudentRegisterForm = () => {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
+      if (data?.userId) {
+        window.alert("Student registered ok ;)");
+      }
       //reset()
       console.log("server response to form data: ", data);
     } catch (error) {
@@ -124,7 +127,7 @@ const StudentRegisterForm = () => {
     <div className=" bg-slate-50 flex items-center justify-center px-4">
       <div className="w-full max-w-md bg-white shadow-lg rounded-2xl p-6 md:p-8">
         <h1 className="text-xl font-semibold text-slate-800 mb-1">
-          Tutor registration
+          Student registration
         </h1>
 
         <form
