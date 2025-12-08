@@ -61,17 +61,21 @@ const CalendarTestPage = () => {
   const [draftEvent, setDraftEvent] = useState(null);
   const [newEvent, setNewEvent] = useState(null);
   const [allEvents, setAllEvents] = useState(initialEvents);
+  // for lesson details panel
+  const [selectedEvent, setSelectedEvent] = useState(null);
 
   // set view style for the Calendar component's view prop by linking it to react state
   const [view, setView] = useState("week");
   // set the focus point for the calendar display by linking its date prop to react state
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  const isDraftValid = draftEvent?.title && draftEvent?.start && draftEvent?.end;
+  const isDraftValid =
+    draftEvent?.title && draftEvent?.start && draftEvent?.end;
 
-  // combine confimred events plus draft event
-  const displayEvents = isDraftValid ? [... allEvents, {...draftEvent, isDraft: true}]: allEvents
-
+  // combine confimred events plus draft event so draft events are displayed on the calendar
+  const displayEvents = isDraftValid
+    ? [...allEvents, { ...draftEvent, isDraft: true }]
+    : allEvents;
 
   // first, you add 'selectable' as a prop to the Calendar component which allows user to click and drag on Calendar to create slots
   // then, you can get access to the 'onSelectSlot' event and create a handler like this:
@@ -80,8 +84,8 @@ const CalendarTestPage = () => {
     const oneHourAsMilliseconds = 60 * 60 * 1000;
     const duration = slotInfo.end - slotInfo.start;
 
-    if(duration > oneHourAsMilliseconds){
-      alert('Lessons can only be booked for a maximum of one hour');
+    if (duration > oneHourAsMilliseconds) {
+      alert("Lessons can only be booked for a maximum of one hour");
       return;
     }
     console.log("slot info: ", slotInfo);
@@ -91,6 +95,8 @@ const CalendarTestPage = () => {
       start: slotInfo.start,
       end: slotInfo.end,
     });
+    // clear this to remove selection when creating a new event/lesson
+    setSelectedEvent(null);
 
     // use the lines below if appointments are selected via DatePicker component
     // setCurrentDate(slotInfo.start);
@@ -109,50 +115,111 @@ const CalendarTestPage = () => {
       alert("End date cannot be before start date.");
       return;
     }
+    const hasOverlap = allEvents.some((event) => {
+      // ignore any overlap with a draft event so we don't get a true value and therefore a misleading truthy
+      if (event.isDraft) return false; // on returning false, the loop continues
+      return isOverlapping(draftEvent, event);
+    });
+
+    if (hasOverlap) {
+      alert("This timeslot overlaps an existing booking. Choose another time");
+      return;
+    }
+
     // draft event is valid therefore chnage to confirmed event
-    const confirmedEvent = {...draftEvent, isDraft:false};
-    // use the confirmed event to set a new event that will be added to events array
-    setNewEvent(confirmedEvent)
+    const confirmedEvent = { ...draftEvent, isDraft: false };
+
+    //setNewEvent(confirmedEvent)
     // add the confirmed event to the events array
-    setAllEvents((prev) => [...prev, { ...confirmedEvent }]);
+    setAllEvents((prev) => [...prev, confirmedEvent]);
 
     // reset draft event back to default
     setDraftEvent(null);
   };
 
-  const clearSelection = ()=>{
+  const clearSelection = () => {
     setDraftEvent(null);
-    setNewEvent(null);
+    //setNewEvent(null);
+    setSelectedEvent(null);
   };
 
-  // fires when a  confirmed Calendar event is clicked on
-  const handleSelectEvent = (event) => {
-    if(event.isDraft) return;
-
-    alert(
-      `Event: ${event.title} \nStart: ${event.start.toLocaleString(
-        "en-GB"
-      )} \nEnd: ${event.end.toLocaleString("en-GB")}`
+  const isSameEvent = (a, b) => {
+    if (!a || !b) return false;
+    return (
+      a.title === b.title &&
+      a.start.getTime() === b.start.getTime() &&
+      a.end.getTime() === b.end.getTime()
     );
   };
 
+  const isOverlapping = (a, b) => {
+    if (!a || !b) return false;
+    return a.start < b.end && a.end > b.start;
+  };
+
+  // fires when a  confirmed Calendar event is clicked on and it receives the event object as it is defined in the calendar (different to normal event handler event i.e. doesn't have .target property etc.)
+  const handleSelectEvent = (event) => {
+    if (event.isDraft) return;
+
+    // alert(
+    //   `Event: ${event.title} \nStart: ${event.start.toLocaleString(
+    //     "en-GB"
+    //   )} \nEnd: ${event.end.toLocaleString("en-GB")}`
+    // );
+
+    // used for conditional rendering of the event-details panel to toggle its display when clicking on a calendar event
+    setSelectedEvent((current) => (isSameEvent(current, event) ? null : event));
+  };
+
+  const handleCancelBooking = () => {
+    if (!selectedEvent) return;
+
+    // don't allow cancellation of draft bookings
+    if (selectedEvent.isDraft) return;
+
+    const ok = window.confirm(
+      `${selectedEvent.title || "Lesson"}\n` +
+        `Date: ${formatDate(selectedEvent.start)}\n` +
+        `Start: ${formatTime(selectedEvent.start)}\n` +
+        `End: ${formatTime(selectedEvent.end)}\n` +
+        `Are you sure you want to cancel this booking?`
+    );
+    if (!ok) return;
+
+    // if ok, remove event from the list
+    setAllEvents((current) =>
+      current.filter((event) => !isSameEvent(event, selectedEvent))
+    );
+
+    // clear selection
+    setSelectedEvent(null);
+  };
+  
   // used to create different style for lessons and non-lessons
+  // Calendar runs this function for each event in the Calendar as it's rendered
   const eventPropGetter = (event) => {
     const eventIsLesson = event.title?.toLowerCase().includes("lesson");
     const eventIsDraft = event.isDraft;
+    const isSelected = isSameEvent(selectedEvent, event);
 
     let backgroundColor;
     let border;
+    let boxShadow = "none";
 
-    if(eventIsDraft){
-      backgroundColor= '#bfdbfe';
-      border='2px dashed #1d4ed8';
-    }else if(eventIsLesson){
-      backgroundColor = '#3e2ce4ff'
-      border='none';
-    }else{
-      backgroundColor='#66e291ff';
-      border='none';
+    if (eventIsDraft) {
+      backgroundColor = "#bfdbfe";
+      border = "2px dashed #1d4ed8";
+    } else if (eventIsLesson) {
+      backgroundColor = "#3e2ce4ff";
+      border = "none";
+    } else {
+      backgroundColor = "#66e291ff";
+      border = "none";
+    }
+
+    if (isSelected) {
+      boxShadow = "0 0 0 2px rgba(15,23,42,0.4)";
+      backgroundColor = "#23197cff";
     }
 
     // return CSS
@@ -162,8 +229,25 @@ const CalendarTestPage = () => {
         borderRadius: "8px",
         border,
         padding: "2px 4px",
+        boxShadow,
       },
     };
+  };
+
+  const formatDate = (date) => {
+    return date.toLocaleDateString("en-GB", {
+      weekday: "short",
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const formatTime = (date) => {
+    return date.toLocaleTimeString("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   };
 
   return (
@@ -172,7 +256,9 @@ const CalendarTestPage = () => {
 
       <section className="mb-6">
         <h2 className="text-lg font-medium mb-2">Book a lesson</h2>
-        <p className="mb-2 text-sm text-slate-600">Drag on the calendar to select a timeslot</p>
+        <p className="mb-2 text-sm text-slate-600">
+          Drag on the calendar to select a timeslot
+        </p>
         <div className="flex flex-wrap items-center gap-3">
           {/* <input
             type="text"
@@ -218,12 +304,19 @@ const CalendarTestPage = () => {
           <button
             onClick={handleConfirmBooking}
             disabled={!isDraftValid}
-            className={`px-3 py-1 border rounded-md  ${isDraftValid? "hover:bg-slate-100 cursor-pointer": "opacity-50 cursor-not-allowed"}`}
+            className={`px-3 py-1 border rounded-md  ${
+              isDraftValid
+                ? "hover:bg-slate-100 cursor-pointer"
+                : "opacity-50 cursor-not-allowed"
+            }`}
           >
             Confirm booking
           </button>
 
-          <button onClick={clearSelection} className="px-3 py-1 border rounded-md cursor-pointer hover:bg-slate-100">
+          <button
+            onClick={clearSelection}
+            className="px-3 py-1 border rounded-md cursor-pointer hover:bg-slate-100"
+          >
             Clear selection
           </button>
         </div>
@@ -236,32 +329,79 @@ const CalendarTestPage = () => {
         </p>
       </section>
 
-      <section>
-        <Calendar
-          localizer={localizer}
-          events={displayEvents}
-          startAccessor="start" // i.e. event.start proeprty
-          endAccessor="end"
-          // bug fixes- work by getting react to control the inner-state of the Calendar component by tying it to react state
-          // view and onView relate to the month/week/day/agenda buttons
-          view={view} // 'view' prop determines the current display mode of the calendar i.e. diplay on month, week, or day basis etc.
-          onView={(nextView) => setView(nextView)} // onView is triggered when any of the 'week','month','day','agenda' buttons are clicked. The cb function then links the triggered 'onView' property to the 'view' prop via react useState so the view updates on clicking and changes calendar display
-          // date and onNavigate work together to have the 'today','back', and 'next' buttons chnage display
-          date={currentDate}
-          onNavigate={(nextDate) => setCurrentDate(nextDate)}
-          style={{ height: 600 }}
-          // limit the time displayed on the Calendar to between min and max
-          min={MIN_TIME}
-          max={MAX_TIME}
-          step={30} // create 30-minute steps in Calendar
-          selectable // this allows the Calendar slots to be clicakble/drag mouse over and fires the 'onSelectSlot' event
-          onSelectSlot={handleSelectSlot}
-          onSelectEvent={handleSelectEvent} // fires when a confirmed event in the Calendar is clicked e.g. use to display event info
-          eventPropGetter={eventPropGetter}
-        />
+      <section className="grid gap-4 md:grid-cols-[2fr,1fr] items-start">
+        <div>
+          <Calendar
+            localizer={localizer}
+            events={displayEvents}
+            startAccessor="start" // i.e. event.start proeprty
+            endAccessor="end"
+            // bug fixes- work by getting react to control the inner-state of the Calendar component by tying it to react state
+            // view and onView relate to the month/week/day/agenda buttons
+            view={view} // 'view' prop determines the current display mode of the calendar i.e. diplay on month, week, or day basis etc.
+            onView={(nextView) => setView(nextView)} // onView is triggered when any of the 'week','month','day','agenda' buttons are clicked. The cb function then links the triggered 'onView' property to the 'view' prop via react useState so the view updates on clicking and changes calendar display
+            // date and onNavigate work together to have the 'today','back', and 'next' buttons chnage display
+            date={currentDate}
+            onNavigate={(nextDate) => setCurrentDate(nextDate)}
+            style={{ height: 600 }}
+            // limit the time displayed on the Calendar to between min and max
+            min={MIN_TIME}
+            max={MAX_TIME}
+            step={30} // create 30-minute steps in Calendar
+            selectable // this allows the Calendar slots to be clicakble/drag mouse over and fires the 'onSelectSlot' event
+            onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent} // fires when a confirmed event in the Calendar is clicked e.g. use to display event info
+            eventPropGetter={eventPropGetter} // returns  inline-CSS style object
+          />
+        </div>
+
+        {/* event details panel */}
+        <div className="mt-4 md:mt-0">
+          <h2 className="text-lg font-medium mb-2">Event details</h2>
+          {selectedEvent ? (
+            <div className="border rounded-xl p-4 bg-white shadow-sm text-sm text-slate-700">
+              <p className="text-base font-semibold mb-1">
+                {selectedEvent.title || "Untitled event"}
+              </p>
+              <p>
+                <span className="font-medium ">Date: </span>
+                {formatDate(selectedEvent.start)}
+              </p>
+              <p>
+                <span className="font-medium">Start:</span>{" "}
+                {formatTime(selectedEvent.start)}
+              </p>
+              <p>
+                <span className="font-medium">End:</span>{" "}
+                {formatTime(selectedEvent.end)}
+              </p>
+
+              {selectedEvent.isDraft && (
+                <p className="mt-3 text-xs text-amber-600">
+                  This is a draft selection. Click{" "}
+                  <span className="font-semibold">Confirm booking</span> to save
+                  it.
+                </p>
+              )}
+              {/* show cancel button for confirmed events only */}
+              {!selectedEvent.isDraft && (
+                <button
+                  onClick={handleCancelBooking}
+                  className="mt-4 px-3 py-1 border rounded-md cursor-pointer hover:bg-red-50 text-red-700 border-red-300 text-xs"
+                >
+                  Cancel booking
+                </button>
+              )}
+            </div>
+          ) : (
+            <p className="text-sm text-slate-500">
+              Click an event in the calendar to see its details here
+            </p>
+          )}
+        </div>
       </section>
     </div>
-  ); 
+  );
 };
 
 export default CalendarTestPage;
