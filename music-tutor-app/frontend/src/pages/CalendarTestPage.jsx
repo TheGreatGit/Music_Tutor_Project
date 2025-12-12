@@ -31,7 +31,7 @@ const localizer = dateFnsLocalizer({
   locales, // sets the locale to British English - as per above
 });
 
-// create min and max times for Calendar component to display
+// create min and max times for Calendar component to display- the actual date is irrelevant.
 const MIN_TIME = new Date(2025, 7, 28, 8, 0, 0); // 8am
 const MAX_TIME = new Date(2025, 7, 28, 21, 0, 0); // 9pm
 
@@ -60,8 +60,9 @@ const initialEvents = [
 const CalendarTestPage = () => {
   const [draftEvent, setDraftEvent] = useState(null);
   const [newEvent, setNewEvent] = useState(null);
+  // used to derive events to display (confirmed and draft)
   const [allEvents, setAllEvents] = useState(initialEvents);
-  // for lesson details panel
+  // for triggering differential rendering in eventsPropGetter() and for displaying lesson details panel
   const [selectedEvent, setSelectedEvent] = useState(null);
 
   // set view style for the Calendar component's view prop by linking it to react state
@@ -74,28 +75,36 @@ const CalendarTestPage = () => {
 
   // combine confimred events plus draft event so draft events are displayed on the calendar
   const displayEvents = isDraftValid
-    ? [...allEvents, { ...draftEvent, isDraft: true }]
+    ? [...allEvents, { ...draftEvent }]
     : allEvents;
 
   // first, you add 'selectable' as a prop to the Calendar component which allows user to click and drag on Calendar to create slots
   // then, you can get access to the 'onSelectSlot' event and create a handler like this:
   // This function creates a new event which can then be added by clicking 'add event' button
   const handleSelectSlot = (slotInfo) => {
+    const now = new Date();
     const oneHourAsMilliseconds = 60 * 60 * 1000;
     const duration = slotInfo.end - slotInfo.start;
 
-    if (duration > oneHourAsMilliseconds) {
-      alert("Lessons can only be booked for a maximum of one hour");
-      return;
-    }
-    console.log("slot info: ", slotInfo);
+    // if (slotInfo.start < now) {
+    //   alert("You cannot book events in the past");
+    //   return;
+    // }
+
+    // maybe move this to the comfirm booking handler for better UX?
+    // if (duration > oneHourAsMilliseconds) {
+    //   alert("Lessons can only be booked for a maximum of one hour");
+    //   return;
+    // }
+    //console.log("slot info: ", slotInfo);
 
     setDraftEvent({
       title: "Lesson",
       start: slotInfo.start,
       end: slotInfo.end,
+      isDraft: true,
     });
-    // clear this to remove selection when creating a new event/lesson
+    // clear slected event to remove previous/current selection so you can create a new event/lesson after confirming this one
     setSelectedEvent(null);
 
     // use the lines below if appointments are selected via DatePicker component
@@ -105,6 +114,19 @@ const CalendarTestPage = () => {
 
   // triggers when 'Confirm booking' button is clicked
   const handleConfirmBooking = () => {
+    const now = new Date();
+    const oneHourAsMilliseconds = 60 * 60 * 1000;
+    const duration = draftEvent?.end - draftEvent?.start;
+
+    if (draftEvent.start < now) {
+      alert("You cannot book events in the past");
+      return;
+    }
+    // maybe refactor to comply with DRY principle
+    if (duration > oneHourAsMilliseconds) {
+      alert("Lessons can only be booked for a maximum of one hour");
+      return;
+    }
     if (!isDraftValid) {
       alert("Please select a valid timeslot.");
       return;
@@ -116,8 +138,9 @@ const CalendarTestPage = () => {
       return;
     }
     const hasOverlap = allEvents.some((event) => {
-      // ignore any overlap with a draft event so we don't get a true value and therefore a misleading truthy
+      // ignore any overlap with a draft event so we don't get a true value and therefore a misleading truthy (not stricly necessary as draft events are not directly added to allEvents)
       if (event.isDraft) return false; // on returning false, the loop continues
+      // .some() stops as soon as a true (according to the criteria being assessed) is found
       return isOverlapping(draftEvent, event);
     });
 
@@ -133,7 +156,7 @@ const CalendarTestPage = () => {
     // add the confirmed event to the events array
     setAllEvents((prev) => [...prev, confirmedEvent]);
 
-    // reset draft event back to default
+    // reset draft event back to null as it has been transformed in to a conformed event and added to event array for display
     setDraftEvent(null);
   };
 
@@ -167,7 +190,7 @@ const CalendarTestPage = () => {
     //   )} \nEnd: ${event.end.toLocaleString("en-GB")}`
     // );
 
-    // used for conditional rendering of the event-details panel to toggle its display when clicking on a calendar event
+    // used when clicking on a calendar event to toggle the event to being the selectedEvent or not- this triggers differential rendering via eventPropsGetter function below.
     setSelectedEvent((current) => (isSameEvent(current, event) ? null : event));
   };
 
@@ -194,7 +217,7 @@ const CalendarTestPage = () => {
     // clear selection
     setSelectedEvent(null);
   };
-  
+
   // used to create different style for lessons and non-lessons
   // Calendar runs this function for each event in the Calendar as it's rendered
   const eventPropGetter = (event) => {
@@ -250,6 +273,44 @@ const CalendarTestPage = () => {
     });
   };
 
+  // helper function to get 0-hour of a given date in order to do comparisons in Calendar functions for styling
+  const startOfGivenDay = (date) => {
+    // take in a date object and recreate it by using its constituents in constructor  (the hours etc. default to 0 to create the day starting at midnight)
+    return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  };
+
+  const dayStyler = (date) => {
+    // as whole days are being styled here, comparisons are done on a date-midnight basis as we are wanting to know if a particular date is before midnight of today rather than before any particluar moment of today
+    const todayStart = startOfGivenDay(new Date()); // today at midnight
+    const calendarDayStart = startOfGivenDay(date); // a given calendar day at mnidnight-- not strictly necessary to convert to midnight-date but useful safety
+
+    if (calendarDayStart < todayStart) {
+      return {
+        style: {
+          backgroundColor: "#f8fafc",
+          color: "#9ca3af",
+        },
+      };
+    }
+    // return empty object to tell dayPropGetter prop to use default styles
+    return {};
+  };
+
+  const slotStyler = (date) => {
+    // as actual hourly slots are being styled, the comparison is to check if a given slot in today is before the current time of today
+    const now = new Date();
+    if (date < now) {
+      return {
+        style: {
+          backgroundColor: "#f1f5f9",
+          color: "#9ca3af",
+        },
+      };
+    }
+
+    // return empty object to tell Calendar's slotPropGetter prop to use default style
+    return {};
+  };
   return (
     <div className="p-6 max-w-5xl mx-auto">
       <h1 className="text-2xl font-semibold mb-4">Calendar</h1>
@@ -352,17 +413,20 @@ const CalendarTestPage = () => {
             onSelectSlot={handleSelectSlot}
             onSelectEvent={handleSelectEvent} // fires when a confirmed event in the Calendar is clicked e.g. use to display event info
             eventPropGetter={eventPropGetter} // returns  inline-CSS style object
+            dayPropGetter={dayStyler} // grey-out past days
+            slotPropGetter={slotStyler} // gray-out today's past slots
           />
         </div>
 
         {/* event details panel */}
         <div className="mt-4 md:mt-0">
-          <h2 className="text-lg font-medium mb-2">Event details</h2>
           {selectedEvent ? (
             <div className="border rounded-xl p-4 bg-white shadow-sm text-sm text-slate-700">
+              <h2 className="text-lg font-medium mb-2">Event details</h2>
               <p className="text-base font-semibold mb-1">
                 {selectedEvent.title || "Untitled event"}
               </p>
+
               <p>
                 <span className="font-medium ">Date: </span>
                 {formatDate(selectedEvent.start)}
@@ -376,13 +440,6 @@ const CalendarTestPage = () => {
                 {formatTime(selectedEvent.end)}
               </p>
 
-              {selectedEvent.isDraft && (
-                <p className="mt-3 text-xs text-amber-600">
-                  This is a draft selection. Click{" "}
-                  <span className="font-semibold">Confirm booking</span> to save
-                  it.
-                </p>
-              )}
               {/* show cancel button for confirmed events only */}
               {!selectedEvent.isDraft && (
                 <button
