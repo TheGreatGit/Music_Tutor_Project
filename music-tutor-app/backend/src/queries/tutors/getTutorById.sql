@@ -29,14 +29,7 @@ left join teaching_format as tf on tf.teaching_format_id = ttf.teaching_format_i
 left join tutor_teaching_types as ttt on ttt.tutor_id = t.tutor_id
 left join teaching_type as tt on tt.teaching_type_id = ttt.teaching_type_id
 -- add filters
-where
---$1,2,3 etc is just the flag for the nth-parameter supplied in a parameterised query from frontend
--- explicitly cast parameter as text so postgres will treat it as text (even if it's null) rather than relying on type inference
--- The logic is 'or' so you send either a null or the parameter value from front-end
--- ILIKE is postgres funcion that matches strings but not case sensitive
-(CAST($1 as text) is null or i.instrument_name   ILIKE $1)
-and
-(CAST($2 as text) is null or c.city_name ILIKE $2)
+where t.tutor_id = $1
 -- REMEMEMBER TO USE THE GROUP-BY FOR STRING-AGG FUNCTION TO WORK -- include every column that is NOT in an aggregate
 group by
 au.user_id,

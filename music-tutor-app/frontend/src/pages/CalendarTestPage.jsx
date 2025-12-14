@@ -167,12 +167,9 @@ const CalendarTestPage = () => {
   };
 
   const isSameEvent = (a, b) => {
+    // change comparision basis to use booking_ids (and guard against nulls)
     if (!a || !b) return false;
-    return (
-      a.title === b.title &&
-      a.start.getTime() === b.start.getTime() &&
-      a.end.getTime() === b.end.getTime()
-    );
+    return a?.booking_id != null && a.booking_id === b.booking_id;
   };
 
   const isOverlapping = (a, b) => {

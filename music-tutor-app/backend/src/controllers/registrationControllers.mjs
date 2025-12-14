@@ -4,21 +4,21 @@ import { validateStudentRegistrationFormData } from "../validation/validateStude
 import { findUserByEmail } from "../services/userService.mjs";
 import bcrypt from "bcrypt";
 
-// this handler is for the front-end turor and student registration forms to fetch.(NOT IN USE CURRENTLY)
-export const checkEmail = async (req, res, next) => {
-  //grab the email from url search param
-  const email = req.query.email;
-  console.log("email is: ", email);
+// // this handler is for the front-end turor and student registration forms to fetch.(NOT IN USE CURRENTLY)
+// export const checkEmail = async (req, res, next) => {
+//   //grab the email from url search param
+//   const email = req.query.email;
+//   console.log("email is: ", email);
 
-  if (!email) {
-    return res.status(400).json({ isAvailable: false, error: "Provide email" });
-  }
+//   if (!email) {
+//     return res.status(400).json({ isAvailable: false, error: "Provide email" });
+//   }
 
-  const emailInUse = await findUserByEmail(email);
-  console.log("email in use: ", emailInUse);
+//   const emailInUse = await findUserByEmail(email);
+//   console.log("email in use: ", emailInUse);
 
-  return res.json({ isAvailable: !emailInUse });
-};
+//   return res.json({ isAvailable: !emailInUse });
+// };
 
 // this handler is for actual tutor registration attempt; it will also check email availability
 // requests go to http://localhost:3000/api/register/tutor  (post request)

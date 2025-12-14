@@ -1,7 +1,7 @@
 import { verifyToken } from "../services/tokenService.mjs";
 import { findUserById } from "../services/userService.mjs";
 
-// custom middleware to protect routes from unauthorised users
+// custom middleware to protect routes from unauthorised users -CURRENTLY UNUSED
 export const protect = async (req, res, next) => {
   // check for JWT called token -as per signUserToken function
   const token = req.cookies?.token;

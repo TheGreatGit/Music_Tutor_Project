@@ -1,75 +1,71 @@
 import { signUserToken } from "../services/tokenService.mjs";
 import { findUserByEmail, validatePassword } from "../services/userService.mjs";
 import { cookieOptions, setAuthCookie } from "../utils/cookie.mjs";
-import { query } from "../config/pool.mjs";
+import { authError, fieldError } from "../utils/httpError.mjs";
 
 // handler for login route (works for any user as it just requires an email and password)
 export const login = async (req, res, next) => {
   try {
     // get user input
     const { email, password } = req.body || {};
-    console.log(email, password);
+    // console.log(email, password);
 
     if (!email || !password) {
-      res.status(400);
-      return next(new Error("Provide all required fields"));
+      return next(fieldError("Provide all required fields", "email/password"));
     }
-    
-    const lowerCasedEmail = email.toLowerCase();
+
+    const lowerCasedEmail = email.toLowerCase().trim();
     // find user in DB
-    const user = await findUserByEmail(lowerCasedEmail); // will return a matching  DB row from APP_USERS table as an object. It will include entire row including password
+    const user = await findUserByEmail(lowerCasedEmail); // will return a matching  DB row from APP_USERS, STUDENTS, TUTORS, AND ROLE tables as an object. It will include entire row including password
     if (!user) {
       console.log(("no user with email ", lowerCasedEmail));
-      
-      res.status(400);
-      return next(new Error("Invalid credentials"));
+      return next(authError());
     }
 
-    // if matching email found, check password in APP_USERS table
+    // if matching email found, check password in result
     const valid = await validatePassword(password, user.password_hash);
     if (!valid) {
-      res.status(400);
-      return next(new Error("Invalid credentials"));
+      return next(authError());
     }
 
-    // destructure user id  and role id and email
-    // in destructure, cant just use 'email' for field name as 'email' is a differnet variabel earlier in the code
-    // to mitigate this, destructure the email from user but alias it as dbEmail
-    const { user_id, role_id, email: dbEmail } = user;
+    // begin to acquire user details dependant on their role
+    const { user_id } = user;
+    const userRole = user.role_name;
+    let roleSpecificId;
+    let firstName;
+    let lastName;
 
-    // get user's role as string from DB
-    const roleQuery = await query(
-      `select role_name from roles where role_id = $1`,
-      [role_id]
-    );
-    // console.log(roleQuery);
-    if (!roleQuery.rows.length) {
-      res.status(500);
-      return next(new Error("USer Role not found"));
+    if (userRole === "tutor") {
+      roleSpecificId = user.tutor_id;
+      firstName = user.tutor_first_name;
+      lastName = user.tutor_last_name;
+    } else if (userRole === "student") {
+      roleSpecificId = user.student_id;
+      firstName = user.student_first_name;
+      lastName = user.student_last_name;
+    } else {
+      // change to admin later
+      roleSpecificId = null;
+      firstName = null;
+      lastName = null;
     }
-    // use thr role-as-string to then search the correct DB i.e. tutors or students
-    const roleAsString = roleQuery.rows[0].role_name;
-    // console.log(roleAsString);
-    const nameQuery = await query(
-      `select first_name, last_name from ${
-        roleAsString + `s`
-      } where user_id = $1`,
-      [user_id]
-    );
-    if (!nameQuery.rows.length) {
-      res.status(500);
-      return next(new Error("User name data not found"));
-    }
-    const nameRows = nameQuery.rows[0];
 
     // create a stripped user object for frontend (i.e. minus password)
     const strippedUser = {
       user_id,
-      role: roleAsString,
-      firstName: nameRows.first_name,
-      lastName: nameRows.last_name,
-      email: dbEmail,
+      role: userRole,
+      firstName,
+      lastName,
+      email: user.email,
     };
+
+    // add tutor or student id in
+    if (userRole === "student") {
+      strippedUser.student_id = roleSpecificId;
+    }
+    if (userRole === "tutor") {
+      strippedUser.tutor_id = roleSpecificId;
+    }
     console.log("stripped user from DB in login route", strippedUser);
 
     //create JWT with user id as payload -CONTAINS ONLY USER_ID AND NO OTHER USER DATA
@@ -89,11 +85,11 @@ export const login = async (req, res, next) => {
 
 // handler for logout
 export const logout = (req, res) => {
-  res.clearCookie("token",  cookieOptions );
+  res.clearCookie("token", cookieOptions);
   return res.json({ message: "Logged out successfully" });
 };
 
-// handler for getting current user
+// handler for getting current user - NOT CURRENTLY USED
 export const getCurrentUser = (req, res, next) => {
   // current user should have been added to the request object by the 'protect' middleware
   try {

@@ -13,6 +13,8 @@ import TutorRegisterForm from "../components/TutorRegisterForm";
 import StudentRegisterForm from "../components/StudentRegisterForm";
 import LoginUserForm from "../pages/LoginUserForm"
 import CalendarTestPage from "../pages/CalendarTestPage";
+import TutorProfilePage from "../pages/TutorProfilePage";
+
 
 const router =  createBrowserRouter(
   createRoutesFromElements(
@@ -21,7 +23,9 @@ const router =  createBrowserRouter(
       <Route path="about" element={<About />} />
       <Route path="contact" element={<ContactLayout />}/>
       <Route path="findTutors" element={<FindTutors />}/>
-      {/* register link in navbar */}
+      {/* route for individual tutors */}
+      <Route path="tutors/:tutorId" element={ <TutorProfilePage />} />
+      {/* for the register-link in navbar */}
       <Route path="register" element={<Register/>}/>
       {/* links to registration forms */}
       <Route path="register/tutor" element={<TutorRegisterForm/>}/>

@@ -1,6 +1,6 @@
 import React from "react";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import TutorCard from "../components/TutorCard";
 
 const FindTutors = () => {
@@ -133,7 +133,7 @@ const FindTutors = () => {
           throw new Error("Failed to fetch tutors");
         }
         const data = await res.json();
-        // console.log(data);
+         console.log(data);
         setTutors(data);
       } catch (error) {
         if (error.name === "AbortError") {
@@ -280,7 +280,11 @@ const FindTutors = () => {
       {!loading && tutors.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {tutors.map((tutor) => (
-            <TutorCard tutor={tutor} key={tutor.tutor_id} />
+            // Add Link here :tutorId
+            <Link to={`/tutors/${tutor.tutor_id}`} key={tutor.tutor_id}>
+              <TutorCard tutor={tutor}  />
+            </Link>
+            
           ))}
         </div>
       )}
