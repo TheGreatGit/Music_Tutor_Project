@@ -1,6 +1,5 @@
 import { query } from "../config/pool.mjs";
 import { loadSql } from "../queries/loadSql.mjs";
-import { fieldError, httpError } from "../utils/httpError.mjs";
 
 // read-in sql file with parameterised query
 const listTutorsSql = loadSql("tutors/getTutors.sql");
@@ -36,22 +35,21 @@ export const getTutorById = async (req, res, next) => {
 
     // handles invalid input in url
     if (!Number.isInteger(tutorId) || tutorId <= 0) {
-      // return res.status(400).json({ message: "Invalid tutor id" });
-      return next(fieldError("Invalid tutor id", "tutorId"));
+      res.status(400);
+      return next(new Error('Invalid tutor id'));
     }
 
     const { rows } = await query(tutorByIdSql, [tutorId]);
-    // if client gived valid input but tutorId doesn't exists e.g '9999'
+    // if client gives valid input but tutorId doesn't exists e.g '9999'
     if (rows.length === 0) {
-      // return res.status(404).json({ message: "Tutor not found" });
-      return next(httpError(404, "Tutor not found", {type: "NOT_FOUND",input: "tutorId", tutorId }))
+      res.status(404);
+      return next(new Error('Tutor not found'));
     }
     console.log(rows[0]);
     
     return res.json(rows[0]);
   } catch (error) {
     console.error("Database error in getTutorById", error);
-    // res.status(500).json({ message: "database error" });
     return next(error); // use global error handler instead
   }
 };

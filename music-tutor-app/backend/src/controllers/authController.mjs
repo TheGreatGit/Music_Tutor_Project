@@ -1,7 +1,6 @@
 import { signUserToken } from "../services/tokenService.mjs";
 import { findUserByEmail, validatePassword } from "../services/userService.mjs";
 import { cookieOptions, setAuthCookie } from "../utils/cookie.mjs";
-import { authError, fieldError } from "../utils/httpError.mjs";
 
 // handler for login route (works for any user as it just requires an email and password)
 export const login = async (req, res, next) => {
@@ -11,21 +10,23 @@ export const login = async (req, res, next) => {
     // console.log(email, password);
 
     if (!email || !password) {
-      return next(fieldError("Provide all required fields", "email/password"));
+      res.status(400);
+      return next(new Error('Provide all required fields'));
     }
 
     const lowerCasedEmail = email.toLowerCase().trim();
     // find user in DB
     const user = await findUserByEmail(lowerCasedEmail); // will return a matching  DB row from APP_USERS, STUDENTS, TUTORS, AND ROLE tables as an object. It will include entire row including password
     if (!user) {
-      console.log(("no user with email ", lowerCasedEmail));
-      return next(authError());
+      res.status(401);
+      return next(new Error('Invalid credentials'));
     }
 
     // if matching email found, check password in result
     const valid = await validatePassword(password, user.password_hash);
     if (!valid) {
-      return next(authError());
+      res.status(401);
+      return next(new Error('Invalid credentials'));
     }
 
     // begin to acquire user details dependant on their role
@@ -76,7 +77,7 @@ export const login = async (req, res, next) => {
     // alias strippedUser as user because frontend will use {user} for rendering
     return res.json({ user: strippedUser });
   } catch (error) {
-    // receives errors passed in to next() in above code
+    // receives errors passed in to next() in above code as well as any other errors e.g. connection issues beofre sql can run
     console.error("Login error: ", error);
     // pass to global error handler
     return next(error);

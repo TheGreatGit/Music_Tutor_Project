@@ -2,7 +2,7 @@ import express, { urlencoded } from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import { errorHandler } from "./middleware/errorHandler.mjs";
+import { GlobalErrorHandler } from "./middleware/globalErrorHandler.mjs";
 import tutorRouter from "./routes/searchTutorRoutes.mjs";
 import filterRouter from './routes/filterRoutes.mjs'
 import registerRouter from './routes/registerRoutes.mjs';
@@ -58,7 +58,7 @@ app.use((req, res, next) => {
 
 
 // express global error handler
-app.use(errorHandler);
+app.use(GlobalErrorHandler);
 
 app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);

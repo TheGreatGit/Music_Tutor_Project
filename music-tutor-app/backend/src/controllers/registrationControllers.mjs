@@ -36,7 +36,7 @@ export const tutorRegistrationController = async (req, res, next) => {
   );
 
   if (!validationResult.ok) {
-    return res.status(400).json({ errors: validationResult.errors });
+    return res.status(400).json({ errors: validationResult.errors }); // this style is kept in order to provide info on validation fails
   }
 
   // destructure the cleaned data returned in validateTutorRegistrationFormData.data
@@ -53,16 +53,15 @@ export const tutorRegistrationController = async (req, res, next) => {
     password,
   } = validationResult.data;
 
-  const lowerCasedEmail = email.toLowerCase();
+  const lowerCasedEmail = email.toLowerCase().trim();
   // create outer try block
   try {
-    // since data is validated, check that the email is not in use already
+    // since data is validated, check that the email is not in use already so that you don't begin the later transaction needlessly
     const isEmailRegistered = await findUserByEmail(lowerCasedEmail);
     if (isEmailRegistered) {
       console.log(isEmailRegistered.email + " is not available");
-      return res
-        .status(409)
-        .json({ message: "email already registered!", field: "email" });
+      res.status(409);
+      return next(new Error("Email already registered"));
     }
 
     // use the 'client' method from the pool object rather than the 'query' method because the sql will use a transaction
@@ -244,9 +243,8 @@ export const tutorRegistrationController = async (req, res, next) => {
       }
       // error for email being already registered. postgreSQL has the error code 23505 for a unique_violation error i.e. email breachers the app_user table's constraint of having unique email
       if (err.code === "23505") {
-        return res
-          .status(409)
-          .json({ message: "Email already registered", field: "email" });
+        res.status(409);
+        return next(new Error("Email already registered"));
       }
 
       console.error("Error in tutorRegistrationController: ", err);
@@ -275,20 +273,14 @@ export const studentRegistrationController = async (req, res, next) => {
   const validationResult = validateStudentRegistrationFormData(formData);
 
   if (!validationResult.ok) {
-    return res.status(400).json({ errors: validationResult.errors });
+    return res.status(400).json({ errors: validationResult.errors }); // keep this format for now so info on validation errors is preserved
   }
 
   // destructure the cleaned data returned in validateStudentRegistrationFormData.data
-  const {
-    firstName,
-    lastName,
-    city,
-    email,
-    phoneNumber,
-    password,
-  } = validationResult.data;
+  const { firstName, lastName, city, email, phoneNumber, password } =
+    validationResult.data;
 
-   const lowerCasedEmail = email.toLowerCase();
+  const lowerCasedEmail = email.toLowerCase();
 
   // create outer try block
   try {
@@ -296,9 +288,8 @@ export const studentRegistrationController = async (req, res, next) => {
     const isEmailRegistered = await findUserByEmail(lowerCasedEmail);
     if (isEmailRegistered) {
       console.log(isEmailRegistered.email + " is not available");
-      return res
-        .status(409)
-        .json({ message: "email already registered!", field: "email" });
+      res.status(409);
+      return next(new Error("Email already registered"));
     }
 
     // use the 'client' method from the pool object rather than the 'query' method because the sql will use a transaction
@@ -379,9 +370,8 @@ export const studentRegistrationController = async (req, res, next) => {
       }
       // error for email being already registered. postgreSQL has the error code 23505 for a unique_violation error i.e. email breachers the app_user table's constraint of having unique email
       if (err.code === "23505") {
-        return res
-          .status(409)
-          .json({ message: "Email already registered", field: "email" });
+        res.status(409);
+        return next(new Error("Email already registered"));
       }
 
       console.error("Error in studentRegistrationController: ", err);
