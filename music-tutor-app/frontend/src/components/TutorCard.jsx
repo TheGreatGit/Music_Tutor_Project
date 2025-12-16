@@ -1,4 +1,3 @@
-import React from "react";
 
 const TutorCard = ({ tutor }) => {
   if (!tutor) return <p>No tutor passed in as prop</p>;

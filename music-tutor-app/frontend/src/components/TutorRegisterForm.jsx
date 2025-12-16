@@ -162,14 +162,14 @@ function TutorRegistrationForm() {
   const handleBack = () => setStep(1);
 
   // as RHF is managing inouts via useRef() hook, use RHF's 'watch()' function to access input values.
-  const instrumentInput = (watch("instrument") || "").trim();
+  const instrumentInput = (watch("instrument") || "").trim(); // dom't conver to lower case here because the form value will e lower case
   const cityInput = (watch("city") || "").trim();
 
-  const userInstrumentInput = (instrumentInput || "").toLowerCase().trim();
+  const userInstrumentInput = instrumentInput.toLowerCase();
   // check if the user input matches any instrument name  in any row of dbInstruments 
-  const hasExactInstrumentMatch = userInstrumentInput && dbInstruments.some((instrumentRow)=>(instrumentRow.instrument_name || "").toLowerCase().trim()=== userInstrumentInput)
+  const hasExactInstrumentMatch = userInstrumentInput && dbInstruments.some((instrumentRow)=>(instrumentRow.instrument_name || "").toLowerCase()=== userInstrumentInput)
   
-  // now create a dropdown only when there is user input but with no exact match; otherwise, the dropdown is an empty array
+  // now create a dropdown only when there is user input but with no exact match; otherwise, when there is an exact match, the dropdown is an empty array
   // when there is an exact match(i.e. user clicks on an instrument dropdown option, the instrument dropdown becomes [])
   const instrumentDropdown = userInstrumentInput && !hasExactInstrumentMatch ? dbInstruments.filter((instrumentRow)=>{
     const matchInstrument = (instrumentRow.instrument_name ||"").toLowerCase();
@@ -177,7 +177,7 @@ function TutorRegistrationForm() {
   }).slice(0,10) : [];
 
   const userCityInput = (cityInput || "").trim().toLowerCase();
-    const hasExactCityMatch = userCityInput && dbCities.some((cityRow)=>(cityRow.city_name ||"").toLowerCase() === userCityInput);
+  const hasExactCityMatch = userCityInput && dbCities.some((cityRow)=>(cityRow.city_name ||"").toLowerCase() === userCityInput);
 
   const cityDropdown = userCityInput && !hasExactCityMatch ? dbCities.filter((cityRow)=>{
     const matchCity = (cityRow.city_name || "").toLowerCase();

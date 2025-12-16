@@ -27,7 +27,7 @@ const StudentRegisterForm = () => {
         const cities = await res.json();
         console.log(cities);
         setDBCities(cities);
-        // clear any previous errors that might be in the object from previous render
+        // clear any previous city-fetch errors that might be in the object from previous render
         setFetchErrors((current) => ({
           ...current,
           cityError: null,
@@ -78,7 +78,7 @@ const StudentRegisterForm = () => {
     setError,
   } = form;
 
-  // destructure RHF's 'errors' object for form errors
+  // destructure RHF's 'errors' object for form validation errors
   const { errors, isSubmitting, isSubmitSuccessful } = formState;
 
   const onSubmit = async (formData) => {
@@ -111,17 +111,21 @@ const StudentRegisterForm = () => {
 
   // as RHF is managing inputs via useRef() hook, use RHF's 'watch()' function to access input values.
   const cityInput = (watch("city") || "").trim();
+  const userCityInput = cityInput.toLowerCase();
 
-  const cityDropdown = dbCities
-    .filter((cityRow) => {
-      const userInput = cityInput.toLowerCase();
-      const matchCity = (cityRow.city_name || "").toLowerCase();
-
-      return (
-        userInput && matchCity.includes(userInput) && matchCity !== userInput
-      );
-    })
-    .slice(0, 10);
+  const hasExactCityMatch = userCityInput && dbCities.some((cityRow) => (cityRow.city_name || "").toLowerCase() === userCityInput);
+  
+  const cityDropdown =
+    userCityInput && !hasExactCityMatch
+      ? dbCities
+          .filter((cityRow) => {
+            const matchCity = (cityRow.city_name || "").toLowerCase();
+            return (
+              matchCity.includes(userCityInput) && matchCity !== userCityInput
+            );
+          })
+          .slice(0, 10)
+      : [];
 
   return (
     <div className=" bg-slate-50 flex items-center justify-center px-4">
