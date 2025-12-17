@@ -33,30 +33,30 @@ export const login = async (req, res, next) => {
     const { user_id } = user;
     const userRole = user.role_name;
     let roleSpecificId;
-    let firstName;
-    let lastName;
+    let first_name;
+    let last_name;
 
     if (userRole === "tutor") {
       roleSpecificId = user.tutor_id;
-      firstName = user.tutor_first_name;
-      lastName = user.tutor_last_name;
+      first_name = user.tutor_first_name;
+      last_name = user.tutor_last_name;
     } else if (userRole === "student") {
       roleSpecificId = user.student_id;
-      firstName = user.student_first_name;
-      lastName = user.student_last_name;
+      first_name = user.student_first_name;
+      last_name = user.student_last_name;
     } else {
       // change to admin later
       roleSpecificId = null;
-      firstName = null;
-      lastName = null;
+      first_name = null;
+      last_name = null;
     }
 
     // create a stripped user object for frontend (i.e. minus password)
     const strippedUser = {
       user_id,
       role: userRole,
-      firstName,
-      lastName,
+      first_name,
+      last_name,
       email: user.email,
     };
 

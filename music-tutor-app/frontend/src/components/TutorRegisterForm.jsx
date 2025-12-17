@@ -211,7 +211,12 @@ function TutorRegistrationForm() {
                 {instrumentDropdown.length >0 && (
                   <div className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-10">
                     {instrumentDropdown.map((instrumentRow)=>(
-                      <div key={instrumentRow.instrument_id} onClick={()=>setValue('instrument', instrumentRow.instrument_name,{
+                      <div key={instrumentRow.instrument_id} 
+                      // setValue is a function that, in this code, programmatically sets the 'instrument' field value to nstrumentRow.instrument_name on the onClick event. 
+                      // setValue basically changes the RHF form's state in a way it recognises
+                      // ShouldValidate means that the field, once set, is subjected to RHF's validation - as set up earlier
+                      // shouldDirty is used to indicate that, after setValue runs, the form field should be treated as 'dirty' i.e. treated as if it were a direct, user-induced change akin to entering the value manually
+                      onClick={()=>setValue('instrument', instrumentRow.instrument_name,{
                         shouldValidate: true,
                         shouldDirty:true,
                       })

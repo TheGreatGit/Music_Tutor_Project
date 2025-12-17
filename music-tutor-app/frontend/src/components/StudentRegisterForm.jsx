@@ -115,6 +115,7 @@ const StudentRegisterForm = () => {
 
   const hasExactCityMatch = userCityInput && dbCities.some((cityRow) => (cityRow.city_name || "").toLowerCase() === userCityInput);
   
+  // crucial bug fix is to use the !hasExactMatch; otherwise, when clicking on piano, classical piano and jazz piano would still show in a dropdown
   const cityDropdown =
     userCityInput && !hasExactCityMatch
       ? dbCities
@@ -179,7 +180,7 @@ const StudentRegisterForm = () => {
                 <div className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-10">
                   {cityDropdown.map((cityRow) => (
                     <div
-                      key={cityRow.city_id}
+                      key={cityRow.city_id} 
                       onClick={() =>
                         setValue("city", cityRow.city_name, {
                           shouldValidate: true,
