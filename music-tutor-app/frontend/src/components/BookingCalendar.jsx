@@ -32,9 +32,13 @@ const MAX_TIME = new Date(2025, 7, 28, 21, 0, 0); // 9pm
 // event start and end times must be a JS date object
 const initialEvents = [];
 
-const BookingCalendar = ({ tutor, user }) => {
-   console.log("passed in ", tutor, user);
-  const bookingIdRef = useRef(1);
+const BookingCalendar = ({ tutor, user, tutorBookings, studentBookings: userBookings }) => {
+  if(!tutorBookings || !userBookings){
+    return <p>Fetching tutor and  student bookings ...</p>
+  }
+
+  console.log("passed in ", tutor, user);
+  const clientIdRef = useRef(1);
   const [view, setView] = useState("week");
   const [currentDate, setCurrentDate] = useState(new Date());
 
@@ -55,11 +59,11 @@ const BookingCalendar = ({ tutor, user }) => {
   // first, you add 'selectable' as a prop to the Calendar component which allows user to click and drag on Calendar to create slots
   // then, you can get access to the 'onSelectSlot' event and create a handler like this:
   const handleSelectSlot = (slotInfo) => {
-    const booking_id = bookingIdRef.current;
-    bookingIdRef.current += 1;
+    const client_id = clientIdRef.current;
+    clientIdRef.current += 1;
 
     setDraftEvent({
-      booking_id,
+      client_id,
       title: 'Lesson',
       tutor_id: tutor.tutor_id,
       student_id: user.student_id,
@@ -134,11 +138,16 @@ const BookingCalendar = ({ tutor, user }) => {
 
   const isSameEvent = (a, b) => {
     if (!a || !b) return false;
-    return (
-      a?.booking_id != null &&
-      b?.booking_id != null &&
-      a.booking_id === b.booking_id
-    );
+
+    if(a?.booking_id !== null && b?.booking_id !== null){
+      return a.booking_id === b.booking_id;
+    }
+
+    if(a?.client_id !== null && b?.client_id !== null){
+      return a.client_id === b.client_id;
+    }
+
+    return false;
   };
 
   const isOverlapping = (a, b) => {

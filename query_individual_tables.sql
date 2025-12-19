@@ -1,4 +1,6 @@
+select * from admins;
 select * from app_users;
+select * from bookings;
 select * from cities; -- filled
 select * from contact_type; -- filled
 select * from countries; -- filled

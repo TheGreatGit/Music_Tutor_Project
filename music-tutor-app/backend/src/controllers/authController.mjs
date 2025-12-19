@@ -44,11 +44,11 @@ export const login = async (req, res, next) => {
       roleSpecificId = user.student_id;
       first_name = user.student_first_name;
       last_name = user.student_last_name;
-    } else {
+    } else if(userRole === 'admin') {
       // change to admin later
-      roleSpecificId = null;
-      first_name = null;
-      last_name = null;
+      roleSpecificId = user.admin_id;
+      first_name = user.admin_first_name;
+      last_name = user.admin_last_name;
     }
 
     // create a stripped user object for frontend (i.e. minus password)

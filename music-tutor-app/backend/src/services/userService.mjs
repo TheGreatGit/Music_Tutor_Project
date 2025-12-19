@@ -17,11 +17,3 @@ export const validatePassword = async (plain, hashed) => {
   return bcrypt.compare(plain, hashed);
 };
 
-// needs refactored
-export const findUserById = async (id) => {
-  const { rows } = await query(
-    "SELECT id, name, email FROM users WHERE id = $1",
-    [id]
-  );
-  return rows[0] || null;
-};

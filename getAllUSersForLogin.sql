@@ -17,4 +17,3 @@ left join admins as ad on ad.user_id = au.user_id
 left join tutors as t on t.user_id = au.user_id
 left join students as s on s.user_id = au.user_id
 left join roles as r on r.role_id = au.role_id
-WHERE au.email = $1

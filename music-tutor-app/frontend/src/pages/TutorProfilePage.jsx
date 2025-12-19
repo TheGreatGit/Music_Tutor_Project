@@ -10,6 +10,8 @@ const TutorProfilePage = () => {
   const { tutorId } = useParams();
   const [tutor, setTutor] = useState(null);
   const { user, setUser } = useContext(UserContext);
+  const [tutorBookings, setTutorBookings] = useState([]);
+  const [userBookings, setUserBookings] = useState([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
@@ -49,6 +51,35 @@ const TutorProfilePage = () => {
   }, [tutorId]);
   console.log("student is", user);
 
+  // feth tutor's bookings
+  useEffect(() => {
+    const controller = new AbortController();
+
+    const getTutorBookings = async () => {
+      setLoading(true)
+      setErr(null);
+      try {
+        const res = await fetch(`http://localhost:3000/api/bookings/tutors/${tutorId}`,{ credentials: "include", signal: controller.signal });
+        if(!res.ok){
+          throw new Error("Failed to fetch tutor's bookings");
+        }
+        const bookings = await res.json();
+        setTutorBookings(bookings);
+        console.log('bookings are',bookings);
+        
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          setErr(error.message || "Unknown error");
+          setTutorBookings([]);
+        }        
+      } finally {
+        setLoading(false)
+      }
+    };
+    getTutorBookings();
+    return ()=> controller.abort();
+  }, [tutorId]);
+
   if (loading) return <p className="p-6">Loading tutor...</p>;
   if (err) return <p className="p-6 text-red-600">{err}</p>;
   if (!tutor) return <p className="p-6">Tutor not found</p>;
@@ -65,13 +96,29 @@ const TutorProfilePage = () => {
             <h2 className="text-lg font-semibold text-slate-900 mb-2">
               Availability and booking
             </h2>
-            {user?.role==='student' ? (
+            {user?.role === "student" ? (
               <>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-2" onClick={()=>setShowCalendar((current)=> !current)}>{showCalendar ? 'Close calendar' : 'Show calendar'}</button>
-              <div className={`overflow-hidden transition-all duration-700 ease-in-out 
-                ${showCalendar ? 'max-h-[1200px] opacity-100 mt-4':'max-h-0 opacity-0 mt-0'}`}>
-                  <BookingCalendar tutor={tutor} user={user}/>
-              </div>
+                <button
+                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-2"
+                  onClick={() => setShowCalendar((current) => !current)}
+                >
+                  {showCalendar ? "Close calendar" : "Show calendar"}
+                </button>
+                <div
+                  className={`overflow-hidden transition-all duration-700 ease-in-out 
+                ${
+                  showCalendar
+                    ? "max-h-[1200px] opacity-100 mt-4"
+                    : "max-h-0 opacity-0 mt-0"
+                }`}
+                >
+                  <BookingCalendar
+                    tutor={tutor}
+                    user={user}
+                    tutorBookings={tutorBookings}
+                    userBookings={userBookings}
+                  />
+                </div>
               </>
             ) : (
               <p>

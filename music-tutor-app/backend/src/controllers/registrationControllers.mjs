@@ -3,22 +3,8 @@ import { validateTutorRegistrationFormData } from "../validation/validateTutorRe
 import { validateStudentRegistrationFormData } from "../validation/validateStudentRegistrationForm.mjs";
 import { findUserByEmail } from "../services/userService.mjs";
 import bcrypt from "bcrypt";
+import { validateAdminRegistration } from "../validation/validateAdminRegistration.mjs";
 
-// // this handler is for the front-end turor and student registration forms to fetch.(NOT IN USE CURRENTLY)
-// export const checkEmail = async (req, res, next) => {
-//   //grab the email from url search param
-//   const email = req.query.email;
-//   console.log("email is: ", email);
-
-//   if (!email) {
-//     return res.status(400).json({ isAvailable: false, error: "Provide email" });
-//   }
-
-//   const emailInUse = await findUserByEmail(email);
-//   console.log("email in use: ", emailInUse);
-
-//   return res.json({ isAvailable: !emailInUse });
-// };
 
 // this handler is for actual tutor registration attempt; it will also check email availability
 // requests go to http://localhost:3000/api/register/tutor  (post request)
@@ -384,6 +370,108 @@ export const studentRegistrationController = async (req, res, next) => {
     // catches errors from e.g. findUSerByEmail or pool.connect()
     console.error(
       "Outer error before transaction begins in registering student: ",
+      outerError
+    );
+    return next(outerError);
+  }
+};
+
+export const adminRegistrationController = async (req, res, next) => {
+  // check form data in req.body
+  const formData = req.body || {};
+
+  // validate form data- TO BE REPLACED WITH ZOD LATER
+  // the validation function returns an object of either {ok: false, errors} or {ok:true, data:cleaned}
+  const validationResult = validateAdminRegistration(formData);
+
+  if (!validationResult.ok) {
+    return res.status(400).json({ errors: validationResult.errors }); // keep this format for now so info on validation errors is preserved
+  }
+
+  // destructure the cleaned data returned in validateStudentRegistrationFormData.data
+  const { firstName, lastName,email, password } =
+    validationResult.data;
+
+  const lowerCasedEmail = email.toLowerCase();
+
+  // create outer try block
+  try {
+    // since data is validated, check that the email is not in use already
+    const isEmailRegistered = await findUserByEmail(lowerCasedEmail);
+    if (isEmailRegistered) {
+      console.log(isEmailRegistered.email + " is not available");
+      res.status(409);
+      return next(new Error("Email already registered"));
+    }
+
+    // use the 'client' method from the pool object rather than the 'query' method because the sql will use a transaction
+    const client = await pool.connect();
+
+    // inner try for attempting the transaction
+    try {
+      // get a client connection and begin transaction
+      await client.query("BEGIN");
+
+      // hash user password
+      const passwordHash = await bcrypt.hash(password, 10);
+
+      // get role id for ADMIN
+      const roleResult = await client.query(
+        `select role_id from roles where role_name = $1`,
+        ["admin"]
+      );
+      const roleId = roleResult.rows[0].role_id;
+
+      // insert email, roleId, and hashed password in to app_users table and return the system-generated user id (from the user_id column)
+      const appUserResult = await client.query(
+        `insert into app_users (email, password_hash, role_id) 
+      values ($1, $2, $3) returning user_id`,
+        [lowerCasedEmail, passwordHash, roleId]
+      );
+      // get  user Id from appUserResult
+      const userId = appUserResult.rows[0].user_id;
+
+      // insert in to ADMINS
+      const adminResult = await client.query(
+        `insert into admins (first_name, last_name, user_id) values ($1, $2, $3) returning admin_id`,
+        [firstName, lastName, userId]
+      );
+      // get returned admin_id
+      const adminId = adminResult.rows[0].admin_id;
+
+      // COMMIT TRANSACTION
+      await client.query("COMMIT");
+
+      // confirm success
+      return res
+        .status(201)
+        .json({ message: "admin registered successfully", userId });
+    } catch (err) {
+      // in the midst of an error, roll back if anythign went wrong
+      try {
+        await client.query("ROLLBACK");
+      } catch (rollbackErr) {
+        console.error(
+          "Error rolling back transaction in studentRegistrationController: ",
+          rollbackErr
+        );
+      }
+      // error for email being already registered. postgreSQL has the error code 23505 for a unique_violation error i.e. email breachers the app_user table's constraint of having unique email
+      if (err.code === "23505") {
+        res.status(409);
+        return next(new Error("Email already registered"));
+      }
+
+      console.error("Error in adminRegistrationController: ", err);
+      return next(err);
+    } finally {
+      // release the client
+      client.release();
+    }
+  } catch (outerError) {
+    // catches errors from e.g. findUSerByEmail or pool.connect()
+    console.error(
+      "Outer error before transaction begins in registering admin: ",
       outerError
     );
     return next(outerError);

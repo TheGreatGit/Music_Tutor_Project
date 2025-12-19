@@ -8,6 +8,7 @@ import filterRouter from './routes/filterRoutes.mjs'
 import registerRouter from './routes/registerRoutes.mjs';
 import loginRouter from './routes/loginRoute.mjs';
 import logoutRouter from './routes/logOutRoute.mjs';
+import bookingsRouter from './routes/bookingsRoutes.mjs';
 
 // load environment variables in to process.ENV
 dotenv.config();
@@ -46,6 +47,9 @@ app.use('/api', loginRouter);
 
 //logout route
 app.use('/api', logoutRouter);
+
+//bookings router
+app.use('/api/bookings', bookingsRouter)
 
 // api health check
 app.get('/api/health', (req, res)=> {res.json({ok:true})});
