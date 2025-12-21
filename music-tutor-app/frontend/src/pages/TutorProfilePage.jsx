@@ -5,18 +5,21 @@ import { UserContext } from "../context/UserContext";
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import BookingCalendar from "../components/BookingCalendar";
+import { bookingShaper } from "../utils/bookingShaper.mjs";
 
 const TutorProfilePage = () => {
   const { tutorId } = useParams();
   const [tutor, setTutor] = useState(null);
   const { user, setUser } = useContext(UserContext);
+
   const [tutorBookings, setTutorBookings] = useState([]);
   const [userBookings, setUserBookings] = useState([]);
+  
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null);
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // fetch tutor
+  // fetch tutor info
   useEffect(() => {
     const controller = new AbortController();
 
@@ -35,7 +38,7 @@ const TutorProfilePage = () => {
         }
 
         const tutor = await res.json();
-        console.log("tutor is", tutor);
+        //console.log("tutor is", tutor);
         setTutor(tutor);
       } catch (error) {
         if (error.name !== "AbortError") {
@@ -65,10 +68,9 @@ const TutorProfilePage = () => {
         }
         const bookings = await res.json();
         setTutorBookings(bookings);
-        console.log('bookings are',bookings);
-        
       } catch (error) {
         if (error.name !== "AbortError") {
+          console.log('error in fetching tutor bookings');
           setErr(error.message || "Unknown error");
           setTutorBookings([]);
         }        
@@ -80,9 +82,66 @@ const TutorProfilePage = () => {
     return ()=> controller.abort();
   }, [tutorId]);
 
+  // useEffect for student/user bookiongs
+    useEffect(() => {
+      if(!user || user.role !== "student" || !user.student_id || !user.user_id) return;
+
+    const controller = new AbortController();
+
+    const getUserBookings = async () => {
+      setLoading(true)
+      setErr(null);
+      try {
+        const res = await fetch(`http://localhost:3000/api/bookings/students/${user.student_id}`,{ credentials: "include", signal: controller.signal });
+        if(!res.ok){
+          throw new Error("Failed to fetch student's bookings");
+        }
+        const bookings = await res.json();
+        setUserBookings(bookings);
+      } catch (error) {
+        if (error.name !== "AbortError") {
+          console.log('error in fetching student bookings');
+          setErr(error.message || "Unknown error");
+          setUserBookings([]);
+        }        
+      } finally {
+        setLoading(false)
+      }
+    };
+    getUserBookings();
+    return ()=> controller.abort();
+  }, [user?.user_id]);
+
+  // this is passed doen to Calendar component as a prop
+  // it will receive the draftEvent in the scope of the Calendar component where it is called
+  const handleConfirmBooking = async(draftEvent) => {
+    console.log('handleConfirmBooking draftEvent is', draftEvent);
+    
+
+  };
+
+const handleCancelBooking = async(selectedEvent) => {
+    // if (!selectedEvent) return;
+
+    // // don't allow cancellation of draft bookings
+    // if (selectedEvent.isDraft) return;
+
+    // const ok = window.confirm(
+    //   `${selectedEvent.title || "Lesson"}\n` +
+    //     `Date: ${formatDate(selectedEvent.start)}\n` +
+    //     `Start: ${formatTime(selectedEvent.start)}\n` +
+    //     `End: ${formatTime(selectedEvent.end)}\n` +
+    //     `Are you sure you want to cancel this booking?`
+    // );
+    // if (!ok) return;
+  };
+
   if (loading) return <p className="p-6">Loading tutor...</p>;
   if (err) return <p className="p-6 text-red-600">{err}</p>;
   if (!tutor) return <p className="p-6">Tutor not found</p>;
+
+  // TRANSFORM TUTOR BOOKINGS INTO EVENT SHAPE THAT THE CALENDAR CAN DISPLAY AND PASS THE TRANSFORMED BOOKINGS AS A PROP
+  const transformedBookings = bookingShaper(tutorBookings);
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
@@ -115,8 +174,9 @@ const TutorProfilePage = () => {
                   <BookingCalendar
                     tutor={tutor}
                     user={user}
-                    tutorBookings={tutorBookings}
-                    userBookings={userBookings}
+                    calendarEvents = {transformedBookings}
+                    handleConfirmBooking = {handleConfirmBooking}
+                    handleCancelBooking = {handleCancelBooking}
                   />
                 </div>
               </>

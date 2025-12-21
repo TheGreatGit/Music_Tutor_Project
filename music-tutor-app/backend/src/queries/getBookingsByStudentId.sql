@@ -3,10 +3,8 @@ b.booking_id,
 b.tutor_id,
 b.student_id,
 b.instrument_id,
-i.instrument_name,
 b.booking_start_time,
 b.booking_end_time,
 b.booking_status
 from bookings as b
-left join instruments as i on i.instrument_id = b.instrument_id
-where b.tutor_id = $1;
+where b.student_id = $1;
