@@ -8,7 +8,7 @@ import startOfWeek from "date-fns/startOfWeek";
 import getDay from "date-fns/getDay";
 import enGB from "date-fns/locale/en-GB";
 import "react-big-calendar/lib/css/react-big-calendar.css";
-import "react-datepicker/dist/react-datepicker.css";
+// import "react-datepicker/dist/react-datepicker.css";
 import { useState, useRef } from "react";
 
 // set the date presentation to UK format rather then US
@@ -29,8 +29,14 @@ const localizer = dateFnsLocalizer({
 const MIN_TIME = new Date(2025, 7, 28, 8, 0, 0); // 8am
 const MAX_TIME = new Date(2025, 7, 28, 21, 0, 0); // 9pm
 
-const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, handleCancelBooking}) => {
-
+const BookingCalendar = ({
+  tutor,
+  user,
+  calendarEvents,
+  handleConfirmBooking,
+  handleCancelBooking,
+  draftBookingBundle,
+}) => {
   console.log("passed in ", tutor, user);
   const clientIdRef = useRef(1); // for generating a tempiray id so frontend can do checks prior to booking appoitments
 
@@ -38,25 +44,33 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
   const [view, setView] = useState("week");
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // set up draft event state for obtaining the details of and checking validity of user's attempts at bookings
+  // unbundle/deconstruct the draft event state from props
   // the draft event is filled-in in the handleSelectSlot event handler below
-  const [draftEvent, setDraftEvent] = useState(null);
-  
+  const { draftBooking, updateDraftBooking } = draftBookingBundle;
+
   // for triggering differential rendering in eventsPropGetter(), for displaying lesson details panel, and for cancelling events
   const [selectedEvent, setSelectedEvent] = useState(null);
 
-  // draftEVent wont exist on inital render or after certain functions run so use ?. to rpevent crashes
-  const isDraftValid =
-    draftEvent?.client_id &&
-    draftEvent?.title &&
-    draftEvent?.tutor_id &&
-    draftEvent?.student_id &&
-    draftEvent?.instrument &&
-    draftEvent?.start &&
-    draftEvent?.end;
+  // check draft validity for rendering it in calandar
+  // the client id is only a temporary field to allow frontend booking logic checks
+  const canDisplayDraft =
+    draftBooking?.isDraft &&
+    draftBooking?.client_id &&
+    draftBooking?.booking_start_time &&
+    draftBooking?.booking_end_time;
+
+  const canConfirmDraft =
+    canDisplayDraft &&
+    draftBooking?.tutor_id &&
+    draftBooking?.student_id &&
+    draftBooking?.instrument_id &&
+    draftBooking?.teaching_format_id &&
+    draftBooking?.teaching_type_id &&
+    draftBooking?.skill_level_id &&
+    draftBooking?.title
 
   // combine calendar events plus draft event so the draft event is displayed on the calendar
-  const displayEvents = isDraftValid ? [...calendarEvents,  draftEvent ] : calendarEvents;
+  const displayEvents = canDisplayDraft ? [...calendarEvents, draftBooking] : calendarEvents;
 
   // first, you add 'selectable' as a prop to the Calendar component which allows user to click and drag on Calendar; this info can be used to create draft event
   // then, you can get access to the 'onSelectSlot' event and create a handler like this:
@@ -64,16 +78,11 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
     // create a dummy booking  id so frontend can do booking validity checks
     const client_id = clientIdRef.current;
     clientIdRef.current += 1;
-
-    setDraftEvent({
+    updateDraftBooking({
       client_id,
-      title: "Lesson",
-      tutor_id: tutor.tutor_id,
-      student_id: user.student_id,
-      instrument: tutor.instruments,
-      start: slotInfo.start,
-      end: slotInfo.end,
-      isDraft: true,
+      booking_start_time: slotInfo.start,
+      booking_end_time: slotInfo.end,
+      isDraft: true
     });
     // clear selected event to remove previous/current selection so you can create a new event/lesson after confirming this one
     setSelectedEvent(null);
@@ -89,16 +98,16 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
 
   // PRE-BOOKING CHECKS HAVE BEEN REFACTORED IN TO THIS SEPARATE FUNCTION THAT WILL RUN PRIOR TO ATTEMPTING TO BOOK VIA BACKEND ROUTE
   const preBookingChecks = (draftEvent) => {
-    if(!draftEvent){
-      alert('Please select a valid timeslot');
+    if (!draftEvent) {
+      alert("Please select a valid timeslot");
       return false;
     }
 
     const now = new Date();
     const oneHourAsMilliseconds = 60 * 60 * 1000;
-    const duration = draftEvent?.end - draftEvent?.start;
+    const duration = draftEvent?.booking_end_time - draftEvent?.booking_start_time;
 
-    if (draftEvent.start < now) {
+    if (draftEvent.booking_start_time < now) {
       alert("You cannot book events in the past");
       return false;
     }
@@ -107,13 +116,13 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
       alert("Lessons can only be booked for a maximum of one hour");
       return false;
     }
-    if (!isDraftValid) {
+    if (!canDisplayDraft) {
       alert("Please select a valid timeslot.");
       return false;
     }
 
     // only works with Date objects
-    if (draftEvent.end < draftEvent.start) {
+    if (draftEvent.booking_end_time < draftEvent.booking_start_time) {
       alert("End date cannot be before start date.");
       return false;
     }
@@ -132,30 +141,40 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
     return true;
   };
 
-  const confirmDraftBooking = async()=>{
-    if(!preBookingChecks(draftEvent)) return;
+  const confirmDraftBooking = async () => {
+    if (!preBookingChecks(draftBooking)) return;
 
     try {
-      await handleConfirmBooking(draftEvent);
-      clearSelection()
+      await handleConfirmBooking(draftBooking);
+      clearSelection();
     } catch (bookingError) {
-      alert(bookingError.message || 'Booking failed');
+      alert(bookingError.message || "Booking failed");
     }
   };
 
   const clearSelection = () => {
-    setDraftEvent(null);
+    updateDraftBooking({
+    client_id: null,
+    instrument_id: null, 
+    booking_start_time: null,
+    booking_end_time: null,
+    title: "Lesson",
+    teaching_format_id: null,
+    teaching_type_id: null,
+    skill_level_id: null,
+    isDraft: true
+    });
     setSelectedEvent(null);
   };
 
   const isSameEvent = (a, b) => {
     if (!a || !b) return false;
 
-    if (a?.booking_id !== null && b?.booking_id !== null) {
+    if (a?.booking_id != null && b?.booking_id != null) {
       return a.booking_id === b.booking_id;
     }
 
-    if (a?.client_id !== null && b?.client_id !== null) {
+    if (a?.client_id != null && b?.client_id != null) {
       return a.client_id === b.client_id;
     }
 
@@ -164,7 +183,7 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
 
   const isOverlapping = (a, b) => {
     if (!a || !b) return false;
-    return a.start < b.end && a.end > b.start;
+    return a.booking_start_time < b.booking_end_time && a.booking_end_time > b.booking_start_time;
   };
 
   // used to create different style for lessons and non-lessons
@@ -265,8 +284,8 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
       <Calendar
         localizer={localizer}
         events={displayEvents}
-        startAccessor="start"
-        endAccessor="end"
+        startAccessor="booking_start_time"
+        endAccessor="booking_end_time"
         view={view}
         onView={(nextView) => setView(nextView)}
         date={currentDate}
@@ -284,9 +303,9 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
       />
       <button
         onClick={confirmDraftBooking}
-        disabled={!isDraftValid}
+        disabled={!canConfirmDraft}
         className={`px-3 py-1 border rounded-md  ${
-          isDraftValid
+          canConfirmDraft
             ? "hover:bg-slate-100 cursor-pointer"
             : "opacity-50 cursor-not-allowed"
         }`}
@@ -332,25 +351,27 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
                   Instrument:{" "}
                 </span>
                 <span className="font-medium text-slate-500">
-                  {tutor?.instruments || "-"}
+                  {tutor?.instruments.map(
+                    (instrument) => instrument.instrument_name
+                  ) || "-"}
                 </span>
               </p>
               <p>
                 <span className="font-semibold text-slate-900">Date: </span>
                 <span className="font-medium text-slate-500">
-                  {selectedEvent?.start ? formatDate(selectedEvent.start) : "-"}
+                  {selectedEvent?.booking_start_time ? formatDate(selectedEvent.booking_start_time) : "-"}
                 </span>
               </p>
               <p>
                 <span className="font-semibold text-slate-900">Start: </span>
                 <span className="font-medium text-slate-500">
-                  {selectedEvent?.start ? formatTime(selectedEvent.start) : "-"}
+                  {selectedEvent?.booking_start_time ? formatTime(selectedEvent.booking_start_time) : "-"}
                 </span>
               </p>
               <p>
                 <span className="font-semibold text-slate-900">End: </span>
                 <span className="font-medium text-slate-500">
-                  {selectedEvent?.end ? formatTime(selectedEvent.end) : "-"}
+                  {selectedEvent?.booking_end_time ? formatTime(selectedEvent.booking_end_time) : "-"}
                 </span>
               </p>
             </div>
@@ -358,7 +379,7 @@ const BookingCalendar = ({tutor, user, calendarEvents , handleConfirmBooking, ha
             {/* show cancel button for confirmed events only */}
             {!selectedEvent.isDraft && (
               <button
-                onClick={()=>handleCancelBooking(selectedEvent)}
+                onClick={() => handleCancelBooking(selectedEvent)}
                 className="mt-4 px-3 py-1 border rounded-md cursor-pointer hover:bg-red-50 text-red-700 border-red-300 text-xs"
               >
                 Cancel booking

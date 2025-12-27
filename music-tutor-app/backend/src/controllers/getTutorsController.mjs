@@ -3,10 +3,17 @@ import { loadSql } from "../queries/loadSql.mjs";
 
 // read-in sql file with parameterised query
 const listTutorsSql = loadSql("tutors/getTutors.sql");
-const tutorByIdSql = loadSql("tutors/getTutorById.sql");
+
+// individual queries for getting indidivual tutor details in rthe shape required by frontend
+const coreTutorDetailsQuery = loadSql("tutors/getTutorById/coreTutorDetails.sql");
+const tutorInstrumentsQuery = loadSql("tutors/getTutorById/tutorInstruments.sql");
+const tutorSkillLevelsQuery = loadSql("tutors/getTutorById/tutorSkillLevels.sql");
+const tutorTeachingFormatsQuery = loadSql("tutors/getTutorById/tutorTeachingFormats.sql");
+const tutorTeachingTypesQuery = loadSql("tutors/getTutorById/tutorTeachingTypes.sql");
+
 
 // create the actual controller
-// this controller also frabs any url params for coty or instrument (if present) and adds them to SQL query as params
+// this controller also frabs any url params for city or instrument (if present) and adds them to SQL query as params
 export const getTutors = async (req, res, next) => {
   try {
     // attempt to grab url query params from front-end (anything after the'?' in url)
@@ -39,15 +46,39 @@ export const getTutorById = async (req, res, next) => {
       return next(new Error('Invalid tutor id'));
     }
 
-    const { rows } = await query(tutorByIdSql, [tutorId]);
-    // if client gives valid input but tutorId doesn't exists e.g '9999'
-    if (rows.length === 0) {
-      res.status(404);
+    // gives user id, tutor id, full name, city, and email
+    const coreTutorResult = await query(coreTutorDetailsQuery, [tutorId]);
+    if(coreTutorResult.rows.length === 0){
+      res.status(400);
       return next(new Error('Tutor not found'));
     }
-    console.log(rows[0]);
+    // console.log(coreTutorResult.rows[0]);
+
+    // start building the 'tutor' object for frontend
+    const tutor = coreTutorResult.rows[0];
+
+    // run the remaining queries in paralelle with Promise.all()
+    const [
+      tutorInstrumentsResult,
+      tutorTeachingFormatsResult,
+      tutorTeachingTypesResult,
+      tutorSkillLevelsResult,
+    ] = await Promise.all([
+      query(tutorInstrumentsQuery, [tutorId]),
+      query(tutorTeachingFormatsQuery, [tutorId]),
+      query(tutorTeachingTypesQuery, [tutorId]),
+      query(tutorSkillLevelsQuery, [tutorId])
+    ]
+    )
+
+    // attach the result arrays as properties on the 'tutor' object
+    tutor.instruments = tutorInstrumentsResult.rows;
+    tutor.teaching_formats = tutorTeachingFormatsResult.rows;
+    tutor.teaching_types = tutorTeachingTypesResult.rows;
+    tutor.skill_levels = tutorSkillLevelsResult.rows;
+
     
-    return res.json(rows[0]);
+    return res.status(200).json(tutor)
   } catch (error) {
     console.error("Database error in getTutorById", error);
     return next(error); // use global error handler instead

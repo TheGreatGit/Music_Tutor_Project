@@ -1,7 +1,10 @@
 import { loadSql } from "../queries/loadSql.mjs";
 import { query } from "../config/pool.mjs";
 
-const queryString = loadSql("tutors/getBookingsByTutor.sql");
+const tutorBookingsQuery = loadSql("tutors/getBookingsByTutor.sql");
+const studentBookingsQuery = loadSql("getBookingsByStudentId.sql");
+const makeBookingQuery = loadSql("makeBooking.sql");
+
 
 export const getBookingsByTutorId = async (req, res, next) => {
   try {
@@ -14,7 +17,7 @@ export const getBookingsByTutorId = async (req, res, next) => {
     }
 
     //attempt query
-    const { rows } = await query(queryString, [tutorId]);
+    const { rows } = await query(tutorBookingsQuery, [tutorId]);
     console.log(rows);
     return res.status(200).json(rows);
   } catch (error) {
@@ -33,10 +36,29 @@ export const getBookingsByStudentId = async (req, res, next) => {
     }
 
     //attempt query
-    const { rows } = await query(queryString, [studentId]);
+    const { rows } = await query(studentBookingsQuery, [studentId]);
     console.log(rows);
     return res.status(200).json(rows);
   } catch (error) {
     return next(error);
   }
 };
+
+
+export const makeBooking = async(req, res, next)=>{
+  try {
+
+  const draftBooking = req.body;
+  const booking_status = 1;
+  console.log(draftBooking);
+  const {tutor_id, student_id, instrument_id, booking_start_time, booking_end_time, title, teaching_format_id, teaching_type_id, skill_level_id, isdraft, client_id} = draftBooking;
+
+  // create checks later
+  const {rows} = await query(makeBookingQuery, [tutor_id,student_id, instrument_id, booking_start_time, booking_end_time,booking_status, teaching_format_id, teaching_type_id,skill_level_id])
+  return res.status(201).json(rows[0]);    
+  } catch (error) {
+    return next(error);
+  }
+  
+
+} 

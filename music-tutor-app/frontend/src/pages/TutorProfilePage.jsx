@@ -1,26 +1,59 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import TutorCard from "../components/TutorCard";
 import { UserContext } from "../context/UserContext";
 import { useContext } from "react";
 import { Link } from "react-router-dom";
+import FocusedTutorCard from "../components/FocusedTutorCard";
 import BookingCalendar from "../components/BookingCalendar";
 import { bookingShaper } from "../utils/bookingShaper.mjs";
 
+
 const TutorProfilePage = () => {
   const { tutorId } = useParams();
+
+  // a new function to parse tutorId param to see if it's valid before allowing any fetches based on it
+  const parseTutorId = (id)=>{
+    const parsedId = Number(id);
+    if (!Number.isInteger(parsedId) || parsedId <1) return null;
+    return parsedId;
+  };
+
+  const tutorIdParsed = parseTutorId(tutorId);
+
   const [tutor, setTutor] = useState(null);
   const { user, setUser } = useContext(UserContext);
 
   const [tutorBookings, setTutorBookings] = useState([]);
   const [userBookings, setUserBookings] = useState([]);
+
+  // new, uplifted booking-state object whose properties will be updated across this component and child components
+  const [draftBooking, setDraftBooking] = useState({
+    tutor_id: tutorIdParsed,
+    student_id: user?.student_id,
+    instrument_id: null, // will be set in the FocusedtutorCard component
+    booking_start_time: null, // will be set in BookingCalendar component
+    booking_end_time: null, // will be set in BookingCalendar component
+    title: "Lesson",
+    teaching_format_id: null, // will be set in the FocusedtutorCard component
+    teaching_type_id: null, // will be set in the FocusedtutorCard component
+    skill_level_id: null,// will be set in the FocusedtutorCard component
+    isDraft: true
+  })
+
+  // create a parent-component-level state mutator for the draftBooking that child components will use
+  const updateDraftBooking = (update) =>{
+    setDraftBooking((current)=> ({...current, ...update}))
+  };
   
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState(null);
+  const [err, setErr] = useState(null); // BREAK THIS IN TO SEPARATE ERRORS FOR THE DIFFERENT USE-EFFECTS? OR 1 SUPER-ERRPR OBJECT THAT HAS 3 PROPETITESFOR THE 3 FETCH ERROR POSSIBILITIES
   const [showCalendar, setShowCalendar] = useState(false);
 
   // fetch tutor info
   useEffect(() => {
+    // prevent pointless fetch if :tutorId param is not a valid number
+    if(!tutorIdParsed) return;
+
     const controller = new AbortController();
 
     const getTutor = async () => {
@@ -29,7 +62,7 @@ const TutorProfilePage = () => {
       setErr(null);
 
       try {
-        const res = await fetch(`http://localhost:3000/api/tutors/${tutorId}`, {
+        const res = await fetch(`http://localhost:3000/api/tutors/${tutorIdParsed}`, {
           credentials: "include",
           signal: controller.signal,
         });
@@ -51,18 +84,20 @@ const TutorProfilePage = () => {
     };
     getTutor();
     return () => controller.abort();
-  }, [tutorId]);
+  }, [tutorIdParsed]);
+
   console.log("student is", user);
 
   // feth tutor's bookings
   useEffect(() => {
+    if(!tutorIdParsed) return;
     const controller = new AbortController();
 
     const getTutorBookings = async () => {
       setLoading(true)
       setErr(null);
       try {
-        const res = await fetch(`http://localhost:3000/api/bookings/tutors/${tutorId}`,{ credentials: "include", signal: controller.signal });
+        const res = await fetch(`http://localhost:3000/api/bookings/tutors/${tutorIdParsed}`,{ credentials: "include", signal: controller.signal });
         if(!res.ok){
           throw new Error("Failed to fetch tutor's bookings");
         }
@@ -80,9 +115,9 @@ const TutorProfilePage = () => {
     };
     getTutorBookings();
     return ()=> controller.abort();
-  }, [tutorId]);
+  }, [tutorIdParsed]);
 
-  // useEffect for student/user bookiongs
+  // useEffect for student/user bookiongs (WILL LIEKELY NEED AMENDED IN ORDER TO ALLOW TUTORS TO BOOK LESSONS WITH OTHER STUDENTS)
     useEffect(() => {
       if(!user || user.role !== "student" || !user.student_id || !user.user_id) return;
 
@@ -110,13 +145,31 @@ const TutorProfilePage = () => {
     };
     getUserBookings();
     return ()=> controller.abort();
+    // using user.user_id as dependency as i might have a tutor logging in in future but as a student to book lessons with other tutors (would need DB refactor)
   }, [user?.user_id]);
 
   // this is passed doen to Calendar component as a prop
   // it will receive the draftEvent in the scope of the Calendar component where it is called
   const handleConfirmBooking = async(draftEvent) => {
     console.log('handleConfirmBooking draftEvent is', draftEvent);
-    
+    try {
+          const res = await fetch('http://localhost:3000/api/bookings/makeBooking', {method: 'POST', credentials:'include', headers: {
+      "Content-Type": "application/json"
+    }, body: JSON.stringify(
+      {
+        ...draftBooking,
+        // use built-in 'toISOstring' method to convert date object to string for sending to DB
+        booking_start_time: draftEvent.booking_start_time.toISOString(),
+        booking_end_time: draftEvent.booking_end_time.toISOString()
+      }
+    )});
+
+    if(!res.ok){
+       
+    }
+    } catch (error) {
+      
+    }
 
   };
 
@@ -142,13 +195,15 @@ const handleCancelBooking = async(selectedEvent) => {
 
   // TRANSFORM TUTOR BOOKINGS INTO EVENT SHAPE THAT THE CALENDAR CAN DISPLAY AND PASS THE TRANSFORMED BOOKINGS AS A PROP
   const transformedBookings = bookingShaper(tutorBookings);
+  // create bundled prop for the tutor and calendar child components
+  const draftBookingBundle = {draftBooking, updateDraftBooking}
 
   return (
     <div className="min-h-screen bg-slate-50 py-10 px-4">
       <div className="mx-auto max-w-3xl space-y-10">
         <div className="flex flex-col items-center gap-2">
           <div className="w-full max-w-xl">
-            <TutorCard tutor={tutor} />
+            <FocusedTutorCard tutor={tutor} draftBookingBundle={draftBookingBundle}/>
           </div>
 
           <section className="w-full max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
@@ -177,6 +232,7 @@ const handleCancelBooking = async(selectedEvent) => {
                     calendarEvents = {transformedBookings}
                     handleConfirmBooking = {handleConfirmBooking}
                     handleCancelBooking = {handleCancelBooking}
+                    draftBookingBundle={draftBookingBundle}
                   />
                 </div>
               </>

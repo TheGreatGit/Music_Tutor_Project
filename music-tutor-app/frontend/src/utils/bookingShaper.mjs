@@ -5,8 +5,9 @@ export const bookingShaper = (bookings) => {
     return {
       ...booking,
       //set new start date by usimg DB date in to Date() constructor
-      start: new Date(booking?.booking_start_time),
-      end: new Date(booking?.booking_end_time),
+      // using date objects here as the Calendar component needs date objects for rendering
+      booking_start_time: new Date(booking?.booking_start_time),
+      booking_end_time: new Date(booking?.booking_end_time),
       title: "Lesson",
       isDraft: false,
     };
