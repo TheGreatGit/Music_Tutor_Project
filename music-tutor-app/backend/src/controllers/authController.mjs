@@ -49,6 +49,9 @@ export const login = async (req, res, next) => {
       roleSpecificId = user.admin_id;
       first_name = user.admin_first_name;
       last_name = user.admin_last_name;
+    }else{
+      res.status(403);
+      return next(new Error('Unsupported role'));
     }
 
     // create a stripped user object for frontend (i.e. minus password)
@@ -67,6 +70,9 @@ export const login = async (req, res, next) => {
     if (userRole === "tutor") {
       strippedUser.tutor_id = roleSpecificId;
     }
+    if(userRole === "admin"){
+      strippedUser.admin_id = roleSpecificId;
+    }
     console.log("stripped user from DB in login route", strippedUser);
 
     //create JWT with user id as payload -CONTAINS ONLY USER_ID AND NO OTHER USER DATA
@@ -75,7 +81,7 @@ export const login = async (req, res, next) => {
     setAuthCookie(res, token);
 
     // alias strippedUser as user because frontend will use {user} for rendering
-    return res.json({ user: strippedUser });
+    return res.status(200).json({ user: strippedUser });
   } catch (error) {
     // receives errors passed in to next() in above code as well as any other errors e.g. connection issues beofre sql can run
     console.error("Login error: ", error);
@@ -87,7 +93,7 @@ export const login = async (req, res, next) => {
 // handler for logout
 export const logout = (req, res) => {
   res.clearCookie("token", cookieOptions);
-  return res.json({ message: "Logged out successfully" });
+  return res.status(200).json({ message: "Logged out successfully" });
 };
 
 // handler for getting current user - NOT CURRENTLY USED
@@ -98,7 +104,7 @@ export const getCurrentUser = (req, res, next) => {
       res.status(401);
       return next(new Error("Not authenticated"));
     }
-    return res.json(req.user);
+    return res.status(200).json(req.user);
   } catch (error) {
     // pass error to express general error handler
     return next(error);

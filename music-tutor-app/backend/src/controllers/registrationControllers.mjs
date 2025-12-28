@@ -22,7 +22,7 @@ export const tutorRegistrationController = async (req, res, next) => {
   );
 
   if (!validationResult.ok) {
-    return res.status(400).json({ errors: validationResult.errors }); // this style is kept in order to provide info on validation fails
+    return res.status(400).json({ errors: validationResult.errors }); // this style is kept in order to provide granular info on validation fails rather than a generic error message
   }
 
   // destructure the cleaned data returned in validateTutorRegistrationFormData.data

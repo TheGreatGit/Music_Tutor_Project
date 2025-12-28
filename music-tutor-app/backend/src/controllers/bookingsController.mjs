@@ -32,7 +32,7 @@ export const getBookingsByStudentId = async (req, res, next) => {
 
     if (!Number.isInteger(studentId) || studentId <= 0) {
       res.status(400);
-      return next(new Error("Invalid tutor id"));
+      return next(new Error("Invalid student id"));
     }
 
     //attempt query
@@ -46,19 +46,29 @@ export const getBookingsByStudentId = async (req, res, next) => {
 
 
 export const makeBooking = async(req, res, next)=>{
-  try {
+    try {
+      const draftBooking = req.body;
+      // set default value to be inserted upon booking
+      const booking_status = 1;
 
-  const draftBooking = req.body;
-  const booking_status = 1;
-  console.log(draftBooking);
-  const {tutor_id, student_id, instrument_id, booking_start_time, booking_end_time, title, teaching_format_id, teaching_type_id, skill_level_id, isdraft, client_id} = draftBooking;
+      console.log(draftBooking);
+      const {tutor_id, student_id, instrument_id, booking_start_time, booking_end_time, title, teaching_format_id, teaching_type_id, skill_level_id, isDraft, client_id} = draftBooking;
 
-  // create checks later
-  const {rows} = await query(makeBookingQuery, [tutor_id,student_id, instrument_id, booking_start_time, booking_end_time,booking_status, teaching_format_id, teaching_type_id,skill_level_id])
-  return res.status(201).json(rows[0]);    
-  } catch (error) {
-    return next(error);
-  }
-  
+      // basic validity check
+      if(!tutor_id || !student_id || !instrument_id || !booking_start_time || !booking_end_time || !teaching_format_id || !teaching_type_id || !skill_level_id){
+        res.status(400);
+        return next(new Error('Missing required booking fields'));
+      }
+
+      const {rows} = await query(makeBookingQuery, [tutor_id,student_id, instrument_id, booking_start_time, booking_end_time,booking_status, teaching_format_id, teaching_type_id,skill_level_id])
+      if(!rows || rows.length === 0){
+        res.status(500);
+        return next (new Error('Booking insert failed'));
+      }
+      return res.status(201).json(rows[0]);    
+    } catch (error) {
+      return next(error);
+    }
+    
 
 } 

@@ -279,8 +279,9 @@ const FindTutors = () => {
       {!loading && tutors.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {tutors.map((tutor) => (
-            // Add Link here :tutorId
+            
             <Link to={`/tutors/${tutor.tutor_id}`} key={tutor.tutor_id}>
+               {/* This represents the old TutorCard component but it is wrapped in a link to TutorProfilePage ( via '/tutors/${tutor.tutor_id}'as per frontend router) which contains the new FocusedTutorCard compomnent*/} 
               <TutorCard tutor={tutor}  />
             </Link>
             

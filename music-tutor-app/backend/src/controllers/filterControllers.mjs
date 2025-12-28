@@ -11,12 +11,12 @@ export const  getInstruments = async (req,res, next)=>{
     try {
         const {rows} = await query(instrumentQueryString);
         //console.log(rows);
-        return res.json(rows)
+        return res.status(200).json(rows)
         
     } catch (error) {
         console.error('Error in getInstruments: ', error);
         // pass error out to global handler
-        next(error);
+        return next(error);
     }
 }
 
@@ -24,10 +24,10 @@ export const getCities = async(req,res,next)=>{
     try {
         const {rows} = await query(cityQueryString);
         //console.log(rows);
-        return res.json(rows);
+        return res.status(200).json(rows);
         
     } catch (error) {
         console.error('error in get cities: ', error);
-        next(error);
+        return next(error);
     }
 }

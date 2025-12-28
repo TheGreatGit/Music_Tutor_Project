@@ -26,7 +26,7 @@ export const getTutors = async (req, res, next) => {
       instrumentSearchParam,
       citySearchParam,
     ]);
-    return res.json(rows);
+    return res.status(200).json(rows);
   } catch (error) {
     console.error("Database error (get tutors):", error);
    // res.status(500).json({ message: "database error" });
@@ -49,7 +49,7 @@ export const getTutorById = async (req, res, next) => {
     // gives user id, tutor id, full name, city, and email
     const coreTutorResult = await query(coreTutorDetailsQuery, [tutorId]);
     if(coreTutorResult.rows.length === 0){
-      res.status(400);
+      res.status(404);
       return next(new Error('Tutor not found'));
     }
     // console.log(coreTutorResult.rows[0]);

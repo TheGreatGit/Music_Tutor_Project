@@ -37,10 +37,13 @@ const TutorProfilePage = () => {
     teaching_format_id: null, // will be set in the FocusedtutorCard component
     teaching_type_id: null, // will be set in the FocusedtutorCard component
     skill_level_id: null,// will be set in the FocusedtutorCard component
-    isDraft: true
+    isDraft: true // will be set to false in backend after appointment added to DB
   })
 
   // create a parent-component-level state mutator for the draftBooking that child components will use
+  // the way this is coded means that children components will not accidentally erase the parts of the draft booking they don't change ( e.g. due to code mistake)
+  // i.e. by using ..current, it guarantees that the other properties are kept unchanged and ...current meand only the relevant part is changed in a given mutator ( a button in the FocusedTutorCard component)
+  // essemntially, this restricts the change they can make to the minimum necessary
   const updateDraftBooking = (update) =>{
     setDraftBooking((current)=> ({...current, ...update}))
   };
@@ -48,6 +51,16 @@ const TutorProfilePage = () => {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState(null); // BREAK THIS IN TO SEPARATE ERRORS FOR THE DIFFERENT USE-EFFECTS? OR 1 SUPER-ERRPR OBJECT THAT HAS 3 PROPETITESFOR THE 3 FETCH ERROR POSSIBILITIES
   const [showCalendar, setShowCalendar] = useState(false);
+
+  // a new use-effect to keep tutor id and student id always in-sync with the latest values. Not stricly needed now, but will be needed when I add user rehydration to preserve login after refrshing pages in browser
+  useEffect(()=>{
+    setDraftBooking((current)=>({
+      ...current,
+      tutor_id: tutorIdParsed || null,
+      student_id: user?.student_id || null
+    }));
+  }, [tutorIdParsed, user?.student_id]);
+
 
   // fetch tutor info
   useEffect(() => {
@@ -158,6 +171,10 @@ const TutorProfilePage = () => {
     }, body: JSON.stringify(
       {
         ...draftBooking,
+        // safety check with student id to ensure it's always the most recent one
+        student_id: user?.student_id || null,
+        // safety check with tutor id
+        tutor_id: tutorIdParsed || draftBooking.tutor_id,
         // use built-in 'toISOstring' method to convert date object to string for sending to DB
         booking_start_time: draftEvent.booking_start_time.toISOString(),
         booking_end_time: draftEvent.booking_end_time.toISOString()
@@ -165,10 +182,16 @@ const TutorProfilePage = () => {
     )});
 
     if(!res.ok){
-       
+       throw new Error('Error in booking');
     }
+    const dbBooking = await res.json();
+    // update the tutor bookings for the calendar in order to update display to include the newly booked appointment
+    // the new booking doesn't need to be altred to have date objects for start and end time here as the bookingShaper() function does that later
+    setTutorBookings((current)=> [...current, dbBooking]);
     } catch (error) {
-      
+      console.error('handleConfirmBooking error', error);
+      // this will be caught by caller in BookingCalendar
+      throw error;
     }
 
   };
