@@ -108,7 +108,7 @@ const BookingCalendar = ({
     const duration = draftEvent?.booking_end_time - draftEvent?.booking_start_time;
 
     if (draftEvent.booking_start_time < now) {
-      alert("You cannot book events in the past");
+      alert("You cannot book appointments in the past");
       return false;
     }
     // maybe refactor to comply with DRY principle

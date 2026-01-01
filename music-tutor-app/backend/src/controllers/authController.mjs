@@ -92,7 +92,7 @@ export const login = async (req, res, next) => {
 
 // handler for logout
 export const logout = (req, res) => {
-  res.clearCookie("token", cookieOptions);
+  res.clearCookie("token", cookieOptions); // to ensure deletion of the cookie, clearCookie() method must be supplied with the same options as the cookie was when it was created
   return res.status(200).json({ message: "Logged out successfully" });
 };
 
