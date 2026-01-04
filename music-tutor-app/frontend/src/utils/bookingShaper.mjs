@@ -1,5 +1,6 @@
 // thisfunction takes an array of bbokoing objects from the database and shapes them so the Calendar component can display them
-// to display events, the Calednar needs them to have a title, a start time, and an end time. The DB objects have this but need reformatted
+// to display events, the Calednar needs them to have a title, a start time, and an end time.
+// This function adds a title of 'Lesson' and converts to Db date string to JS Date objects for the calendar. It also sets isDraft to false.
 export const bookingShaper = (bookings) => {
   return bookings.map((booking) => {
     return {

@@ -31,7 +31,6 @@ const router =  createBrowserRouter(
       <Route path="register/tutor" element={<TutorRegisterForm/>}/>
       <Route path="register/student" element={<StudentRegisterForm/>}/>
       <Route path="login" element={<LoginUserForm/>}/>
-      <Route path="testCalendar" element={<CalendarTestPage />}/>
     </Route>
   )
 );

@@ -24,7 +24,6 @@ const TutorProfilePage = () => {
   const { user, setUser } = useContext(UserContext);
 
   const [tutorBookings, setTutorBookings] = useState([]);
-  const [userBookings, setUserBookings] = useState([]);
 
   // new, uplifted booking-state object whose properties will be updated across this component and child components
   const [draftBooking, setDraftBooking] = useState({
@@ -130,36 +129,7 @@ const TutorProfilePage = () => {
     return ()=> controller.abort();
   }, [tutorIdParsed]);
 
-  // useEffect for student/user bookiongs (WILL LIEKELY NEED AMENDED IN ORDER TO ALLOW TUTORS TO BOOK LESSONS WITH OTHER STUDENTS)
-    useEffect(() => {
-      if(!user || user.role !== "student" || !user.student_id || !user.user_id) return;
 
-    const controller = new AbortController();
-
-    const getUserBookings = async () => {
-      setLoading(true)
-      setErr(null);
-      try {
-        const res = await fetch(`http://localhost:3000/api/bookings/students/${user.student_id}`,{ credentials: "include", signal: controller.signal });
-        if(!res.ok){
-          throw new Error("Failed to fetch student's bookings");
-        }
-        const bookings = await res.json();
-        setUserBookings(bookings);
-      } catch (error) {
-        if (error.name !== "AbortError") {
-          console.log('error in fetching student bookings');
-          setErr(error.message || "Unknown error");
-          setUserBookings([]);
-        }        
-      } finally {
-        setLoading(false)
-      }
-    };
-    getUserBookings();
-    return ()=> controller.abort();
-    // using user.user_id as dependency as i might have a tutor logging in in future but as a student to book lessons with other tutors (would need DB refactor)
-  }, [user?.user_id]);
 
   // this is passed doen to Calendar component as a prop
   // it will receive the draftEvent in the scope of the Calendar component where it is called
@@ -185,6 +155,8 @@ const TutorProfilePage = () => {
        throw new Error('Error in booking');
     }
     const dbBooking = await res.json();
+    console.log('db booking is', dbBooking);
+    
     // update the tutor bookings for the calendar in order to update display to include the newly booked appointment
     // the new booking doesn't need to be altred to have date objects for start and end time here as the bookingShaper() function does that later
     setTutorBookings((current)=> [...current, dbBooking]);
@@ -196,20 +168,27 @@ const TutorProfilePage = () => {
 
   };
 
-const handleCancelBooking = async(selectedEvent) => {
-    // if (!selectedEvent) return;
+const handleCancelBooking = async(event) => {
+  if(!event.booking_id) return;
 
-    // // don't allow cancellation of draft bookings
-    // if (selectedEvent.isDraft) return;
+  const ok = window.confirm('Are you sure you wish to cancel this booking?');
+  if(!ok) return;
 
-    // const ok = window.confirm(
-    //   `${selectedEvent.title || "Lesson"}\n` +
-    //     `Date: ${formatDate(selectedEvent.start)}\n` +
-    //     `Start: ${formatTime(selectedEvent.start)}\n` +
-    //     `End: ${formatTime(selectedEvent.end)}\n` +
-    //     `Are you sure you want to cancel this booking?`
-    // );
-    // if (!ok) return;
+  try {
+    const res = await fetch(`http://localhost:3000/api/bookings/cancelBooking/${event.booking_id}`, { method: "PATCH", credentials: "include"});
+    // again try new approach where response is json-ed before checking for !res.ok; this way, any backend-specific error message can be obtained
+    const data = await res.json();
+
+    if(!res.ok){
+      throw new Error(data?.message || 'Failed to csncel booking');
+    }
+
+    // reset tutorBookings to remvoe the cancelled booking-  the useEffect only fires if parsedTutorId changes so need to use setTutorBookings
+    setTutorBookings((current)=>current.filter((booking)=> booking.booking_id !== event.booking_id ));
+  } catch (error) {
+    alert(error.message || 'Cancellation failed');
+  }
+ 
   };
 
   if (loading) return <p className="p-6">Loading tutor...</p>;

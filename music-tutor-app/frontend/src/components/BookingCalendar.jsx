@@ -51,6 +51,11 @@ const BookingCalendar = ({
   // for triggering differential rendering in eventsPropGetter(), for displaying lesson details panel, and for cancelling events
   const [selectedEvent, setSelectedEvent] = useState(null);
 
+  // state for getting lesson details when clicking on the lesson in calendar, displaying loading status, displaying error status
+  const [selectedBookingDetails, setSelectedBookingDetails] = useState(null);
+  const [bookingDetailsLoading, setBookingDetailsLoading] = useState(false);
+  const [bookingDetailsError, setBookingDetailsError] = useState(null);
+
   // check draft validity for rendering it in calandar
   // the client id is only a temporary field to allow frontend booking logic checks
   const canDisplayDraft =
@@ -86,14 +91,50 @@ const BookingCalendar = ({
     });
     // clear selected event to remove previous/current selection so you can create a new event/lesson after confirming this one
     setSelectedEvent(null);
+    // clear newly added state to cler UI
+    setSelectedBookingDetails(null);
+    setBookingDetailsError(null);
+    setBookingDetailsLoading(false);
   };
 
   // fires when a  confirmed Calendar event is clicked. It receives the event object as it is defined in the calendar (different to normal event handler event i.e. doesn't have .target property etc.)
-  const handleSelectEvent = (event) => {
-    console.log(event);
-    if (event.isDraft) return;
-    // used when clicking on a calendar event to toggle the event to being the selectedEvent or not- this triggers differential rendering via eventPropsGetter function below.
-    setSelectedEvent((current) => (isSameEvent(current, event) ? null : event));
+  const handleSelectEvent = async(clickedEvent) => {
+    console.log('clciked event in handleSelectEvent is', clickedEvent);
+    if(clickedEvent.isDraft) return; // i.e. don't attempt fetch for draft event
+    if(!clickedEvent?.booking_id) return;
+
+    // this checks whether the event the handleSelectEvent receives is the same as the event held in 'selectedEvent' state; if it is, it clears selectedEvent state i.e. de-deselects the event
+    // this code section basically allows users to 'toggle' an event on consecutive clicks
+    if(isSameEvent(clickedEvent, selectedEvent)){
+      setSelectedEvent(null); // for differnetial rendering in calendar
+      setSelectedBookingDetails(null); 
+      setBookingDetailsError(null);
+      setBookingDetailsLoading(false);
+      return;
+    }
+
+    setSelectedEvent(clickedEvent); // for diffeential rendering in calendar
+    setBookingDetailsLoading(true); 
+    setBookingDetailsError(null);
+    setSelectedBookingDetails(null);
+
+    try {
+      const res = await fetch(`http://localhost:3000/api/bookings/getBookings/${clickedEvent.booking_id}`, {credentials: "include"});
+      // trialling new codee pattern after fetches where the resposne is processed with .json() and, if it was a backend error response (!res.ok), the backend error message is accessed via data.message
+      const data = await res.json();
+
+      if(!res.ok){
+        throw new Error(data?.message || 'Failed to fetch lesson details');
+      }
+
+      setSelectedBookingDetails(data);
+      console.log('handleSelectEvent event details from DB are:', data);
+      
+    } catch (error) {
+      setBookingDetailsError(error.message || 'Unknown error');
+    }finally{
+      setBookingDetailsLoading(false);
+    }
   };
 
   // PRE-BOOKING CHECKS HAVE BEEN REFACTORED IN TO THIS SEPARATE FUNCTION THAT WILL RUN PRIOR TO ATTEMPTING TO BOOK VIA BACKEND ROUTE
@@ -152,6 +193,21 @@ const BookingCalendar = ({
     }
   };
 
+  const confirmCancelBooking = async()=>{
+    if(!selectedEvent || selectedEvent.isDraft) return;
+
+    try {
+      await handleCancelBooking(selectedEvent);
+      // reset relevant state so that the event profile panel and info don't continue to show the cancelled booking's data
+      setSelectedEvent(null);
+      setSelectedBookingDetails(null);
+      setBookingDetailsError(null);
+      setBookingDetailsLoading(false);
+    } catch (error) {
+      setBookingDetailsError(error.message || 'Cancellation failed');
+    }
+  }
+
   const clearSelection = () => {
     updateDraftBooking({
     client_id: null,
@@ -165,15 +221,21 @@ const BookingCalendar = ({
     isDraft: true
     });
     setSelectedEvent(null);
+    // clear new state too
+    setSelectedBookingDetails(null);
+    setBookingDetailsError(null);
+    setBookingDetailsLoading(false);
   };
 
   const isSameEvent = (a, b) => {
     if (!a || !b) return false;
 
+    // checks confirmed bookings
     if (a?.booking_id != null && b?.booking_id != null) {
       return a.booking_id === b.booking_id;
     }
 
+    // checks draft bookings as they are being created on the frontend
     if (a?.client_id != null && b?.client_id != null) {
       return a.client_id === b.client_id;
     }
@@ -225,7 +287,11 @@ const BookingCalendar = ({
     };
   };
 
-  const formatDate = (date) => {
+  const formatDate = (value) => {
+    // convert paramter to date
+    const date = value instanceof Date ? value : new Date(value);
+    if(Number.isNaN(date.getTime())) return '_';
+
     return date.toLocaleDateString("en-GB", {
       weekday: "short",
       year: "numeric",
@@ -234,7 +300,11 @@ const BookingCalendar = ({
     });
   };
 
-  const formatTime = (date) => {
+  const formatTime = (value) => {
+    // convert paramter to date
+    const date = value instanceof Date ? value : new Date(value);
+    if(Number.isNaN(date.getTime())) return '_';
+
     return date.toLocaleTimeString("en-GB", {
       hour: "2-digit",
       minute: "2-digit",
@@ -321,76 +391,47 @@ const BookingCalendar = ({
       </button>
 
       {/* event details panel */}
-      <div className="mt-4 md:mt-0">
-        {selectedEvent ? (
-          <div className="border rounded-xl p-4 bg-white shadow-sm text-sm text-slate-700">
-            <h2 className="text-lg font-medium mb-2">Event details</h2>
+      <div className="mt-6">
+        <div className="border rounded-xl p-4 bg-white shadow-sm text-sm text-slate-700">
+          <h2 className="text-xl font-medium mb-2">Lesson details</h2>
 
-            <div className="space-y-1 text-sm">
-              <p>
-                <span className="font-semibold text-slate-900">Lesson</span>
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">Tutor: </span>
-                <span className="font-medium text-slate-500">
-                  {tutor?.first_name && tutor?.last_name
-                    ? `${tutor.first_name} ${tutor.last_name}`
-                    : "-"}
-                </span>
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">Student: </span>
-                <span className="font-medium text-slate-500">
-                  {user?.first_name && user?.last_name
-                    ? `${user.first_name} ${user.last_name}`
-                    : "-"}
-                </span>
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">
-                  Instrument:{" "}
-                </span>
-                <span className="font-medium text-slate-500">
-                  {tutor?.instruments.map(
-                    (instrument) => instrument.instrument_name
-                  ) || "-"}
-                </span>
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">Date: </span>
-                <span className="font-medium text-slate-500">
-                  {selectedEvent?.booking_start_time ? formatDate(selectedEvent.booking_start_time) : "-"}
-                </span>
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">Start: </span>
-                <span className="font-medium text-slate-500">
-                  {selectedEvent?.booking_start_time ? formatTime(selectedEvent.booking_start_time) : "-"}
-                </span>
-              </p>
-              <p>
-                <span className="font-semibold text-slate-900">End: </span>
-                <span className="font-medium text-slate-500">
-                  {selectedEvent?.booking_end_time ? formatTime(selectedEvent.booking_end_time) : "-"}
-                </span>
-              </p>
-            </div>
+          {bookingDetailsLoading && (
+            <p className="text-slate-500 mt-2">Loading booking details...</p>
+          )}
 
-            {/* show cancel button for confirmed events only */}
-            {!selectedEvent.isDraft && (
-              <button
-                onClick={() => handleCancelBooking(selectedEvent)}
-                className="mt-4 px-3 py-1 border rounded-md cursor-pointer hover:bg-red-50 text-red-700 border-red-300 text-xs"
-              >
-                Cancel booking
-              </button>
-            )}
-          </div>
-        ) : (
-          <p className="text-sm text-slate-500">
-            Click an event in the calendar to see its details here
-          </p>
-        )}
+          {bookingDetailsError && (
+            <p className="text-red-600 mt-2">{bookingDetailsError}</p>
+          )}
+
+          {selectedBookingDetails ? (
+            <>
+              <div className="space-y-1 text-sm">
+                <p><span className="font-semibold text-slate-900">Tutor: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.tutor || "_"}</span></p>
+                <p><span className="font-semibold text-slate-900">Student: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.student || "_"}</span></p>
+                <p><span className="font-semibold text-slate-900">Instrument: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.instrument_name || "_"}</span></p>
+                <p><span className="font-semibold text-slate-900">Teaching format: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_format_name || "_"}</span></p>
+                <p><span className="font-semibold text-slate-900">Teaching type: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_type_name || ""}</span></p>
+                <p><span className="font-semibold text-slate-900">Skill level: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.skill_level_name || "_"}</span></p>
+                <p><span className="font-semibold text-slate-900">Date: </span><span className="font-medium text-slate-500">{formatDate(selectedBookingDetails?.booking_start_time)}</span></p>
+                <p><span className="font-semibold text-slate-900">Start: </span><span className="font-medium text-slate-500">{formatTime(selectedBookingDetails?.booking_start_time)}</span></p>
+                <p><span className="font-semibold text-slate-900">End: </span><span className="font-medium text-slate-500">{formatTime(selectedBookingDetails?.booking_end_time)}</span></p>
+              </div>
+
+              {/* render cancel button only if event selected and isn't draft */}
+              {selectedEvent && !selectedEvent.isDraft && (
+                <button onClick={confirmCancelBooking} className="mt-3 px-3 py-1 border rounded-md cursor-pointer hover:bg-red-50 text-red-700 border-red-300 text-xs">
+                  Cancel booking
+                </button>
+              )}
+            </>
+          ):(
+            !bookingDetailsLoading && !bookingDetailsError && (
+              <p className="text-sm text-slate-500">
+                Click an event in the calendar to see its details here
+              </p>
+            )
+          )}
+        </div>
       </div>
     </>
   );

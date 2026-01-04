@@ -24,7 +24,6 @@ const NavBar = () => {
         <li className='m-4'><NavLink to="/about">About</NavLink></li>
         <li className='m-4'><NavLink to="/contact">Contact</NavLink></li>
         <li className='m-4'><NavLink to="/findTutors">Find a tutor</NavLink></li>
-        <li className='m-4'><NavLink to= "/testCalendar">Calendar</NavLink></li>
       </ul>
       
       <div className=" flex items-center gap-3">

@@ -5,6 +5,8 @@ const tutorBookingsQuery = loadSql("tutors/getBookingsByTutor.sql");
 const studentBookingsQuery = loadSql("getBookingsByStudentId.sql");
 const checkConflictsQuery = loadSql("checkForConflicts.sql");
 const makeBookingQuery = loadSql("makeBooking.sql");
+const getBookingByIdQuery = loadSql('getBookingByBookingId.sql');
+const cancelBookingByIdQuery = loadSql('cancelBooking.sql');
 
 const MIN_LESSON_DURATION_IN_MINUTES = 30;
 const MAX_LESSON_DURATION_IN_MINUTES = 60;
@@ -136,3 +138,46 @@ export const makeBooking = async(req, res, next)=>{
       return next(error);
     }
 } 
+
+export const getBookingById = async(req, res, next) =>{
+  try {
+    // booking ID will be received as string so it needs to be cast to an integer
+    const bookingId = Number(req.params.bookingId);
+    if(!Number.isInteger(bookingId) || bookingId <= 0){
+      res.status(400);
+      return next(new Error('Invalid booking Id'));
+    }
+    
+    const {rows} = await query(getBookingByIdQuery, [bookingId]); 
+    if(rows.length === 0){
+      res.status(404);
+      // the return is essential to prevent a 'headers already sent' error in node - this is caused by the res.json(rows) call being fired!
+      return next(new Error( 'No booking found with that id'));
+    }
+
+    return res.status(200).json(rows[0]);
+  } catch (error) {
+    return next(error);
+  }
+
+}
+
+export const cancelBookingById = async(req, res, next) =>{
+  try {
+    const bookingId = Number(req.params.bookingId);
+    if(!Number.isInteger(bookingId) || bookingId <=0){
+      res.status(400);
+      return next(new Error('Invalid booking id'));
+    }
+
+    const {rows} = await query(cancelBookingByIdQuery, [bookingId]);
+    if(rows.length === 0){
+      res.status(404);
+      return next(new Error('Booking not found or already cancelled'));
+    }
+    return res.status(200).json(rows[0]);
+  } catch (error) {
+    next(error);
+  }
+
+};
