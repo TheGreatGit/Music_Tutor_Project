@@ -6,10 +6,11 @@ const studentBookingsQuery = loadSql("getBookingsByStudentId.sql");
 const checkConflictsQuery = loadSql("checkForConflicts.sql");
 const makeBookingQuery = loadSql("makeBooking.sql");
 const getBookingByIdQuery = loadSql('getBookingByBookingId.sql');
-const cancelBookingByIdQuery = loadSql('cancelBooking.sql');
+const cancelBookingByIdQuery = loadSql('cancelBookingById.sql');
 
 const MIN_LESSON_DURATION_IN_MINUTES = 30;
 const MAX_LESSON_DURATION_IN_MINUTES = 60;
+const DAY_IN_MS = 1000 * 60 * 60 * 24;
 
 
 export const getBookingsByTutorId = async (req, res, next) => {
@@ -139,7 +140,7 @@ export const makeBooking = async(req, res, next)=>{
     }
 } 
 
-export const getBookingById = async(req, res, next) =>{
+export const getBookingByBookingId = async(req, res, next) =>{
   try {
     // booking ID will be received as string so it needs to be cast to an integer
     const bookingId = Number(req.params.bookingId);
@@ -147,6 +148,9 @@ export const getBookingById = async(req, res, next) =>{
       res.status(400);
       return next(new Error('Invalid booking Id'));
     }
+    console.log('get booking by id sql query is', getBookingByIdQuery);
+    
+    console.log('booking id requested is:', bookingId);
     
     const {rows} = await query(getBookingByIdQuery, [bookingId]); 
     if(rows.length === 0){
@@ -170,12 +174,56 @@ export const cancelBookingById = async(req, res, next) =>{
       return next(new Error('Invalid booking id'));
     }
 
-    const {rows} = await query(cancelBookingByIdQuery, [bookingId]);
-    if(rows.length === 0){
-      res.status(404);
-      return next(new Error('Booking not found or already cancelled'));
+    // cancel SQL query looks for given booking id where current booking status is 1(confirmed) and the start time is >24 hours away and returns booking id and status
+    const cancelResult = await query(cancelBookingByIdQuery, [bookingId]);
+    if(cancelResult.rows.length >0){
+      // send message for frontend to display
+      // also send the result from the query (the booking id and status) in case I want frontend to use that info later
+      return res.status(200).json({message: 'Appointment cancelled', booking: cancelResult.rows[0]});
     }
-    return res.status(200).json(rows[0]);
+
+    // here means that rows.length === 0; i.e. that the booking that was requested to  be cancelled did not fit cancel criteria or doesn't exist or some error
+    // do other checks to determine what has happened
+
+    // 1st, just check to see if any bookings match the booking id at all
+    // didn't want to create another separate sql file for this right now!
+    const checkResult = await query(`
+      select 
+        booking_status, 
+        booking_start_time, 
+        booking_start_time <= NOW() as started_or_passed,
+        booking_start_time <=(NOW() + interval '24 hours') as within_24h 
+      from bookings 
+      where booking_id = $1`, 
+      [bookingId]);
+
+    if(checkResult.rows.length === 0){
+      res.status(404);
+      return next(new Error('Booking not found in cancel booking attempt'));
+    }
+
+    // here means that a booking whose id matches with that contained in the cancel request from frontend has been found but it doesn't meet cancel criteria
+    const booking = checkResult.rows[0];
+    // booking status of 1 means confirmed, 2 means pending( not used yet) and 3 means cancelled
+    if(booking.booking_status !==1){// assume that if not equal to 1, it is equal to 3
+      res.status(409);
+      return next(new Error('Booking is not confirmedd and cannot be cancelled'));
+    }
+
+    // booking exists and has not been cancelled, but does not fit other crtieria of initial cancel SQL clauses i.e. is not > 24 hours away
+    if(booking.started_or_passed){
+      res.status(409);
+      return next(new Error('LEsson has already passed or begun and cannot be cancelled'));
+    }
+
+    if(booking.within_24h){
+      res.status(409);
+      return next(new Error('Bookings cannot be cancelled within 24 hours of start time'));
+    }
+
+    // general catch-all as a fallback- should not be reachable but add just in case
+    res.status(409);
+    return next(new Error('Booking could not be cancelled'));
   } catch (error) {
     next(error);
   }

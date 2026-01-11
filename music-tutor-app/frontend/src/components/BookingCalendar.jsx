@@ -254,10 +254,14 @@ const BookingCalendar = ({
     const eventIsLesson = event.title?.toLowerCase().includes("lesson");
     const eventIsDraft = event.isDraft;
     const isSelected = isSameEvent(selectedEvent, event);
+    // added to style bookings that cannot be cancelled
+    const preventCancel = !eventIsDraft && withinTwentyFourHours(event)
 
     let backgroundColor;
     let border;
     let boxShadow = "none";
+    let opacity = 1;
+    let cursor = 'pointer';
 
     if (eventIsDraft) {
       backgroundColor = "#bfdbfe";
@@ -270,9 +274,16 @@ const BookingCalendar = ({
       border = "none";
     }
 
+    if(preventCancel){
+      opacity= 0.55;
+      cursor = 'not-allowed'
+    }
+
     if (isSelected) {
       boxShadow = "0 0 0 2px rgba(15,23,42,0.4)";
       backgroundColor = "#23197cff";
+      opacity = 1;
+      cursor = 'pointer';
     }
 
     // return CSS
@@ -283,6 +294,8 @@ const BookingCalendar = ({
         border,
         padding: "2px 4px",
         boxShadow,
+        opacity,
+        cursor
       },
     };
   };
@@ -349,6 +362,17 @@ const BookingCalendar = ({
     // return empty object to tell Calendar's slotPropGetter prop to use default style for slots in future
     return {};
   };
+
+  const withinTwentyFourHours = (booking) =>{
+    const dayAsMilliseconds = 1000 * 60*60*24;
+    const now = Date.now(); // gives current time in ms since 1970...
+    const bookingStart = booking.booking_start_time.getTime();
+    const diff = bookingStart - now;
+    // prevent cancellation of past events
+    if(diff <=0) return false;
+    // return the answer to if selected booking's start time is LESS than 24 hours away
+    return diff < dayAsMilliseconds;
+  }
   return (
     <>
       <Calendar
@@ -363,7 +387,7 @@ const BookingCalendar = ({
         style={{ height: 600 }}
         min={MIN_TIME}
         max={MAX_TIME}
-        step={30}
+        step={15}
         selectable
         onSelectSlot={handleSelectSlot}
         onSelectEvent={handleSelectEvent}
@@ -407,7 +431,7 @@ const BookingCalendar = ({
             <>
               <div className="space-y-1 text-sm">
                 <p><span className="font-semibold text-slate-900">Tutor: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.tutor || "_"}</span></p>
-                <p><span className="font-semibold text-slate-900">Student: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.student || "_"}</span></p>
+                { /* <p><span className="font-semibold text-slate-900">Student: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.student || "_"}</span></p> */}
                 <p><span className="font-semibold text-slate-900">Instrument: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.instrument_name || "_"}</span></p>
                 <p><span className="font-semibold text-slate-900">Teaching format: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_format_name || "_"}</span></p>
                 <p><span className="font-semibold text-slate-900">Teaching type: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_type_name || ""}</span></p>
@@ -419,9 +443,22 @@ const BookingCalendar = ({
 
               {/* render cancel button only if event selected and isn't draft */}
               {selectedEvent && !selectedEvent.isDraft && (
-                <button onClick={confirmCancelBooking} className="mt-3 px-3 py-1 border rounded-md cursor-pointer hover:bg-red-50 text-red-700 border-red-300 text-xs">
+              <>
+                <button onClick={confirmCancelBooking} disabled= {withinTwentyFourHours(selectedEvent)}
+                className={`mt-3 px-3 py-1 border rounded-md text-xs
+                ${withinTwentyFourHours(selectedEvent) 
+                  ? "cursor-not-allowed  border-red-300 text-red-700"
+                  : "cursor-pointer hover:bg-red-50 text-red-700 border-red-300"}`}
+                  >
                   Cancel booking
                 </button>
+                
+                {withinTwentyFourHours(selectedEvent) && (
+                  <p className="text-xs text-red-500 mt-1">
+                    Bookings cannot be cancelled within 24 hours of start time
+                  </p>
+                )}
+              </>
               )}
             </>
           ):(
