@@ -276,7 +276,7 @@ const BookingCalendar = ({
 
     if(preventCancel){
       opacity= 0.55;
-      cursor = 'not-allowed'
+      cursor;
     }
 
     if (isSelected) {
@@ -368,8 +368,6 @@ const BookingCalendar = ({
     const now = Date.now(); // gives current time in ms since 1970...
     const bookingStart = booking.booking_start_time.getTime();
     const diff = bookingStart - now;
-    // prevent cancellation of past events
-    if(diff <=0) return false;
     // return the answer to if selected booking's start time is LESS than 24 hours away
     return diff < dayAsMilliseconds;
   }
