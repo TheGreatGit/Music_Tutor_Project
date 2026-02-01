@@ -12,6 +12,9 @@ export const findUserByEmail = async (email) => {
   return rows[0] || null;
 };
 
+export const findUserByUserId = async (userId) =>{
+
+};
 
 export const validatePassword = async (plain, hashed) => {
   return bcrypt.compare(plain, hashed);

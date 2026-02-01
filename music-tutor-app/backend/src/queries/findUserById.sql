@@ -1,0 +1,1 @@
+select * from app_users as au where au.user_id = $1

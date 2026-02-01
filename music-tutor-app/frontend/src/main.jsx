@@ -1,8 +1,9 @@
-import { StrictMode, useState } from "react";
+import { StrictMode, useState, useEffect } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.jsx";
 import {UserContext} from "./context/UserContext.jsx";
+import { socket } from "./socket.mjs";
 
 // create a function that enfolds App in a context provider but also supplies the user,setUser functions
 // Call this function in the rendering function
@@ -11,6 +12,22 @@ function Main(){
   // set up useState() hook so you can supply the user,setUser functions to the context Provider
   // this means that any sub-component that imports UserContext and then uses useContext() hook to read UserContext's value will get user,setUser.
   const [user, setUser] = useState(null);
+
+  // useEffect to manage socket connection to ensure only logged in users get websocket functionality
+  // set it to 'watch' user state
+  useEffect(()=>{
+    if(user){
+      if(!socket.connected){
+        socket.connect();
+      }
+      return;
+    }
+
+    // disconnect socket if no user logged in (just in case it's still connected somehow)
+    if(socket.connected){
+      socket.disconnect();
+    }
+  }, [user])
 
   return (
     // UserContext initially has no value, as per its definition file.
