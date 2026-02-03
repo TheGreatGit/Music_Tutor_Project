@@ -12,6 +12,7 @@ import bookingsRouter from "./routes/bookingsRoutes.mjs";
 import http from "http";
 import { Server } from "socket.io";
 import { verifyToken } from "./services/tokenService.mjs";
+import { buildUserInfo, findUserByUserId } from "./services/userService.mjs";
 
 
 // load environment variables in to process.ENV
@@ -90,26 +91,37 @@ const io = new Server(httpServer, {
 // io.on refers to the whole server whereas socket.on refers to the indiividual socket.
 // e.g. socket.emit() will means just the socket sends soemthign from from server to client, but io.emit means the server will wmit to all connected sockets
 
-// ADD SOCKET.IO VALIDATION MIDDLEWARE
+// SOCKET.IO MIDDLEWARE
 io.use(async (socket, next) => {
   try {
+    // socket.io itself does not recive http req/res objects, so access JWT as below:
     const cookieHeader = socket.handshake.headers.cookie || "";
-    // console.log('socket headers cookie from client', cookieHeader);
+    //console.log('socket headers cookie from client', cookieHeader);
 
+    /* because cookies separate their key/value pairs with ';' or '; ', use split(';) to get an array of separated cookie info.
+      (currently, the cookie only has the JWT token so the split via ';' isn't strictly necessary, but I keep it for futureproofing) 
+     then trim(), and then, because the 'setAuthCookie' function adds the signed JWT and names is 'token', the JWT appears in the cookie as token=(JWTString).
+     This means you can grab it with array find() method using the string 'token='
+     */
     const tokenPairString = cookieHeader.split(";").map((cookieString)=> cookieString.trim()).find((string)=> string.startsWith("token="));
     // console.log("token string:", tokenPairString);
     if(!tokenPairString){
       console.log('socket.io auth middleware: no token');
-      return next(new Error("unauthorised"));
+      return next(new Error("Unauthorised"));
     } 
 
-    const tokenStringOnly = tokenPairString.slice("token=".length);
+    // to get the JWT string stripped of the cookie's key of 'token=', slice it by the length of 'token='
+    const tokenStringOnly = tokenPairString.slice("token=".length).trim();
     // console.log('Token string only:', tokenStringOnly);
 
-    const decoded = verifyToken(tokenStringOnly);
+    const decoded = verifyToken(tokenStringOnly); // returned value has the shape of {userId, iat, exp}
     console.log('decoded = ', decoded);
-    
-    socket.user = decoded;
+    // use JWT's userId to search DB
+    const userRow = await findUserByUserId(decoded.userId);
+    if(!userRow) {
+      console.log('In socket.io auth middleware, no user found with JWT\'s user id');
+      return next (new Error('Unauthorised'))};
+    socket.user = buildUserInfo(userRow);
     return next();
   } catch (error) {
     console.log('error in socket.io mioddleware', error);
@@ -120,9 +132,9 @@ io.use(async (socket, next) => {
 // normal socket.io code
 io.on("connection", (socket) => {
   console.log("socket connected", socket.id);
-  console.log('connected userId:', socket.user.userId);
+  console.log('connected userId:', socket.user.user_id);
+  console.log('socket.io user:', socket.user);
   
-
   //listen for event called 'chat-message' received from client-side of socket
   socket.on("chat_message", (data) => {
     console.log("message received from client:", data);
