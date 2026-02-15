@@ -35,7 +35,7 @@ export const getTutors = async (req, res, next) => {
 };
 
 // this is for the personalised tutor profiles after clicking on a tutor's profile card in the 'find a tutor' page
-export const getTutorById = async (req, res, next) => {
+export const getTutorByTutorId = async (req, res, next) => {
   try {
     // grab tutor id from url and cast as number as it will be in string format in url
     const tutorId = Number(req.params.tutorId);

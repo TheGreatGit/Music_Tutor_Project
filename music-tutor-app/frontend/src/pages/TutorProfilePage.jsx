@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { UserContext } from "../context/UserContext";
+import { ChatContext } from "../context/ChatContext";
 import { useContext } from "react";
 import { Link } from "react-router-dom";
 import FocusedTutorCard from "../components/FocusedTutorCard";
 import BookingCalendar from "../components/BookingCalendar";
 import { bookingShaper } from "../utils/bookingShaper.mjs";
-
 
 const TutorProfilePage = () => {
   const { tutorId } = useParams();
@@ -21,7 +21,9 @@ const TutorProfilePage = () => {
   const tutorIdParsed = parseTutorId(tutorId);
 
   const [tutor, setTutor] = useState(null);
+
   const { user, setUser } = useContext(UserContext);
+  const { activeChat, setActiveChat } = useContext(ChatContext);
 
   const [tutorBookings, setTutorBookings] = useState([]);
 
@@ -205,7 +207,10 @@ const handleCancelBooking = async(event) => {
       <div className="mx-auto max-w-3xl space-y-10">
         <div className="flex flex-col items-center gap-2">
           <div className="w-full max-w-xl">
-            <FocusedTutorCard tutor={tutor} draftBookingBundle={draftBookingBundle}/>
+            <FocusedTutorCard tutor={tutor} draftBookingBundle={draftBookingBundle} canMessage={user?.role === 'student'} onMessageClick={()=>setActiveChat({
+              otherUserId: tutor.user_id,
+              otherDisplayName: `${tutor.first_name} ${tutor.last_name}`.trim()
+            })}/>
           </div>
 
           <section className="w-full max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
