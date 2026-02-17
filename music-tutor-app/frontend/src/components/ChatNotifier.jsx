@@ -9,7 +9,7 @@ const ChatNotifier = () => {
   const { user } = useContext(UserContext);
   const { activeChat, setActiveChat } = useContext(ChatContext);
 
-  // set state for controlling the pending chat message notification
+  // set state for controlling the pending chat message notification and for supplying other user data to the ChatWindow component
   const [pending, setPending] = useState(null);
 
   useEffect(() => {
@@ -17,8 +17,9 @@ const ChatNotifier = () => {
 
     console.log("Chat notifier running for user:", user);
 
+    // this function detrmines whether to show the pending modal or , if user has opened their chat window, to not show the pending modal
     const handleIncomingChat = (payload) => {
-      // not currently using the 'room' variable but might later
+      // not currently using the 'room' variable from the payload but might later
       const fromUserId = Number(payload?.fromUserId);
       const fromName = payload?.fromName ?? "unkown";
       const preview = payload?.preview ?? "";
@@ -26,13 +27,14 @@ const ChatNotifier = () => {
       if (!Number.isInteger(fromUserId) || fromUserId <= 0) return;
 
       // prevents prompts if currently chatting with other user in window as it ends the method before the pending useStae object ha sits state updated as below
+      // the activeChat object will only have had data set if the ChatWindow component was opened
       if (activeChat?.otherUserId === fromUserId) return;
 
       // give message preview info so the preview modal can display it
       setPending({ fromUserId, fromName, preview });
     };
 
-    console.log("attaching chat listener");
+    // listen to event emitted from tiehr user's server's socket.io insgtance; it will contain the sender's userID, name, and a message preview
     socket.on("incoming_chat", handleIncomingChat); // assigns data for generating the preview modal
 
     return () => {
@@ -42,7 +44,7 @@ const ChatNotifier = () => {
     };
   }, [user, activeChat?.otherUserId]);
 
-  // useEffect to clear 'pending' state when the Global ChatWindow component is opened
+  // useEffect to clear 'pending' state to close the notification modal when the Global ChatWindow component is opened 
   useEffect(()=>{
     if(activeChat) setPending(null);
   }, [activeChat]);

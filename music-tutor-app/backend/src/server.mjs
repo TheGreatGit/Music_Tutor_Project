@@ -9,11 +9,14 @@ import registerRouter from "./routes/registerRoutes.mjs";
 import loginRouter from "./routes/loginRoute.mjs";
 import logoutRouter from "./routes/logOutRoute.mjs";
 import bookingsRouter from "./routes/bookingsRoutes.mjs";
+import chatMessagesRouter from "./routes/chatMessageRoutes.mjs";
 import http from "http";
 import { Server } from "socket.io";
 import { verifyToken } from "./services/tokenService.mjs";
 import { buildUserInfo, findUserByUserId } from "./services/userService.mjs";
 import { generateRoomNumber } from "./utils/utilFunctions.mjs";
+import { query } from "./config/pool.mjs";
+import { log } from "console";
 
 
 // load environment variables in to process.ENV
@@ -56,6 +59,9 @@ app.use("/api", logoutRouter);
 
 //bookings router
 app.use("/api/bookings", bookingsRouter);
+
+//chat messages router
+app.use("/api/chat/messages", chatMessagesRouter)
 
 // api health check
 app.get("/api/health", (req, res) => {
@@ -175,19 +181,13 @@ io.on("connection", (socket) => {
       if(myUserId === otherUserId){
         return socket.emit('chat_error', {message: 'Cannot chat with self'});
       }
-
-
-      //--------ADD DB CODE LATER ------------------
-      // tutor info has aleady been obtained by TutorProfilePage so just get chat history here by isong tutor user id and/or room number directly
-
+      
       const room =`dm:${generateRoomNumber(myUserId, otherUserId)}`;
       // join this user to the student-tutor room
       socket.join(room);
 
       // store details of the other chat member in this room from the perspective of this socket user (i.e. the user id of the tutor the student has tried to emssage)
       socket.data.dmPeers[room] = otherUserId;
-      console.log('socket peers',socket.data.dmPeers); // format of { 'room name': 'other user id'}
-      console.log(`User ${myName} joined room ${room}`);
 
       // send room details to frontend-- the ChatWindow component is listening for the server-side 'join_room' event because it will use the room name for sending messages to the server
       socket.emit('join_room', {room});
@@ -201,9 +201,11 @@ io.on("connection", (socket) => {
   socket.on("chat_message", async(payload) => {
     console.log("message received from client:", payload);
     try {
-      const room = payload?.room;
+      const room = payload?.room;// this info was sent to the client in the socket.emit('join_room) event above
       const text = String(payload?.text ?? "").trim(); // casting to string not strictly necessary but do it for safety
-
+      // get intended recipient in order to have data for DB queries later
+      const recipientUserId = socket.data.dmPeers?.[room]; // this data was added to the socket instance in the socket.on('join_room) event listener above
+      
       if(!room || typeof room !== "string"){
         return socket.emit('chat_error', {message: "Missing room"});
       }
@@ -212,24 +214,70 @@ io.on("connection", (socket) => {
       if(!socket.rooms.has(room)){
         return socket.emit('chat_error', {message: 'Not in the room'});
       }
+      if(!Number.isInteger(recipientUserId) || recipientUserId <= 0){
+        return socket.emit('chat_error', {message: 'Missing chat recipient'});
+      }
 
-      // -------- add DB code to save chat and message details to server and then return DB info to gather info for sending to frontend in the below variable
+      // ******* DB CODE FOR STORING CHAT MESSAGE
+      // the DB cosntraint, similar to room generation, is that you store min userID first and max userID after 
+      const userA = Math.min(myUserId, recipientUserId);
+      const userB = Math.max(myUserId, recipientUserId);
+
+      /*check room exists in DB and create it if it doesn't or use it if it does. 
+      Use postgres UPSERT approach- 
+      If the room_key (the chat room generated in the socket 'join_room' event earlier) doesn't exist, it gets inserted in DB
+      If it does exist, the 'ON CONFLICT... DO' flag picks this up ( as a duplicate insert triggers the DB table's room_key UNIQUE constraint)
+      the 'DO' tells the DB to set the existing user_a_id to the version already in the table i.e. overwrite with same data i.e. don't change.
+      Decided to apply this to the user_a_id as didn't want to touch the room_key just-in-case
+      This is done because the 'DO NOTHING' can't return any data
+      This approach also means you dont have to check it it exists in one query and then, if it doesn't exist, insert in a 2nd query 
+      */
+     // this poulates the chat_ROOMS  table which needs to happen before messages can be stored in the chat_MESSAGES table
+      const roomCheckResult = await query(`INSERT INTO chat_rooms (room_key, user_a_id, user_b_id) VALUES ($1,$2,$3)
+        ON CONFLICT (room_key) DO UPDATE SET user_a_id = chat_rooms.user_a_id
+        RETURNING room_id;`, [room, userA, userB]
+      );
+      //console.log('room check result', roomCheckResult);
+
+      // get the newly created room id from rthe database as it will be used to populate the chat_messages table
+      const roomId = roomCheckResult.rows?.[0]?.room_id;
+      if(!Number.isInteger(roomId) || roomId <= 0){
+        return socket.emit('chat_error', {message: 'Failed to resolve room id'});
+      }
+      // now insert into chat_messages table to get message persitance and then send to socket room
+      // the chat_messsges table will autogenerate the 'sent_at' data due to its 'DEFAULT NOW()' constraint
+      const messageSaveResponse = await query(`
+        INSERT INTO chat_messages (room_id, sender_user_id, recipient_user_id, message_content)
+        VALUES ($1,$2,$3,$4)
+        RETURNING message_id, sent_at`, [roomId, myUserId, recipientUserId, text]
+      );
+
+      const savedMessageInfo = messageSaveResponse.rows?.[0] // format of {message_id: 1, sent_at: timestamp};
+      if(!savedMessageInfo){
+        return socket.emit('chat_error', {message: 'Failed to save chat message to database'});
+      }
+
+      // now update the chat_room's table with details of the most recently sent message
+      await query(`UPDATE chat_rooms SET last_message_at =$1, last_message_id = $2 WHERE room_id = $3`,
+        [savedMessageInfo.sent_at, savedMessageInfo.message_id, roomId]
+      );
+
       const out = {
         room,
         text,
         fromUserId: myUserId,
         fromName: myName,
-        sentAt: new Date().toISOString()
+        sentAt: savedMessageInfo.sent_at,
+        messageId: savedMessageInfo.message_id
       }
 
       // use io.to() rather than socket.to() in order to broascast the data from the 'out' object to both parties in the room
       io.to(room).emit('chat_message', out);
 
-      // notify other user via their personal room that was created after they logged in
-      const recipientUserId = socket.data.dmPeers?.[room]; // this data was added to the socket instance in the socket.on('join_room) event listener above
       if(Number.isInteger(recipientUserId) && recipientUserId >0){
+        
         io.to(`user:${recipientUserId}`).emit('incoming_chat', {
-          room, // room should be used later so the ChatWIndow component can  use it to get chat history from DB
+         // room,
           fromUserId: myUserId,
           fromName: myName,
           preview: text.slice(0,120),
@@ -237,7 +285,7 @@ io.on("connection", (socket) => {
         });
       }
 
-      console.log(`message in room ${room} from ${myName}: ${text}`);
+      //console.log(`message in room ${room} from ${myName}: ${text}`);
 
     } catch (error) {
       console.log('chat_message_error:', error);

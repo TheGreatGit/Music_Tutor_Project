@@ -27,9 +27,8 @@ export const protect = async (req, res, next) => {
       return next(new Error("User not found"));
     }
 
-   const userInfo = buildUserInfo(user)
     // add user details (id, name, email address as per findUSerByUserId) to req object and pass on to next middleware in chain
-    req.user = userInfo;
+    req.user = buildUserInfo(user);
     // console.log(req.user);
     return next();
   } catch (err) {
