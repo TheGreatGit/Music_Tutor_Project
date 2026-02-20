@@ -120,7 +120,6 @@ io.use(async (socket, next) => {
     // console.log('Token string only:', tokenStringOnly);
 
     const decoded = verifyToken(tokenStringOnly); // returned value has the shape of {userId, iat, exp}
-    console.log('decoded = ', decoded);
     // use JWT's userId to search DB
     const userRow = await findUserByUserId(decoded.userId);
     if(!userRow) {
@@ -224,13 +223,13 @@ io.on("connection", (socket) => {
       const userB = Math.max(myUserId, recipientUserId);
 
       /*check room exists in DB and create it if it doesn't or use it if it does. 
-      Use postgres UPSERT approach- 
-      If the room_key (the chat room generated in the socket 'join_room' event earlier) doesn't exist, it gets inserted in DB
-      If it does exist, the 'ON CONFLICT... DO' flag picks this up ( as a duplicate insert triggers the DB table's room_key UNIQUE constraint)
-      the 'DO' tells the DB to set the existing user_a_id to the version already in the table i.e. overwrite with same data i.e. don't change.
-      Decided to apply this to the user_a_id as didn't want to touch the room_key just-in-case
-      This is done because the 'DO NOTHING' can't return any data
-      This approach also means you dont have to check it it exists in one query and then, if it doesn't exist, insert in a 2nd query 
+        Use postgres UPSERT approach- 
+        If the room_key (the chat room generated in the socket 'join_room' event earlier) doesn't exist, it gets inserted in DB
+        If it does exist, the 'ON CONFLICT... DO' flag picks this up ( as a duplicate insert triggers the DB table's room_key UNIQUE constraint)
+        the 'DO' tells the DB to set the existing user_a_id to the version already in the table i.e. overwrite with same data i.e. don't change.
+        Decided to apply this to the user_a_id as didn't want to touch the room_key just-in-case
+        This is done because the 'DO NOTHING' can't return any data
+        This approach also means you dont have to check it it exists in one query and then, if it doesn't exist, insert in a 2nd query 
       */
      // this poulates the chat_ROOMS  table which needs to happen before messages can be stored in the chat_MESSAGES table
       const roomCheckResult = await query(`INSERT INTO chat_rooms (room_key, user_a_id, user_b_id) VALUES ($1,$2,$3)
@@ -239,7 +238,7 @@ io.on("connection", (socket) => {
       );
       //console.log('room check result', roomCheckResult);
 
-      // get the newly created room id from rthe database as it will be used to populate the chat_messages table
+      // get the newly created/confirmed room id from rthe database as it will be used to populate the chat_messages table
       const roomId = roomCheckResult.rows?.[0]?.room_id;
       if(!Number.isInteger(roomId) || roomId <= 0){
         return socket.emit('chat_error', {message: 'Failed to resolve room id'});
