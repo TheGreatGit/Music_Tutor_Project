@@ -5,12 +5,40 @@ import { useContext } from "react";
 import {UserContext} from "../context/UserContext";
 
 /*
-This component displays a modal chat window for a logged-in user to exhange real-time messages with another user
-This is accomplished by joining a server-side 'room' via the frontend's socket.io instance.
-It fetches and displays historical messages via http fetch and recieves real-time messages via websocket.
+  This component displays a modal chat window for a logged-in user to exhange real-time messages with another user
+  This is accomplished by joining a server-side 'room' via the frontend's socket.io instance.
 
-Props:
--otherUserId (number): Id of the intended recipient of the logged-in user's messages.
+  It fetches and displays 
+  1)historical messages via http fetch.
+  2)real-time messages via websocket.
+
+  Context:
+  -user(object)- supplied via UserContext. Used to populate myUserId which is used to determine ownership and UI appearance of chat messages in component
+
+  Props:
+  -otherUserId (number): Id of the intended recipient of the logged-in user's messages. Used to create/join a chatroom on the server and to fetch chat history
+  -otherDisplayName(string): Name of chat recipient- used for UI.
+  -onClose() (function): sets activeChat to null and closes the ChatWindow modal. Funcion runs on clicking the overlay or the Close button
+
+  Local state:
+  -room (string): Created on server from combination of both users' user ids. The value is stored in state and used when sending messages to server.
+  -text (string): react-contolled input state variable for user-created chat message and, in the handleSend() function, is sent to server via the socket.emit('chat_message, text:message) event
+  -messages (array): Log of historic and real-time chat messages used for rendering messages in the component
+  - err(string): used to display errors in UI.
+
+  Socket:
+  Emits:
+  'join_room' event to server, supplying it with intended recipient's user id, so the server can create/join a room for both users
+  'chat_message' event that sends a message -and its intended room-to the server.
+
+  Listens for:
+  'join_room' event- a reply from the server to this component's 'join_room' event. It takes the server-supplied room number and stores it in state for sending messages
+  'chat_message'- listens for new chat messages from ths server and adds them to the end of the messages array.
+  'chat_error'- displays errors in UI.
+
+  Effects:
+  -useEffect sets up the socket listeners, emits the 'join_room' event, fetches chat history and removes duplicate messages, removes listeners and aborts any fetches on cleanup.
+  Its dependency is otherUserId so the hook runs again if otherUserId changes.
 */
 
 
@@ -33,12 +61,10 @@ const ChatWindow = ({ otherUserId, otherDisplayName, onClose }) => {
     const controller = new AbortController();
 
     const handleJoin = ({ room }) => setRoom(room); // room is used to display room number in component but also to allow client-side to send chst message to server along woth room number so server can route it to the room
-    const handleError = (payload) => {
-      setErr(payload?.message || "Chat error");
+    const handleError = (payload) => {setErr(payload?.message || "Chat error");
     };
     // this 'message' is the 'out' object sent by the server
-    const handleMessage = (message) => {
-      setMessages((current) => [...current, message]);
+    const handleMessage = (message) => {setMessages((current) => [...current, message]);
     };
 
     // set up relevant listeners for named events FROM server
@@ -110,10 +136,11 @@ const ChatWindow = ({ otherUserId, otherDisplayName, onClose }) => {
     socket.emit("chat_message", { room, text: message });
     setText("");
   };
+
   // the div with classname pf 'fixed inset-0 z-50  fills the entire screen when the chatwindow component opens
   return (
     <div className="fixed inset-0 z-50">
-      {/*  having this button here, just below the outer div, means that you can click anywhere on the screen and it closes the component.
+      {/*  having this button here, just below the outer div/overlay, means that you can click anywhere on the screen and it closes the component.
     This way, you don't have to rely on only the specific 'close' button */}
       <button
         className="absolute inset-0 bg-black/40"
