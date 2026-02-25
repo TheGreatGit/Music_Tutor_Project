@@ -37,7 +37,7 @@ export const getMessagesFromDB = async (req, res, next) => {
       [userA, userB],
     );
 
-    console.log(roomRes.rows);
+    //console.log(roomRes.rows);
     // if no room found, send empty messages array
     if (roomRes.rowCount === 0) {
       return res.json({
@@ -72,7 +72,8 @@ export const inboxHistoryHandler = async (req, res, next) => {
 
     const dbRes = await query(inboxHistoryQuery, [myUserId]);
     const inboxData = dbRes.rows ?? [];
-
+    console.log('user inbox history data:', inboxData);
+    
     res.json({
       inboxData,
     });

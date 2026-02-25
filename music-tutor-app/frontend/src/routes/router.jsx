@@ -14,7 +14,6 @@ import StudentRegisterForm from "../components/StudentRegisterForm";
 import LoginUserForm from "../pages/LoginUserForm";
 import CalendarTestPage from "../pages/CalendarTestPage";
 import TutorProfilePage from "../pages/TutorProfilePage";
-import MessageNotificationTestPage from "../pages/MessageNotificationTestPage";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -31,8 +30,6 @@ const router = createBrowserRouter(
       <Route path="register/tutor" element={<TutorRegisterForm />} />
       <Route path="register/student" element={<StudentRegisterForm />} />
       <Route path="login" element={<LoginUserForm />} />
-
-      <Route path="notification-test" element={<MessageNotificationTestPage />} />
     </Route>,
   ),
 );

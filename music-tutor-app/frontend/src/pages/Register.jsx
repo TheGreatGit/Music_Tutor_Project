@@ -11,7 +11,7 @@ const Register = () => {
 
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
       <NavLink to="/register/tutor" className="block p-8 rounded-2xl shadow-md border border-slate-200 hover:shadow-lg transition cursor-pointer bg-white text-center">
-        <h2 className="text-xl fonr:semibold mb-2">Register as tutor</h2>
+        <h2 className="text-xl fonr:semibold mb-2">Tutors- be part of our team</h2>
         <p className="text-slate-600"></p>
       </NavLink>
 

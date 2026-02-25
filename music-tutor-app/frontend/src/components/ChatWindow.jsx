@@ -4,6 +4,16 @@ import { socket } from "../socket.mjs";
 import { useContext } from "react";
 import {UserContext} from "../context/UserContext";
 
+/*
+This component displays a modal chat window for a logged-in user to exhange real-time messages with another user
+This is accomplished by joining a server-side 'room' via the frontend's socket.io instance.
+It fetches and displays historical messages via http fetch and recieves real-time messages via websocket.
+
+Props:
+-otherUserId (number): Id of the intended recipient of the logged-in user's messages.
+*/
+
+
 const ChatWindow = ({ otherUserId, otherDisplayName, onClose }) => {
   const { user } = useContext(UserContext);
   const myUserId = user?.user_id;
