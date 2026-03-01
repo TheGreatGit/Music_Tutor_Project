@@ -30,7 +30,7 @@ function TutorRegistrationForm() {
         const cities = await res.json();
         console.log(cities);
         setDBCities(cities);
-        // clear any previous errors that might be in the object from previous render
+        // clear any previous CITY errors that might be in the object from previous render
         setFetchErrors((current)=>({
           ...current, cityError: null
         }))
@@ -64,7 +64,7 @@ function TutorRegistrationForm() {
         }
         const instruments = await res.json();
         setDBInstruments(instruments);
-        // clear any previous error that might be there:
+        // clear any previous INSTRUMENT error that might be there:
         setFetchErrors((current)=>({...current, instrumentError: null}));
       } catch (error) {
         if (error.name === "AbortError") {
