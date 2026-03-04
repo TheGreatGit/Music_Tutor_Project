@@ -80,6 +80,7 @@ function TutorRegistrationForm() {
     return () => controller.abort();
   }, []);
 
+  // set up form input structure, validation modes, and validation schema
   const form = useForm({
     defaultValues: {
       // form data for 1st page of form
@@ -98,7 +99,7 @@ function TutorRegistrationForm() {
       confirmPassword: "",
       phoneNumber: "",
     },
-    mode: "onBlur", // sets validation of fields to occur onBlur rather than waiting until submission
+    mode: "onBlur", // sets validation of fields to occur when user clicks away from the input rather than waiting until submission
     reValidateMode: "onBlur", // after initial validation, sets subsequent revalidation to onblur also.  Form will still revalidate on submit
     // the default setting is mode: "onSubmit" reValidateMode: "onChange"
 
@@ -161,25 +162,25 @@ function TutorRegistrationForm() {
   // function to allow user to navigate baxk to step 1
   const handleBack = () => setStep(1);
 
-  // as RHF is managing inouts via useRef() hook, use RHF's 'watch()' function to access input values.
-  const instrumentInput = (watch("instrument") || "").trim(); // dom't conver to lower case here because the form value will e lower case
+  // as RHF is managing inputs via useRef() hook, use RHF's 'watch()' function to access input values.
+  const instrumentInput = (watch("instrument") || "").trim(); // dom't convert to lower case here because the form value will be lower case
   const cityInput = (watch("city") || "").trim();
 
   const userInstrumentInput = instrumentInput.toLowerCase();
   // check if the user input matches any instrument name  in any row of dbInstruments 
   const hasExactInstrumentMatch = userInstrumentInput && dbInstruments.some((instrumentRow)=>(instrumentRow.instrument_name || "").toLowerCase()=== userInstrumentInput)
   
-  // now create a dropdown only when there is user input but with no exact match; otherwise, when there is an exact match, the dropdown is an empty array
+  // now create a dropdown array only when there is user input but with no exact match; otherwise, when there is an exact match, the dropdown is an empty array
   // when there is an exact match(i.e. user clicks on an instrument dropdown option, the instrument dropdown becomes [])
-  const instrumentDropdown = userInstrumentInput && !hasExactInstrumentMatch ? dbInstruments.filter((instrumentRow)=>{
+  const instrumentDropdownArray = userInstrumentInput && !hasExactInstrumentMatch ? dbInstruments.filter((instrumentRow)=>{
     const matchInstrument = (instrumentRow.instrument_name ||"").toLowerCase();
     return (matchInstrument.includes(userInstrumentInput) && matchInstrument!== userInstrumentInput);
   }).slice(0,10) : [];
 
-  const userCityInput = (cityInput || "").trim().toLowerCase();
+  const userCityInput = cityInput.toLowerCase();
   const hasExactCityMatch = userCityInput && dbCities.some((cityRow)=>(cityRow.city_name ||"").toLowerCase() === userCityInput);
 
-  const cityDropdown = userCityInput && !hasExactCityMatch ? dbCities.filter((cityRow)=>{
+  const cityDropdownArray = userCityInput && !hasExactCityMatch ? dbCities.filter((cityRow)=>{
     const matchCity = (cityRow.city_name || "").toLowerCase();
     return(matchCity.includes(userCityInput) && matchCity !== userCityInput)
   }).slice(0,10):[];
@@ -208,9 +209,9 @@ function TutorRegistrationForm() {
                   {...register("instrument")}
                   className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
-                {instrumentDropdown.length >0 && (
+                {instrumentDropdownArray.length >0 && (
                   <div className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-10">
-                    {instrumentDropdown.map((instrumentRow)=>(
+                    {instrumentDropdownArray.map((instrumentRow)=>(
                       <div key={instrumentRow.instrument_id} 
                       // setValue is a function that, in this code, programmatically sets the 'instrument' field value to nstrumentRow.instrument_name on the onClick event. 
                       // setValue basically changes the RHF form's state in a way it recognises
@@ -388,9 +389,9 @@ function TutorRegistrationForm() {
                   {...register("city")}
                   className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 />
-                {cityDropdown.length >0 && (
+                {cityDropdownArray.length >0 && (
                   <div className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-10">
-                    {cityDropdown.map((cityRow) =>(
+                    {cityDropdownArray.map((cityRow) =>(
                       <div key={cityRow.city_id} onClick={()=>setValue('city', cityRow.city_name, {shouldValidate:true, shouldDirty:true,})}
                       className="px-3 py-1 cursor-pointer hover:bg-slate-100">
                         {cityRow.city_name}

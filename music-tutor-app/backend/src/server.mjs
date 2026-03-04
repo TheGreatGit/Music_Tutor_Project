@@ -16,7 +16,6 @@ import { verifyToken } from "./services/tokenService.mjs";
 import { buildUserInfo, findUserByUserId } from "./services/userService.mjs";
 import { generateRoomNumber } from "./utils/utilFunctions.mjs";
 import { query } from "./config/pool.mjs";
-import { log } from "console";
 
 
 // load environment variables in to process.ENV
