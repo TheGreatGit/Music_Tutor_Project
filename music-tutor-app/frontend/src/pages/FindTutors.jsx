@@ -11,8 +11,9 @@ const FindTutors = () => {
   const [dbCities, setDBCities] = useState([]);
   const [dbInstruments, setDBInstruments] = useState([]);
 
-  // hook that can  be used to sync  search filters with url in browser
+  // React-router hook that can  be used to sync  search filters with url in browser
   // useSearchParams also 'listens' for client-side url changes
+  // it uses JS UrlSearchParam under-the-hood
   const [searchParams, setSearchParams] = useSearchParams();
 
   // placeholder for real-time search input values:
@@ -82,16 +83,19 @@ const FindTutors = () => {
   }, []);
 
   // a useEffect that keeps the broswer's url and the actual search filters in-sync; a url -> state sync
-  // this is acheived by using the srachParams as a dependency and updating the filters ()
+  // this is acheived by using the srachParams as a dependency and updating the 'filters' state object ()
   useEffect(() => {
-    // the searchParams will be set in the commitFilters() function which is called in the keydown event handler function
+    // the searchParams will be set in the commitFilters() function which is called in the keydown event handler function which triggers this useeffect
     // on initial component load (and when clicking on 'find a tutor' link) these params will be empty
     const instrument = (searchParams.get("instrument") || "").trim();
     const city = (searchParams.get("city") || "").trim();
 
     // using setFilters triggers the main data-fetching useEffect() below
-    setFilters({ instrument, city });
-    setInputs({ instrument, city }); // setInputs only so that the input fields are in-sync with what  has been searched for - even "" on reload
+    setFilters({ instrument, city }); // triggers tutor fetching in useeffect below
+
+    // setInputs  so that the rendered input fields are in-sync with what  has been searched for - even "" on reload
+    // this is done here so that the inputs boxes will show the same content even if user types query string in to URL directly
+    setInputs({ instrument, city });
   }, [searchParams]);
 
 
@@ -177,6 +181,7 @@ const FindTutors = () => {
     }
   };
 
+  // used to update inputs when user clicks on the input dropdown
   const handleClick = (searchTerm, fieldName) => {
     setInputs((current) => ({ ...current, [fieldName]: searchTerm }));
   };
