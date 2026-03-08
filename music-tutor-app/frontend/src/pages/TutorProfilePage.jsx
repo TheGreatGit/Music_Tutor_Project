@@ -53,16 +53,6 @@ const TutorProfilePage = () => {
   const [err, setErr] = useState(null); // BREAK THIS IN TO SEPARATE ERRORS FOR THE DIFFERENT USE-EFFECTS? OR 1 SUPER-ERRPR OBJECT THAT HAS 3 PROPETITESFOR THE 3 FETCH ERROR POSSIBILITIES
   const [showCalendar, setShowCalendar] = useState(false);
 
-  // a new use-effect to keep tutor id and student id always in-sync with the latest values. Not stricly needed now, but will be needed when I add user rehydration to preserve login after refrshing pages in browser
-  useEffect(()=>{
-    setDraftBooking((current)=>({
-      ...current,
-      tutor_id: tutorIdParsed || null,
-      student_id: user?.student_id || null
-    }));
-  }, [tutorIdParsed, user?.student_id]);
-
-
   // fetch tutor info
   useEffect(() => {
     // prevent pointless fetch if :tutorId param is not a valid number
