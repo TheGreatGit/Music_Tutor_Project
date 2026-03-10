@@ -39,6 +39,13 @@ import {UserContext} from "../context/UserContext";
   Effects:
   -useEffect sets up the socket listeners, emits the 'join_room' event, fetches chat history and removes duplicate messages, removes listeners and aborts any fetches on cleanup.
   Its dependency is otherUserId so the hook runs again if otherUserId changes.
+  
+  The extra logic in the useEffect of removing potential duplicates whilst not overwriting instant messages that arrive from socket listener during fetch for chat history is needed because 
+  of the socket.io real-time notification code running in parallel with the fetch chat history code. This creates potential race condition in that, when component renders,
+  the socket listener is added for real-time messages and the hhtp fetch runs to get DB messages. One possibilty without the code is that, during the fetch, 
+  a realtime message arrives and displays but when the fecth completes and updates chat state with DB resposne, the real-time message is lost because it was not yet saved in DB by the time the fetch completed.
+  
+  Another possiblitly is that the realtime message arrvies during fetch but IS saved to DB before fetch compeltesd and when fetch completes, the message is shown again
 */
 
 
@@ -64,6 +71,8 @@ const ChatWindow = ({ otherUserId, otherDisplayName, onClose }) => {
     const handleError = (payload) => {setErr(payload?.message || "Chat error");
     };
     // this 'message' is the 'out' object sent by the server
+    // thid code  updates the UI with real-time messages received from socket
+    // useEffect code below handles msing of current and hsitorical message state
     const handleMessage = (message) => {setMessages((current) => [...current, message]);
     };
 
@@ -87,13 +96,18 @@ const ChatWindow = ({ otherUserId, otherDisplayName, onClose }) => {
         const chatHistory = data?.messages;
         //console.log('chat history is:',chatHistory);
 
-        // this is crucial as live emssages may have arrived to component via socket whilst fetch is still running
-        // need to ensure that any messages sent after fetch starts but before it ends are not erased by setting messages array to just the DB response
+        // this next code is crucial as live emssages may have arrived to component via socket whilst fetch is still running
+        // need to ensure that any messages sent via  socket after fetch starts but before it ends are not lost from UI once message state is set by fetch response
+        // this is achieved with the setMessages((current) => {const fullHistory = [...chatHistory, ...current];)
+        // current contains any intra-fetch messages in the UI from socket. chatHistory shows DB messages.
+        // due to race conditions, you can have a message in current that is not in chatHistory, or you can have a message appearing in both
+        // as such, chatHistory and current need to be merged (as this preserves intra-fetch socket message) and deduplicated (in case message is in current and chatHistory)
         setMessages((current) => {
           const fullHistory = [...chatHistory, ...current];
           // as a Set has no duplicates, this is used as a proxy to store unique message ids from full chat history
           const seen = new Set();
 
+          // potential for duplicates as a real-time chat message can arrive during fetch and, as fetch completes, the messsge may be saved in database and form part of the chatHistory and be shpwn a second time if not removed.
           const noDuplicates = fullHistory.filter((message) => {
             const id = message.messageId;
             if (seen.has(id)) return false; // this filters out duplicates
