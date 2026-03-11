@@ -38,7 +38,7 @@ const BookingCalendar = ({
   draftBookingBundle,
 }) => {
   console.log("passed in ", tutor, user);
-  const clientIdRef = useRef(1); // for generating a tempiray id so frontend can do checks prior to booking appoitments
+  //const clientIdRef = useRef(1); // for generating a tempiray id so frontend can do checks prior to booking appoitments
 
   // set up the Calendar's default view setting and the date it defaults to focusing on
   const [view, setView] = useState("week");
@@ -60,7 +60,7 @@ const BookingCalendar = ({
   // the client id is only a temporary field to allow frontend booking logic checks
   const canDisplayDraft =
     draftBooking?.isDraft &&
-    draftBooking?.client_id &&
+    //draftBooking?.client_id &&
     draftBooking?.booking_start_time &&
     draftBooking?.booking_end_time;
 
@@ -81,10 +81,10 @@ const BookingCalendar = ({
   // then, you can get access to the 'onSelectSlot' event and create a handler like this:
   const handleSelectSlot = (slotInfo) => {
     // create a dummy booking  id so frontend can do booking validity checks
-    const client_id = clientIdRef.current;
-    clientIdRef.current += 1;
+    //const client_id = clientIdRef.current;
+    //clientIdRef.current += 1;
     updateDraftBooking({
-      client_id,
+      //client_id,
       booking_start_time: slotInfo.start,
       booking_end_time: slotInfo.end,
       isDraft: true
@@ -118,6 +118,7 @@ const BookingCalendar = ({
     setBookingDetailsError(null);
     setSelectedBookingDetails(null);
 
+    // fetch booking/event details from DB
     try {
       const res = await fetch(`http://localhost:3000/api/bookings/getBookings/${clickedEvent.booking_id}`, {credentials: "include"});
       // trialling new codee pattern after fetches where the resposne is processed with .json() and, if it was a backend error response (!res.ok), the backend error message is accessed via data.message
@@ -210,7 +211,7 @@ const BookingCalendar = ({
 
   const clearSelection = () => {
     updateDraftBooking({
-    client_id: null,
+    //client_id: null,
     instrument_id: null, 
     booking_start_time: null,
     booking_end_time: null,
@@ -236,9 +237,9 @@ const BookingCalendar = ({
     }
 
     // checks draft bookings as they are being created on the frontend
-    if (a?.client_id != null && b?.client_id != null) {
-      return a.client_id === b.client_id;
-    }
+    // if (a?.client_id != null && b?.client_id != null) {
+    //   return a.client_id === b.client_id;
+    // }
 
     return false;
   };

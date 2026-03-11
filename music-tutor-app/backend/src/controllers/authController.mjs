@@ -1,5 +1,9 @@
 import { signUserToken } from "../services/tokenService.mjs";
-import { findUserByEmail, validatePassword } from "../services/userService.mjs";
+import {
+  buildUserInfo,
+  findUserByEmail,
+  validatePassword,
+} from "../services/userService.mjs";
 import { cookieOptions, setAuthCookie } from "../utils/cookie.mjs";
 
 // handler for login route (works for any user as it just requires an email and password)
@@ -11,7 +15,7 @@ export const login = async (req, res, next) => {
 
     if (!email || !password) {
       res.status(400);
-      return next(new Error('Provide all required fields'));
+      return next(new Error("Provide all required fields"));
     }
 
     const lowerCasedEmail = email.toLowerCase().trim();
@@ -19,64 +23,21 @@ export const login = async (req, res, next) => {
     const user = await findUserByEmail(lowerCasedEmail); // will return a matching  DB row from APP_USERS, STUDENTS, TUTORS, AND ROLE tables as an object. It will include entire row including password
     if (!user) {
       res.status(401);
-      return next(new Error('Invalid credentials'));
+      return next(new Error("Invalid credentials"));
     }
 
     // if matching email found, check password in result
     const valid = await validatePassword(password, user.password_hash);
     if (!valid) {
       res.status(401);
-      return next(new Error('Invalid credentials'));
+      return next(new Error("Invalid credentials"));
     }
 
-    // begin to acquire user details dependant on their role
-    const { user_id } = user;
-    const userRole = user.role_name;
-    let roleSpecificId;
-    let first_name;
-    let last_name;
-
-    if (userRole === "tutor") {
-      roleSpecificId = user.tutor_id;
-      first_name = user.tutor_first_name;
-      last_name = user.tutor_last_name;
-    } else if (userRole === "student") {
-      roleSpecificId = user.student_id;
-      first_name = user.student_first_name;
-      last_name = user.student_last_name;
-    } else if(userRole === 'admin') {
-      // change to admin later
-      roleSpecificId = user.admin_id;
-      first_name = user.admin_first_name;
-      last_name = user.admin_last_name;
-    }else{
-      res.status(403);
-      return next(new Error('Unsupported role'));
-    }
-
-    // create a stripped user object for frontend (i.e. minus password)
-    const strippedUser = {
-      user_id,
-      role: userRole,
-      first_name,
-      last_name,
-      email: user.email,
-    };
-
-    // add tutor or student id in
-    if (userRole === "student") {
-      strippedUser.student_id = roleSpecificId;
-    }
-    if (userRole === "tutor") {
-      strippedUser.tutor_id = roleSpecificId;
-    }
-    if(userRole === "admin"){
-      strippedUser.admin_id = roleSpecificId;
-    }
-    console.log("stripped user from DB in login route", strippedUser);
+    // build user info to be sent to frontend for rendering
+    const strippedUser = buildUserInfo(user); // will have {user_id, role, first_name, last_name, email, student/tutor/admin_id}
 
     //create JWT with user id as payload -CONTAINS ONLY USER_ID AND NO OTHER USER DATA
-    const token = signUserToken(user_id);
+    const token = signUserToken(strippedUser.user_id);
     //add token to cookie
     setAuthCookie(res, token);
 

@@ -59,7 +59,7 @@ export const makeBooking = async(req, res, next)=>{
       const booking_status = 1;
 
       console.log(draftBooking);
-      const {tutor_id, student_id, instrument_id, booking_start_time, booking_end_time, title, teaching_format_id, teaching_type_id, skill_level_id, isDraft, client_id} = draftBooking;
+      const {tutor_id, student_id, instrument_id, booking_start_time, booking_end_time, title, teaching_format_id, teaching_type_id, skill_level_id, isDraft} = draftBooking;
 
       // basic validity check
       if(!tutor_id || !student_id || !instrument_id || !booking_start_time || !booking_end_time || !teaching_format_id || !teaching_type_id || !skill_level_id){
@@ -68,10 +68,10 @@ export const makeBooking = async(req, res, next)=>{
       }
 
       // check all the IDs
-      // put them in an array if obhects in order to apply a standard check in a loop
+      // put them in an array if obhects in order to apply a standard check in a loop rather than writing 6 individual checks
       const IdArray = [{key: 'tutor_id', value: tutor_id}, {key: 'student_id', value: student_id}, {key: 'instrument_id', value: instrument_id}, {key:'teaching_format_id', value: teaching_format_id}, {key:'teaching_type_id', value: teaching_type_id}, {key:'skill_level_id', value: skill_level_id}];
 
-      // empty object to be used to create validated key-value pairs for DB insertion
+      // empty object to be used to create validated IDArray key-value pairs for DB insertion
       const parsedIds = {};
       // rememebr the {} for key, value as you nmeed to destructure each of IdArray's objects in the for-of loop
       for (const {key, value} of IdArray){
@@ -182,7 +182,7 @@ export const cancelBookingById = async(req, res, next) =>{
       return res.status(200).json({message: 'Appointment cancelled', booking: cancelResult.rows[0]});
     }
 
-    // here means that rows.length === 0; i.e. that the booking that was requested to  be cancelled did not fit cancel criteria or doesn't exist or some error
+    // reaching this code means that rows.length === 0; i.e. that the booking that was requested to  be cancelled did not fit cancel criteria or doesn't exist or some error
     // do other checks to determine what has happened
 
     // 1st, just check to see if any bookings match the booking id at all

@@ -20,7 +20,7 @@ const isEmailTaken = async (email) => {
 
 export const tutorRegistrationFormSchema = z
   .object({
-    instrument: removeBlanks("Instrument in required"),
+    instrument: removeBlanks("Instrument is required"),
 
     teachingFormats: z.array(teachingFormatEnum).min(1,{message: 'Select at least one teaching format'}),
     teachingTypes: z.array(teachingTypeEnum).min(1,{message: 'Select at least one teaching type'}),

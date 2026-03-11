@@ -1,5 +1,5 @@
 
-const FocusedTutorCard = ({ tutor, draftBookingBundle }) => {
+const FocusedTutorCard = ({ tutor, draftBookingBundle, canMessage, onMessageClick}) => {
   
   if (!tutor) return <p>No tutor passed in as prop</p>;
   const {draftBooking, updateDraftBooking} = draftBookingBundle;
@@ -97,7 +97,11 @@ const FocusedTutorCard = ({ tutor, draftBookingBundle }) => {
 
         {/* card footer */}
         <div className="mt-auto pt-2 flex items-center justify-between border-t border-slate-100">
-          <div className="text-sm text-slate-500">Message</div>
+          {/* onMessageClick, defined in TutorProfilePage, updates the activeChat conetxt status to have recipients display name and user id */}
+          <button onClick={onMessageClick} disabled={!canMessage} 
+          className={`text-sm font-medium rounded-lg px-3 py-2 bg-indigo-50 transition ${canMessage ? "text-indigo-700 hover:bg-indigo-100 cursor-pointer ": "text-slate-400 cursor-not-allowed"}`}>
+            Message tutor
+          </button>
           <div className="text-sm font-semibold text-slate-900">
             From 30 GBP/30 min
           </div>
