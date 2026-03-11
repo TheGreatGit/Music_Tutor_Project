@@ -131,10 +131,11 @@ export const tutorRegistrationController = async (req, res, next) => {
         const formatsResult = await client.query(
           `select teaching_format_id, teaching_format_name from teaching_format where teaching_format_name = ANY($1::text[])`,
           [teachingFormats]
-        );
-
+        ); // querry becomnes equivalent to ...where teaching_format_name = ANY(ARRAY['in_person'])
+        // formatsResult would return, for each submitted format, row of teaching format id and name where submitted format name matches DB format name
+        
         const values = [];
-        const params = [tutorId]; // always add tutorId as the first param
+        const params = [tutorId]; // always add tutorId as the first param in the params array
 
         formatsResult.rows.forEach((row, index) => {
           values.push(`($1, $${index + 2})`); // depending on index, values becomes [($1,$2), ($1,$3), ($1, $4)...] SEE BELOW WHY ITS INDEX+2
