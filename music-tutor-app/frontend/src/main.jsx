@@ -24,7 +24,7 @@ function Main() {
   const [isInboxOpen, setIsInboxOpen] = useState(false);
 
   // useEffect to manage socket connection to ensure only logged in users get websocket functionality
-  // set it to 'watch' user state
+  // set to watch user state
   useEffect(() => {
     if (user) {
       if (!socket.connected) {

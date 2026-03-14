@@ -12,7 +12,6 @@ import Register from "../pages/Register";
 import TutorRegisterForm from "../components/TutorRegisterForm";
 import StudentRegisterForm from "../components/StudentRegisterForm";
 import LoginUserForm from "../pages/LoginUserForm";
-import CalendarTestPage from "../pages/CalendarTestPage";
 import TutorProfilePage from "../pages/TutorProfilePage";
 
 const router = createBrowserRouter(
