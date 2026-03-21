@@ -3,8 +3,18 @@ import { useForm } from "react-hook-form";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { tutorRegistrationFormSchema } from "../validationSchemas/tutorRegistrationFormSchema.mjs";
+import checkIfUser from "../utils/checkIfUser.mjs";
+import { Navigate } from "react-router-dom";
 
 function TutorRegistrationForm() {
+  // new redirect mechanism for legged-in users
+  const {user} = checkIfUser();
+  console.log('user in registration form check', user);
+  
+  if(user){
+    return <Navigate to="/" />
+  }
+
   // state object for selectively rendering form section i.e. looks like multi-page form
   const [step, setStep] = useState(1);
   // same approach as from FindTutor component: fetch instrument and city info for real-time search dropdowns

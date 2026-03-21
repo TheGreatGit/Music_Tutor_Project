@@ -11,7 +11,7 @@ const Home = () => {
   return (
     <>
     <div>Home</div>
-    { user ? (<p>Hello, {user.role } {user.firstName}</p>):(<p>Not logged in</p>)}
+    { user ? (<p>Hello, {user?.role } {user?.display_name}</p>):(<p>Not logged in</p>)}
     </>
   )
 }

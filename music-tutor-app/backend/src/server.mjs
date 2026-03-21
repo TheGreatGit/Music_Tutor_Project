@@ -10,6 +10,7 @@ import loginRouter from "./routes/loginRoute.mjs";
 import logoutRouter from "./routes/logOutRoute.mjs";
 import bookingsRouter from "./routes/bookingsRoutes.mjs";
 import chatMessagesRouter from "./routes/chatMessageRoutes.mjs";
+import reAuthRouter from "./routes/reAuthRoute.mjs";
 import http from "http";
 import { Server } from "socket.io";
 import { verifyToken } from "./services/tokenService.mjs";
@@ -50,11 +51,14 @@ app.use("/api/filters", filterRouter);
 // route for REGISTERING tutors and students.
 app.use("/api/register", registerRouter);
 
-// route for login any user
+// route to log in any user
 app.use("/api", loginRouter);
 
 //logout route
 app.use("/api", logoutRouter);
+
+// re-auth route to keep frontend's user login status on page refresh
+app.use("/api", reAuthRouter);
 
 //bookings router
 app.use("/api/bookings", bookingsRouter);

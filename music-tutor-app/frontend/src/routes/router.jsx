@@ -1,6 +1,7 @@
 import {
   createBrowserRouter,
   createRoutesFromElements,
+  Navigate,
   Route,
 } from "react-router-dom";
 import RootLayout from "../Layout/RootLayout";
@@ -26,9 +27,9 @@ const router = createBrowserRouter(
       {/* for the register-link in navbar */}
       <Route path="register" element={<Register />} />
       {/* links to registration forms */}
-      <Route path="register/tutor" element={<TutorRegisterForm />} />
+      <Route path="register/tutor" element={ <TutorRegisterForm />} />
       <Route path="register/student" element={<StudentRegisterForm />} />
-      <Route path="login" element={<LoginUserForm />} />
+      <Route path="login" element={ <LoginUserForm />} />
     </Route>,
   ),
 );

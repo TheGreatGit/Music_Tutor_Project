@@ -11,7 +11,7 @@ const NavBar = () => {
   // get user context!
   const {user} = useContext(UserContext);
 
-  const navigate = useNavigate()
+  //const navigate = useNavigate()
 
   return (
     <nav className='flex flex-row justify-between px-4 py-2'>
@@ -27,7 +27,10 @@ const NavBar = () => {
       </ul>
       
       <div className=" flex items-center gap-3">
-        <NavLink to="/register" className="px-4 py-2 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 transition"> Register</NavLink>
+        { !user && (
+          <NavLink to="/register" className="px-4 py-2 rounded-xl bg-indigo-500 text-white hover:bg-indigo-600 transition"> Register</NavLink>
+        )}
+        
         {user? (<LogOutButton />) : (<NavLink to="/login" className='px-4 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 transition cursor-pointer'>Log in</NavLink>)}
       </div>
 

@@ -3,8 +3,16 @@ import { useForm } from "react-hook-form";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { studentRegistrationFormSchema } from "../validationSchemas/studentRegistrationFormSchema.mjs";
+import checkIfUser from "../utils/checkIfUser.mjs";
+import { Navigate } from "react-router-dom";
 
 const StudentRegisterForm = () => {
+  // new redirect mechanism for legged-in users
+  const {user} = checkIfUser();
+  if(user){
+    return <Navigate to="/" />
+  }
+  
   //fetch city info for real-time search dropdowns
   const [dbCities, setDBCities] = useState([]);
 
