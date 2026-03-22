@@ -272,7 +272,7 @@ const StudentRegisterForm = () => {
               </p>
             </div>
             {/*  back button and submit button */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex gap-2 pt-2 justify-center">
               <button
                 type="submit"
                 disabled={isSubmitting}
