@@ -22,8 +22,8 @@ const TutorProfilePage = () => {
 
   const [tutor, setTutor] = useState(null);
 
-  const { user, setUser } = useContext(UserContext);
-  const { activeChat, setActiveChat } = useContext(ChatContext);
+  const { user } = useContext(UserContext);
+  const { setActiveChat } = useContext(ChatContext);
 
   const [tutorBookings, setTutorBookings] = useState([]);
 
@@ -197,7 +197,8 @@ const handleCancelBooking = async(event) => {
       <div className="mx-auto max-w-3xl space-y-10">
         <div className="flex flex-col items-center gap-2">
           <div className="w-full max-w-xl">
-            <FocusedTutorCard tutor={tutor} draftBookingBundle={draftBookingBundle} canMessage={user?.role === 'student'} onMessageClick={()=>setActiveChat({
+            <FocusedTutorCard tutor={tutor} draftBookingBundle={draftBookingBundle} canMessage={ user?.role === 'student'} 
+            onMessageClick={()=>setActiveChat({
               otherUserId: tutor.user_id,
               otherDisplayName: `${tutor.first_name} ${tutor.last_name}`.trim()
             })}/>
@@ -207,7 +208,9 @@ const handleCancelBooking = async(event) => {
             <h2 className="text-lg font-semibold text-slate-900 mb-2">
               Availability and booking
             </h2>
-            {user?.role === "student" ? (
+
+            {
+            user?.role === "student" ? (
               <>
                 <button
                   className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-2"
@@ -233,7 +236,11 @@ const handleCancelBooking = async(event) => {
                   />
                 </div>
               </>
-            ) : (
+            ) : user?.role ==='tutor'? (
+              <p className="text-slate-600">
+                Tutors cannot book lessons with other tutors.
+              </p>
+            ): (
               <p>
                 <Link
                   to="/login"

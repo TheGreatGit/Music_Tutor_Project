@@ -80,6 +80,8 @@ export const getCurrentUser = async (req, res, next) => {
     const strippedUser = buildUserInfo(user);
     return res.status(200).json({user: strippedUser});
   } catch (error) {
+    console.log('error in \'getCurrentUser\' handler', error);
+    
     res.status(401);
     return next(new Error('Invalid or expired token'));
   }
