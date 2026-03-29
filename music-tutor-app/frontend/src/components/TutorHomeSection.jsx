@@ -1,0 +1,71 @@
+import { useEffect, useState } from "react";
+import TutorCrudForm from "./TutorCrudForm";
+
+// this component really just acts as a wrapper that gets the tutor's details (just like FocusedTutorCard) 
+// and feeds them in to the TutorCrudForm component
+const TutorHomeSection = ({ user }) => {
+  const [tutorProfile, setTutorProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState(null);
+
+  // fetch tutor profile data
+  useEffect(() => {
+    if (!user?.tutor_id) {
+      setTutorProfile(null);
+      return;
+    }
+    const controller = new AbortController();
+
+    const getTutorProfile = async () => {
+      setProfileLoading(true);
+      setProfileError(null);
+
+      try {
+        const res = await fetch(
+          `http://localhost:3000/api/tutors/${user.tutor_id}`,
+          {
+            credentials: "include",
+            signal: controller.signal,
+          },
+        );
+
+        if (!res.ok) {
+          throw new Error("Failed to fetch tutor profile");
+        }
+        const data = await res.json();
+        setTutorProfile(data);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("Tutor fetch aborted");
+        } else {
+          console.log("Tutor profile fetch error", error);
+          setProfileError(error.message || "Tutor profile fetch error");
+          setTutorProfile(null);
+        }
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+
+    getTutorProfile();
+
+    return () => controller.abort();
+  }, [user]);
+
+  // selectively render depending on result of tutor fetch
+  if (profileLoading) {
+    return <p>Loading tutor profile...</p>;
+  }
+
+  if (profileError) {
+    return <p className="text-red-600">{profileError}</p>;
+  }
+
+  if (!tutorProfile) {
+    return <p>No tutor profile found</p>;
+  }
+
+  return <TutorCrudForm tutorProfile={tutorProfile} />;
+};
+
+export default TutorHomeSection;
