@@ -11,6 +11,7 @@ import logoutRouter from "./routes/logOutRoute.mjs";
 import bookingsRouter from "./routes/bookingsRoutes.mjs";
 import chatMessagesRouter from "./routes/chatMessageRoutes.mjs";
 import reAuthRouter from "./routes/reAuthRoute.mjs";
+import crudRouter from "./routes/crudRoutes.mjs"
 import http from "http";
 import { Server } from "socket.io";
 import { verifyToken } from "./services/tokenService.mjs";
@@ -65,6 +66,9 @@ app.use("/api/bookings", bookingsRouter);
 
 //chat messages router
 app.use("/api/chat/messages", chatMessagesRouter)
+
+// user CRUD router
+app.use("/api", crudRouter)
 
 // api health check
 app.get("/api/health", (req, res) => {

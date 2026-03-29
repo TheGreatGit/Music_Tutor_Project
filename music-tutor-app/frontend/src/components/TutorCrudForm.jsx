@@ -1,11 +1,19 @@
 import React, { useEffect, useState } from "react";
 
+// OPTED NOT TO USE RHF AT THIS STAGE FOR SIMPLICITY BECAUSE MOST OF THE DATA IN THE PAGE COMES FROM BACKEND ON INITIAL FETCH
+// AND THE USER HAS LIMITED MEANS TO AMEND DATA FORMAT SO
 const TutorCrudForm = ({ tutorProfile }) => {
   const [dbCities, setDBCities] = useState([]);
   const [dbInstruments, setDBInstruments] = useState([]);
-  const [fetchErrors, setFetchErrors] = useState({cityError: null, instrumentError: null});
+  const [fetchErrors, setFetchErrors] = useState({
+    cityError: null,
+    instrumentError: null,
+  });
 
-  const [inputs, setInputs] = useState({city: tutorProfile?.city_name || "", instrument: tutorProfile?.instruments?.[0]?.instrument_name || ""});
+  const [inputs, setInputs] = useState({
+    city: tutorProfile?.city_name || "",
+    instrument: tutorProfile?.instruments?.[0]?.instrument_name || "",
+  });
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,15 +30,53 @@ const TutorCrudForm = ({ tutorProfile }) => {
     }));
   };
 
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    // covnert formData in to plain JS object so it can be sent in request body via stringify
+    const payload = {
+      city: formData.get("city")?.trim() || "",
+      instrument: formData.get("instrument")?.trim() || "",
+      teachingFormats: formData.getAll("teachingFormats"),
+      teachingTypes: formData.getAll("teachingTypes"),
+      skillLevels: formData.getAll("skillLevels"),
+    };
+
+    console.log("Tutor updated payload", payload);
+    try {
+      const res = await fetch("http://localhost:3000/api/tutors/me", {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          // headers needed so express.json() parses the body json data
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      console.log("tutor crud response:", data);
+
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to update tutor profile");
+      }
+      window.alert("Tutor profile updated successfully");
+    } catch (error) {
+      console.log("Tutor crud error", error);
+      window.alert(error.message || "Failed to update tutor prfile");
+    }
+  };
+
   // sync effect for city and isntruemnt input from tutor profile- not strictly necessary as this component is only rednered if tutrProfile exists
   // but it is defensive to have it here
-  useEffect(()=>{
-    if(!tutorProfile) return;
+  useEffect(() => {
+    if (!tutorProfile) return;
     setInputs({
       city: tutorProfile.city_name || "",
-      instrument: tutorProfile?.instruments?.[0].instrument_name || ""
+      instrument: tutorProfile?.instruments?.[0]?.instrument_name || "",
     });
-  },[tutorProfile]);
+  }, [tutorProfile]);
 
   // useEffect() to get DB cities for real-time filter
   useEffect(() => {
@@ -106,26 +152,51 @@ const TutorCrudForm = ({ tutorProfile }) => {
     return <p>No tutor profile</p>;
   }
 
-
-    // get user's input
+  // get user's input
   const userInstrumentInput = (inputs.instrument || "").toLowerCase().trim();
-  // check if the user input matches any instrument name  in any row of dbInstruments 
-  const hasExactInstrumentMatch = userInstrumentInput && dbInstruments.some((instrumentRow)=>(instrumentRow.instrument_name || "").toLowerCase().trim()=== userInstrumentInput);
+  // check if the user input matches any instrument name  in any row of dbInstruments
+  const hasExactInstrumentMatch =
+    userInstrumentInput &&
+    dbInstruments.some(
+      (instrumentRow) =>
+        (instrumentRow.instrument_name || "").toLowerCase().trim() ===
+        userInstrumentInput,
+    );
   // now create a dropdown only when there is user input but with no exact match; otherwise, the dropdown is an empty array
   // when there is an exact match(i.e. user clicks on an instrument dropdown option, the instrument dropdown becomes [])
-  const instrumentDropdown = userInstrumentInput && !hasExactInstrumentMatch ? dbInstruments.filter((instrumentRow)=>{
-    const matchInstrument = (instrumentRow.instrument_name ||"").toLowerCase();
-    return (matchInstrument.includes(userInstrumentInput) && matchInstrument!== userInstrumentInput);
-  }).slice(0,10) : [];
+  const instrumentDropdown =
+    userInstrumentInput && !hasExactInstrumentMatch
+      ? dbInstruments
+          .filter((instrumentRow) => {
+            const matchInstrument = (
+              instrumentRow.instrument_name || ""
+            ).toLowerCase();
+            return (
+              matchInstrument.includes(userInstrumentInput) &&
+              matchInstrument !== userInstrumentInput
+            );
+          })
+          .slice(0, 10)
+      : [];
 
   const userCityInput = (inputs.city || "").toLowerCase().trim();
-  const hasExactCityMatch = userCityInput && dbCities.some((cityRow)=>(cityRow.city_name ||"").toLowerCase() === userCityInput);
-  const cityDropdown = userCityInput && !hasExactCityMatch ? dbCities.filter((cityRow)=>{
-    const matchCity = (cityRow.city_name || "").toLowerCase();
-    return(matchCity.includes(userCityInput) && matchCity !== userCityInput)
-  }).slice(0,10):[];
+  const hasExactCityMatch =
+    userCityInput &&
+    dbCities.some(
+      (cityRow) => (cityRow.city_name || "").toLowerCase() === userCityInput,
+    );
+  const cityDropdown =
+    userCityInput && !hasExactCityMatch
+      ? dbCities
+          .filter((cityRow) => {
+            const matchCity = (cityRow.city_name || "").toLowerCase();
+            return (
+              matchCity.includes(userCityInput) && matchCity !== userCityInput
+            );
+          })
+          .slice(0, 10)
+      : [];
 
-  
   const selectedTeachingFormats =
     tutorProfile?.teaching_formats?.map((format) =>
       (format?.teaching_format_name || "").toLowerCase(),
@@ -166,7 +237,11 @@ const TutorCrudForm = ({ tutorProfile }) => {
           </p>
         </div>
 
-        <form noValidate className="space-y-4 text-left">
+        <form
+          onSubmit={handleSubmit}
+          noValidate
+          className="space-y-4 text-left"
+        >
           <div>
             <label
               htmlFor="firstName"
@@ -225,31 +300,31 @@ const TutorCrudForm = ({ tutorProfile }) => {
             <input
               type="text"
               id="city"
-              name ="city"
+              name="city"
               value={inputs.city}
               onChange={handleChange}
               className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
             {/* REALT-TIME DROPDOWN EFFECT */}
-          {inputs.city.trim() && cityDropdown.length > 0 && (
-            <div className="absolute top-full left-0 mt-1 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
-              {cityDropdown.map((cityRow) => (
-                <div
-                  onClick={() => handleClick(cityRow.city_name, "city")}
-                  className="px-3 py-2 cursor-pointer hover:bg-slate-100"
-                  key={cityRow.city_id}
-                >
-                  {cityRow.city_name}
-                </div>
-              ))}
-            </div>
-          )}
+            {inputs.city.trim() && cityDropdown.length > 0 && (
+              <div className="absolute top-full left-0 mt-1 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
+                {cityDropdown.map((cityRow) => (
+                  <div
+                    onClick={() => handleClick(cityRow.city_name, "city")}
+                    className="px-3 py-2 cursor-pointer hover:bg-slate-100"
+                    key={cityRow.city_id}
+                  >
+                    {cityRow.city_name}
+                  </div>
+                ))}
+              </div>
+            )}
 
-          {fetchErrors.cityError && (
-            <p className="mt-1 text-sm text-red-600">
-              {fetchErrors.cityError}
-            </p>
-          )}
+            {fetchErrors.cityError && (
+              <p className="mt-1 text-sm text-red-600">
+                {fetchErrors.cityError}
+              </p>
+            )}
           </div>
 
           <div className="relative">
@@ -268,26 +343,26 @@ const TutorCrudForm = ({ tutorProfile }) => {
               className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm"
             />
             {/* real-time dropdown */}
-          {inputs.instrument.trim() && instrumentDropdown.length > 0 && (
-            <div className="absolute top-full left-0 mt-1 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
-              {instrumentDropdown.map((instrumentRow) => (
-                <div
-                  onClick={() =>
-                    handleClick(instrumentRow.instrument_name, "instrument")
-                  }
-                  className="px-3 py-2 cursor-pointer hover:bg-slate-100"
-                  key={instrumentRow.instrument_id}
-                >
-                  {instrumentRow.instrument_name}
-                </div>
-              ))}
-            </div>
-          )}
-          {fetchErrors.instrumentError && (
-            <p className="mt-1 text-sm text-red-600">
-              {fetchErrors.instrumentError}
-            </p>
-          )}            
+            {inputs.instrument.trim() && instrumentDropdown.length > 0 && (
+              <div className="absolute top-full left-0 mt-1 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
+                {instrumentDropdown.map((instrumentRow) => (
+                  <div
+                    onClick={() =>
+                      handleClick(instrumentRow.instrument_name, "instrument")
+                    }
+                    className="px-3 py-2 cursor-pointer hover:bg-slate-100"
+                    key={instrumentRow.instrument_id}
+                  >
+                    {instrumentRow.instrument_name}
+                  </div>
+                ))}
+              </div>
+            )}
+            {fetchErrors.instrumentError && (
+              <p className="mt-1 text-sm text-red-600">
+                {fetchErrors.instrumentError}
+              </p>
+            )}
           </div>
 
           <div>
@@ -390,6 +465,14 @@ const TutorCrudForm = ({ tutorProfile }) => {
                 Professional
               </label>
             </div>
+          </div>
+          <div className="pt-2">
+            <button
+              type="submit"
+              className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+            >
+              Save changes
+            </button>
           </div>
         </form>
       </div>
