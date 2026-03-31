@@ -114,7 +114,7 @@ export const tutorCrudController = async (req, res, next) => {
         [teachingFormats],
       );
 
-      // check if the teaching formats sent from online (in the array) are all found in the DB
+      // check if the teaching formats sent from frontend (in the array) are all found in the DB
       // i.e. if the frontend sends an invalid teaching format,  there will be no corresponding row from DB
       // this will mean that DB rows.length != teachingFormats.length
       if (formatsResult.rows.length !== teachingFormats.length) {

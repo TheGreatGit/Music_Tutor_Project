@@ -5,6 +5,11 @@ import React, { useEffect, useState } from "react";
 const TutorCrudForm = ({ tutorProfile }) => {
   const [dbCities, setDBCities] = useState([]);
   const [dbInstruments, setDBInstruments] = useState([]);
+
+  const [saveError,setSaveError] = useState("");
+  const [saveSuccess, setSaveSuccess] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+
   const [fetchErrors, setFetchErrors] = useState({
     cityError: null,
     instrumentError: null,
@@ -24,6 +29,11 @@ const TutorCrudForm = ({ tutorProfile }) => {
   };
 
   const handleClick = (searchTerm, fieldName) => {
+    // the handleChange() function is not triggered when the city/instrument dropdowns arw clicked
+    // so clear the success/error state here too
+    setSaveSuccess("");
+    setSaveError("");
+
     setInputs((current) => ({
       ...current,
       [fieldName]: searchTerm,
@@ -32,6 +42,10 @@ const TutorCrudForm = ({ tutorProfile }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSaveError("");
+    setSaveSuccess("");
+    setIsSaving(true);
+
     const formData = new FormData(e.target);
 
     // covnert formData in to plain JS object so it can be sent in request body via stringify
@@ -61,13 +75,22 @@ const TutorCrudForm = ({ tutorProfile }) => {
       if (!res.ok) {
         throw new Error(data.message || "Failed to update tutor profile");
       }
-      window.alert("Tutor profile updated successfully");
+      // window.alert("Tutor profile updated successfully");
+      setSaveSuccess(data?.message || 'Tutor profile updated successfully');
     } catch (error) {
       console.log("Tutor crud error", error);
-      window.alert(error.message || "Failed to update tutor prfile");
+      // window.alert(error.message || "Failed to update tutor prfile");
+      setSaveError(error?.message || 'Falied to update tutor profile')
+    }finally{
+      setIsSaving(false)
     }
   };
 
+  const handleFormChange = ()=>{
+    // clear previous save/error state when user starts editing the form again
+      setSaveSuccess("");
+      setSaveError("");
+  }
   // sync effect for city and isntruemnt input from tutor profile- not strictly necessary as this component is only rednered if tutrProfile exists
   // but it is defensive to have it here
   useEffect(() => {
@@ -211,7 +234,7 @@ const TutorCrudForm = ({ tutorProfile }) => {
     tutorProfile?.skill_levels?.map((level) => level?.skill_level_name || "") ||
     [];
 
-  console.log("skill levels array", selectedTeachingSkillLevels);
+  // console.log("skill levels array", selectedTeachingSkillLevels);
 
   const hasTeachingFormat = (value) => {
     return selectedTeachingFormats.includes(value.toLowerCase());
@@ -239,6 +262,7 @@ const TutorCrudForm = ({ tutorProfile }) => {
 
         <form
           onSubmit={handleSubmit}
+          onChange={handleFormChange}
           noValidate
           className="space-y-4 text-left"
         >
@@ -466,12 +490,26 @@ const TutorCrudForm = ({ tutorProfile }) => {
               </label>
             </div>
           </div>
+
+            {saveError && (
+              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {saveError}
+              </div>
+            )}
+
+            {saveSuccess && (
+              <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                {saveSuccess}
+              </div>
+            )}
+
           <div className="pt-2">
             <button
               type="submit"
               className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              disabled={isSaving}
             >
-              Save changes
+              {isSaving? "Saving..." : "Save changes"}
             </button>
           </div>
         </form>
