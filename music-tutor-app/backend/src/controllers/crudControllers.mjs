@@ -1,6 +1,12 @@
 import { pool } from "../config/pool.mjs";
 import { verifyToken } from "../services/tokenService.mjs";
 import { findUserByUserId } from "../services/userService.mjs";
+import { validatePassword } from "../services/userService.mjs";
+import { loadSql } from "../queries/loadSql.mjs";
+import { query } from "../config/pool.mjs";
+import bcrypt from "bcrypt";
+
+const changePasswordSql = loadSql("changePassword.sql");
 
 export const tutorCrudController = async (req, res, next) => {
   // get form data
@@ -28,12 +34,18 @@ export const tutorCrudController = async (req, res, next) => {
     return next(new Error("Invalid token"));
   }
 
-  // get frontend's form data
-  const city = formData?.city?.trim() || "";
-  const instrument = formData?.instrument?.trim() || "";
-  const teachingFormats = formData?.teachingFormats || [];
-  const teachingTypes = formData?.teachingTypes || [];
-  const skillLevels = formData?.skillLevels || [];
+  // get frontend's form data and sanitise!!
+  const city = String(formData?.city || "").trim();
+  const instrument = String(formData?.instrument || "").trim();
+  const teachingFormats = Array.isArray(formData?.teachingFormats)
+    ? formData.teachingFormats
+    : [];
+  const teachingTypes = Array.isArray(formData?.teachingTypes)
+    ? formData.teachingTypes
+    : [];
+  const skillLevels = Array.isArray(formData?.skillLevels)
+    ? formData.skillLevels
+    : [];
 
   if (!city) {
     res.status(400);
@@ -276,3 +288,70 @@ export const tutorCrudController = async (req, res, next) => {
 };
 
 export const studentCrudController = async (req, res, next) => {};
+
+export const passwordChangeController = async (req, res, next) => {
+  try {
+    const token = req?.cookies?.token;
+    if (!token) {
+      res.status(401);
+      return next(new Error("Unauthorised"));
+    }
+
+    let decoded;
+    try {
+      decoded = verifyToken(token);
+    } catch (tokenError) {
+      res.status(401);
+      return next(new Error("Invalid or expired token"));
+    }
+    const userId = decoded?.userId;
+    if (!userId) {
+      res.status(401);
+      return next(new Error("Invalid token"));
+    }
+    const userRow = await findUserByUserId(userId);
+    if (!userRow) {
+      res.status(401);
+      return next(new Error("Not authenticated"));
+    }
+    // scrub frontend data
+    const currentPassword = String(req.body?.currentPassword ?? "").trim();
+    const newPassword = String(req.body?.newPassword ?? "").trim();
+    const confirmNewPassword = String(
+      req.body?.confirmNewPassword ?? "",
+    ).trim();
+
+    if (!currentPassword || !newPassword || !confirmNewPassword) {
+      res.status(400);
+      return next(new Error("All fields required"));
+    }
+    if (newPassword.length < 8 || newPassword.length > 16) {
+      res.status(400);
+      return next(new Error("Password must be between  8 and 16 characters"));
+    }
+    if (newPassword === currentPassword) {
+      res.status(400);
+      return next(new Error("New password must differ from current password"));
+    }
+    if (newPassword !== confirmNewPassword) {
+      res.status(400);
+      return next(new Error("New password and confirm password do not match "));
+    }
+
+    const dbPasswordHash = userRow?.password_hash;
+    if (!dbPasswordHash) {
+      res.status(500);
+      return next(new Error("Password not found"));
+    }
+    if (!(await validatePassword(currentPassword, dbPasswordHash))) {
+      res.status(400);
+      return next(new Error("Current password is incorrect"));
+    }
+    const newPasswordHash = await bcrypt.hash(newPassword, 10);
+    await query(changePasswordSql, [newPasswordHash, userId]);
+    return res.status(200).json({ message: "Password changed successfully" });
+  } catch (error) {
+    console.log("error im passwordChangeController", error);
+    return next(error);
+  }
+};

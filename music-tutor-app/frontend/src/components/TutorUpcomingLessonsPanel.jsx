@@ -1,3 +1,5 @@
+import React from "react";
+
 // adapted from https://www.youtube.com/watch?v=lyRP_D0qCfk
 
 //SEE THE 'CALENDARTESTPAGE' page for extra explanatory notes of the functions and Calendar component configuration
@@ -9,7 +11,8 @@ import getDay from "date-fns/getDay";
 import enGB from "date-fns/locale/en-GB";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 // import "react-datepicker/dist/react-datepicker.css";
-import { useState, } from "react";
+import { useState, useEffect } from "react";
+import { bookingShaper } from "../utils/bookingShaper.mjs";
 
 // set the date presentation to UK format rather then US
 const locales = {
@@ -29,23 +32,16 @@ const localizer = dateFnsLocalizer({
 const MIN_TIME = new Date(2025, 7, 28, 8, 0, 0); // 8am
 const MAX_TIME = new Date(2025, 7, 28, 21, 0, 0); // 9pm
 
-const BookingCalendar = ({
-  tutor,
-  user,
-  calendarEvents,
-  handleConfirmBooking,
-  handleCancelBooking,
-  draftBookingBundle,
-}) => {
-  console.log("passed in ", tutor, user);
-
+const TutorUpcomingLessonsPanel = ({ user }) => {
+  console.log("passed in ", user);
   // set up the Calendar's default view setting and the date it defaults to focusing on
   const [view, setView] = useState("week");
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // unbundle/deconstruct the draft event state from props
-  // the draft event is filled-in in the handleSelectSlot event handler below
-  const { draftBooking, updateDraftBooking } = draftBookingBundle;
+  // fetch booking state
+  const [tutorBookings, setTutorBookings] = useState([]);
+  const [tutorBookingsLoading, setTutorBookingsLoading] = useState(false);
+  const [tutorBookingsError, setTutorBookingsError] = useState(null);
 
   // for triggering differential rendering in eventsPropGetter(), for displaying lesson details panel, and for cancelling events
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -55,32 +51,61 @@ const BookingCalendar = ({
   const [bookingDetailsLoading, setBookingDetailsLoading] = useState(false);
   const [bookingDetailsError, setBookingDetailsError] = useState(null);
 
-  // check draft validity for rendering it in calandar
-  const canDisplayDraft =
-    draftBooking?.isDraft &&
-    draftBooking?.booking_start_time &&
-    draftBooking?.booking_end_time;
-
-  const canConfirmDraft =
-    canDisplayDraft &&
-    draftBooking?.tutor_id &&
-    draftBooking?.student_id &&
-    draftBooking?.instrument_id &&
-    draftBooking?.teaching_format_id &&
-    draftBooking?.teaching_type_id &&
-    draftBooking?.skill_level_id &&
-    draftBooking?.title
-
+  /*
   // combine calendar events plus draft event so the draft event is displayed on the calendar
-  const displayEvents = canDisplayDraft ? [...calendarEvents, draftBooking] : calendarEvents;
+  const displayEvents = canDisplayDraft
+    ? [...calendarEvents, draftBooking]
+    : calendarEvents;
+*/
+  // useEffect for fetching tutor's bookings
+  useEffect(() => {
+    if (!user?.tutor_id) {
+      setTutorBookings([]);
+      return;
+    }
 
+    const controller = new AbortController();
+    const getTutorBookings = async () => {
+      setTutorBookingsLoading(true);
+      setTutorBookingsError(null);
+
+      try {
+        const res = await fetch(
+          `http://localhost:3000/api/bookings/tutors/${user.tutor_id}`,
+          { credentials: "include", signal: controller.signal },
+        );
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.message || "Failed to fetch tutor bookings");
+        }
+
+        setTutorBookings(bookingShaper(data));
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("Tutir bookings fetch cancelled");
+        } else {
+          console.log("tutorBookings fetch erroor", error);
+          setTutorBookingsError(
+            error?.message || "Failed to fetch tutor bookings",
+          );
+          setTutorBookings([]);
+        }
+      } finally {
+        setTutorBookingsLoading(false);
+      }
+    };
+    getTutorBookings();
+    return () => controller.abort();
+  }, [user?.tutor_id]);
+
+  /*
   // first, you add 'selectable' as a prop to the Calendar component which allows user to click and drag on Calendar; this info can be used to create draft event
   // then, you can get access to the 'onSelectSlot' event and create a handler like this:
   const handleSelectSlot = (slotInfo) => {
     updateDraftBooking({
       booking_start_time: slotInfo.start,
       booking_end_time: slotInfo.end,
-      isDraft: true
+      isDraft: true,
     });
     // clear selected event to remove previous/current selection so you can create a new event/lesson after confirming this one
     setSelectedEvent(null);
@@ -89,49 +114,52 @@ const BookingCalendar = ({
     setBookingDetailsError(null);
     setBookingDetailsLoading(false);
   };
+  */
 
   // fires when a  confirmed Calendar event is clicked. It receives the event object as it is defined in the calendar (different to normal event handler event i.e. doesn't have .target property etc.)
-  const handleSelectEvent = async(clickedEvent) => {
-    console.log('clciked event in handleSelectEvent is', clickedEvent);
-    if(clickedEvent.isDraft) return; // i.e. don't attempt fetch for draft event
-    if(!clickedEvent?.booking_id) return;
+  const handleSelectEvent = async (clickedEvent) => {
+    console.log("clciked event in handleSelectEvent is", clickedEvent);
+    //if(clickedEvent.isDraft) return; // i.e. don't attempt fetch for draft event
+    if (!clickedEvent?.booking_id) return;
 
     // this checks whether the event the handleSelectEvent receives is the same as the event held in 'selectedEvent' state; if it is, it clears selectedEvent state i.e. de-deselects the event
     // this code section basically allows users to 'toggle' an event on consecutive clicks
-    if(isSameEvent(clickedEvent, selectedEvent)){
+    if (isSameEvent(clickedEvent, selectedEvent)) {
       setSelectedEvent(null); // for differnetial rendering in calendar
-      setSelectedBookingDetails(null); 
+      setSelectedBookingDetails(null);
       setBookingDetailsError(null);
       setBookingDetailsLoading(false);
       return;
     }
 
     setSelectedEvent(clickedEvent); // for diffeential rendering in calendar
-    setBookingDetailsLoading(true); 
+    setBookingDetailsLoading(true);
     setBookingDetailsError(null);
     setSelectedBookingDetails(null);
 
     // fetch booking/event details from DB
     try {
-      const res = await fetch(`http://localhost:3000/api/bookings/getBookings/${clickedEvent.booking_id}`, {credentials: "include"});
-      // trialling new codee pattern after fetches where the resposne is processed with .json() and, if it was a backend error response (!res.ok), the backend error message is accessed via data.message
+      const res = await fetch(
+        `http://localhost:3000/api/bookings/getBookings/${clickedEvent.booking_id}`,
+        { credentials: "include" },
+      );
       const data = await res.json();
 
-      if(!res.ok){
-        throw new Error(data?.message || 'Failed to fetch lesson details');
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to fetch lesson details");
       }
 
       setSelectedBookingDetails(data);
-      console.log('handleSelectEvent event details from DB are:', data);
-      
+      console.log("handleSelectEvent event details from DB are:", data);
     } catch (error) {
-      setBookingDetailsError(error.message || 'Unknown error');
-    }finally{
+      setBookingDetailsError(error.message || "Unknown error");
+    } finally {
       setBookingDetailsLoading(false);
     }
   };
 
   // PRE-BOOKING CHECKS HAVE BEEN REFACTORED IN TO THIS SEPARATE FUNCTION THAT WILL RUN PRIOR TO ATTEMPTING TO BOOK VIA BACKEND ROUTE
+  /*
   const preBookingChecks = (draftEvent) => {
     if (!draftEvent) {
       alert("Please select a valid timeslot");
@@ -175,7 +203,8 @@ const BookingCalendar = ({
 
     return true;
   };
-
+  */
+  /*
   const confirmDraftBooking = async () => {
     if (!preBookingChecks(draftBooking)) return;
 
@@ -186,8 +215,33 @@ const BookingCalendar = ({
       alert(bookingError.message || "Booking failed");
     }
   };
+*/
+  const handleCancelBooking = async (event) => {
+    if (!event.booking_id) return false;
 
- const confirmCancelBooking = async () => {
+    const ok = window.confirm("Are you sure you wish to cancel this booking?");
+    if (!ok) return false;
+
+    const res = await fetch(
+      `http://localhost:3000/api/bookings/cancelBooking/${event.booking_id}`,
+      { method: "PATCH", credentials: "include" },
+    );
+    // again try new approach where response is json-ed before checking for !res.ok; this way, any backend-specific error message can be obtained
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data?.message || "Failed to csncel booking");
+    }
+
+    // reset tutorBookings to remvoe the cancelled booking
+    setTutorBookings((current) =>
+      current.filter((booking) => booking.booking_id !== event.booking_id),
+    );
+
+    return true;
+  };
+
+  const confirmCancelBooking = async () => {
     if (!selectedEvent || selectedEvent?.isDraft) return;
 
     try {
@@ -204,18 +258,19 @@ const BookingCalendar = ({
   };
 
   const clearSelection = () => {
+    /*
     updateDraftBooking({
-    instrument_id: null, 
-    booking_start_time: null,
-    booking_end_time: null,
-    title: "Lesson",
-    teaching_format_id: null,
-    teaching_type_id: null,
-    skill_level_id: null,
-    isDraft: true
+      instrument_id: null,
+      booking_start_time: null,
+      booking_end_time: null,
+      title: "Lesson",
+      teaching_format_id: null,
+      teaching_type_id: null,
+      skill_level_id: null,
+      isDraft: true,
     });
+    */
     setSelectedEvent(null);
-    // clear new state too
     setSelectedBookingDetails(null);
     setBookingDetailsError(null);
     setBookingDetailsLoading(false);
@@ -231,31 +286,38 @@ const BookingCalendar = ({
 
     return false;
   };
-
+  /*
   const isOverlapping = (a, b) => {
     if (!a || !b) return false;
-    return a.booking_start_time < b.booking_end_time && a.booking_end_time > b.booking_start_time;
+    return (
+      a.booking_start_time < b.booking_end_time &&
+      a.booking_end_time > b.booking_start_time
+    );
   };
+  */
 
   // used to create different style for lessons and non-lessons
   // Calendar runs this function for each event in the Calendar as it's rendered
   const eventStyler = (event) => {
-    const eventIsLesson = event.title?.toLowerCase().includes("lesson");
-    const eventIsDraft = event.isDraft;
+    const eventIsLesson = event?.title?.toLowerCase().includes("lesson");
+    // const eventIsDraft = event.isDraft;
     const isSelected = isSameEvent(selectedEvent, event);
     // added to style bookings that cannot be cancelled
-    const preventCancel = !eventIsDraft && withinTwentyFourHours(event)
+    const preventCancel = withinTwentyFourHours(event);
 
     let backgroundColor;
     let border;
     let boxShadow = "none";
     let opacity = 1;
-    let cursor = 'pointer';
+    let cursor = "pointer";
 
+    /*
     if (eventIsDraft) {
       backgroundColor = "#bfdbfe";
       border = "2px dashed #1d4ed8";
-    } else if (eventIsLesson) {
+    } */
+
+    if (eventIsLesson) {
       backgroundColor = "#3e2ce4ff";
       border = "none";
     } else {
@@ -263,8 +325,8 @@ const BookingCalendar = ({
       border = "none";
     }
 
-    if(preventCancel){
-      opacity= 0.55;
+    if (preventCancel) {
+      opacity = 0.55;
       cursor;
     }
 
@@ -272,10 +334,10 @@ const BookingCalendar = ({
       boxShadow = "0 0 0 2px rgba(15,23,42,0.4)";
       backgroundColor = "#23197cff";
       opacity = 1;
-      cursor = 'pointer';
+      cursor = "pointer";
     }
 
-    // return CSS
+    // return CSS determined from above
     return {
       style: {
         backgroundColor,
@@ -284,7 +346,7 @@ const BookingCalendar = ({
         padding: "2px 4px",
         boxShadow,
         opacity,
-        cursor
+        cursor,
       },
     };
   };
@@ -292,7 +354,7 @@ const BookingCalendar = ({
   const formatDate = (value) => {
     // convert paramter to date
     const date = value instanceof Date ? value : new Date(value);
-    if(Number.isNaN(date.getTime())) return '_';
+    if (Number.isNaN(date.getTime())) return "_";
 
     return date.toLocaleDateString("en-GB", {
       weekday: "short",
@@ -305,7 +367,7 @@ const BookingCalendar = ({
   const formatTime = (value) => {
     // convert paramter to date
     const date = value instanceof Date ? value : new Date(value);
-    if(Number.isNaN(date.getTime())) return '_';
+    if (Number.isNaN(date.getTime())) return "_";
 
     return date.toLocaleTimeString("en-GB", {
       hour: "2-digit",
@@ -352,19 +414,27 @@ const BookingCalendar = ({
     return {};
   };
 
-  const withinTwentyFourHours = (booking) =>{
-    const dayAsMilliseconds = 1000 * 60*60*24;
+  const withinTwentyFourHours = (booking) => {
+    const dayAsMilliseconds = 1000 * 60 * 60 * 24;
     const now = Date.now(); // gives current time in ms since 1970...
     const bookingStart = booking.booking_start_time.getTime();
     const diff = bookingStart - now;
     // return the answer to if selected booking's start time is LESS than 24 hours away
     return diff < dayAsMilliseconds;
+  };
+
+  if (tutorBookingsLoading) {
+    return <p>Loading tutor bookings</p>;
   }
+  if (tutorBookingsError) {
+    return <p className="text-red-600">{tutorBookingsError}</p>;
+  }
+
   return (
     <>
       <Calendar
         localizer={localizer}
-        events={displayEvents}
+        events={tutorBookings}
         startAccessor="booking_start_time"
         endAccessor="booking_end_time"
         view={view}
@@ -376,13 +446,15 @@ const BookingCalendar = ({
         max={MAX_TIME}
         step={15}
         selectable
-        onSelectSlot={handleSelectSlot}
+        /* onSelectSlot={handleSelectSlot}
+         */
         onSelectEvent={handleSelectEvent}
         eventPropGetter={eventStyler}
         dayPropGetter={dayStyler}
         slotPropGetter={slotStyler}
       />
-      <button
+
+      {/* <button
         onClick={confirmDraftBooking}
         disabled={!canConfirmDraft}
         className={`px-3 py-1 border rounded-md  ${
@@ -392,7 +464,7 @@ const BookingCalendar = ({
         }`}
       >
         Confirm booking
-      </button>
+      </button> */}
 
       <button
         onClick={clearSelection}
@@ -417,39 +489,92 @@ const BookingCalendar = ({
           {selectedBookingDetails ? (
             <>
               <div className="space-y-1 text-sm">
-                <p><span className="font-semibold text-slate-900">Tutor: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.tutor || "_"}</span></p>
-                { /* <p><span className="font-semibold text-slate-900">Student: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.student || "_"}</span></p> */}
-                <p><span className="font-semibold text-slate-900">Instrument: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.instrument_name || "_"}</span></p>
-                <p><span className="font-semibold text-slate-900">Teaching format: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_format_name || "_"}</span></p>
-                <p><span className="font-semibold text-slate-900">Teaching type: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_type_name || ""}</span></p>
-                <p><span className="font-semibold text-slate-900">Skill level: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.skill_level_name || "_"}</span></p>
-                <p><span className="font-semibold text-slate-900">Date: </span><span className="font-medium text-slate-500">{formatDate(selectedBookingDetails?.booking_start_time)}</span></p>
-                <p><span className="font-semibold text-slate-900">Start: </span><span className="font-medium text-slate-500">{formatTime(selectedBookingDetails?.booking_start_time)}</span></p>
-                <p><span className="font-semibold text-slate-900">End: </span><span className="font-medium text-slate-500">{formatTime(selectedBookingDetails?.booking_end_time)}</span></p>
+                <p>
+                  <span className="font-semibold text-slate-900">Tutor: </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.tutor || "_"}
+                  </span>
+                </p>
+                {/* <p><span className="font-semibold text-slate-900">Student: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.student || "_"}</span></p> */}
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Instrument:{" "}
+                  </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.instrument_name || "_"}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Teaching format:{" "}
+                  </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.teaching_format_name || "_"}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Teaching type:{" "}
+                  </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.teaching_type_name || ""}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Skill level:{" "}
+                  </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.skill_level_name || "_"}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">Date: </span>
+                  <span className="font-medium text-slate-500">
+                    {formatDate(selectedBookingDetails?.booking_start_time)}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">Start: </span>
+                  <span className="font-medium text-slate-500">
+                    {formatTime(selectedBookingDetails?.booking_start_time)}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">End: </span>
+                  <span className="font-medium text-slate-500">
+                    {formatTime(selectedBookingDetails?.booking_end_time)}
+                  </span>
+                </p>
               </div>
 
               {/* render cancel button only if event selected and isn't draft */}
-              {selectedEvent && !selectedEvent.isDraft && (
-              <>
-                <button onClick={confirmCancelBooking} disabled= {withinTwentyFourHours(selectedEvent)}
-                className={`mt-3 px-3 py-1 border rounded-md text-xs
-                ${withinTwentyFourHours(selectedEvent) 
-                  ? "cursor-not-allowed  border-red-300 text-red-700"
-                  : "cursor-pointer hover:bg-red-50 text-red-700 border-red-300"}`}
+              {selectedEvent && !selectedEvent?.isDraft && (
+                <>
+                  <button
+                    onClick={confirmCancelBooking}
+                    disabled={withinTwentyFourHours(selectedEvent)}
+                    className={`mt-3 px-3 py-1 border rounded-md text-xs
+                ${
+                  withinTwentyFourHours(selectedEvent)
+                    ? "cursor-not-allowed  border-red-300 text-red-700"
+                    : "cursor-pointer hover:bg-red-50 text-red-700 border-red-300"
+                }`}
                   >
-                  Cancel booking
-                </button>
-                
-                {withinTwentyFourHours(selectedEvent) && (
-                  <p className="text-xs text-red-500 mt-1">
-                    Bookings cannot be cancelled within 24 hours of start time
-                  </p>
-                )}
-              </>
+                    Cancel booking
+                  </button>
+
+                  {withinTwentyFourHours(selectedEvent) && (
+                    <p className="text-xs text-red-500 mt-1">
+                      Bookings cannot be cancelled within 24 hours of start time
+                    </p>
+                  )}
+                </>
               )}
             </>
-          ):(
-            !bookingDetailsLoading && !bookingDetailsError && (
+          ) : (
+            !bookingDetailsLoading &&
+            !bookingDetailsError && (
               <p className="text-sm text-slate-500">
                 Click an event in the calendar to see its details here
               </p>
@@ -461,4 +586,4 @@ const BookingCalendar = ({
   );
 };
 
-export default BookingCalendar;
+export default TutorUpcomingLessonsPanel;

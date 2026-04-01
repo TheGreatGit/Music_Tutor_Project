@@ -6,7 +6,7 @@ const TutorCrudForm = ({ tutorProfile }) => {
   const [dbCities, setDBCities] = useState([]);
   const [dbInstruments, setDBInstruments] = useState([]);
 
-  const [saveError,setSaveError] = useState("");
+  const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -76,21 +76,21 @@ const TutorCrudForm = ({ tutorProfile }) => {
         throw new Error(data.message || "Failed to update tutor profile");
       }
       // window.alert("Tutor profile updated successfully");
-      setSaveSuccess(data?.message || 'Tutor profile updated successfully');
+      setSaveSuccess(data?.message || "Tutor profile updated successfully");
     } catch (error) {
       console.log("Tutor crud error", error);
       // window.alert(error.message || "Failed to update tutor prfile");
-      setSaveError(error?.message || 'Falied to update tutor profile')
-    }finally{
-      setIsSaving(false)
+      setSaveError(error?.message || "Falied to update tutor profile");
+    } finally {
+      setIsSaving(false);
     }
   };
 
-  const handleFormChange = ()=>{
+  const handleFormChange = () => {
     // clear previous save/error state when user starts editing the form again
-      setSaveSuccess("");
-      setSaveError("");
-  }
+    setSaveSuccess("");
+    setSaveError("");
+  };
   // sync effect for city and isntruemnt input from tutor profile- not strictly necessary as this component is only rednered if tutrProfile exists
   // but it is defensive to have it here
   useEffect(() => {
@@ -249,16 +249,13 @@ const TutorCrudForm = ({ tutorProfile }) => {
   };
 
   return (
-    <div className=" flex items-center justify-center px-4 py-6">
-      <div className="w-full max-w-md rounded-2xl bg-white p-6 text-left shadow-lg md:p-8">
-        <div className="mb-4 text-center">
-          <h1 className="mb-1 text-xl font-semibold text-slate-800">
-            Tutor profile
-          </h1>
-          <p className="mb-4 text-sm text-slate-500">
-            Your current tutor details:
-          </p>
-        </div>
+    <div className="w-full max-w-4xl mx-auto">
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-slate-800">Edit details</h2>
+        <p className="mt-1 text-sm text-slate-500">
+          Update your current tutor details:
+        </p>
+      </div>
 
         <form
           onSubmit={handleSubmit}
@@ -393,7 +390,8 @@ const TutorCrudForm = ({ tutorProfile }) => {
             <p className="block text-sm font-medium text-slate-700">
               Teaching format:
             </p>
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="mt-2 rounded-lg border border-slate-300 bg-slate-50 p-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="inline-flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -412,7 +410,8 @@ const TutorCrudForm = ({ tutorProfile }) => {
                   defaultChecked={hasTeachingFormat("online")}
                 />
                 Online
-              </label>
+              </label>                
+              </div>
             </div>
           </div>
 
@@ -420,7 +419,8 @@ const TutorCrudForm = ({ tutorProfile }) => {
             <p className="block text-sm font-medium text-slate-700">
               Teaching type:
             </p>
-            <div className="mt-2 flex flex-row gap-3 text-sm">
+            <div className="mt-2 rounded-lg border border-slate-300 bg-slate-50 p-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="inline-flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -439,7 +439,8 @@ const TutorCrudForm = ({ tutorProfile }) => {
                   defaultChecked={hasTeachingType("group")}
                 />
                 Group
-              </label>
+              </label>                
+              </div>
             </div>
           </div>
 
@@ -448,7 +449,8 @@ const TutorCrudForm = ({ tutorProfile }) => {
               Skill levels taught:
             </p>
 
-            <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+            <div className="mt-2 rounded-lg border border-slate-300 bg-slate-50 p-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <label className="inline-flex items-center gap-2">
                 <input
                   type="checkbox"
@@ -487,21 +489,22 @@ const TutorCrudForm = ({ tutorProfile }) => {
                   defaultChecked={hasSkillLevel("Professional")}
                 />
                 Professional
-              </label>
+              </label>                
+              </div>
             </div>
           </div>
 
-            {saveError && (
-              <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {saveError}
-              </div>
-            )}
+          {saveError && (
+            <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 text-center">
+              {saveError}
+            </div>
+          )}
 
-            {saveSuccess && (
-              <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
-                {saveSuccess}
-              </div>
-            )}
+          {saveSuccess && (
+            <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700 text-center">
+              {saveSuccess}
+            </div>
+          )}
 
           <div className="pt-2">
             <button
@@ -509,11 +512,10 @@ const TutorCrudForm = ({ tutorProfile }) => {
               className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
               disabled={isSaving}
             >
-              {isSaving? "Saving..." : "Save changes"}
+              {isSaving ? "Saving..." : "Save changes"}
             </button>
           </div>
         </form>
-      </div>
     </div>
   );
 };

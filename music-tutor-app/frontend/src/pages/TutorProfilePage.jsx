@@ -166,11 +166,11 @@ const TutorProfilePage = () => {
           }),
         },
       );
-
+      const data = await res.json();
       if (!res.ok) {
-        throw new Error("Error in booking");
+        throw new Error(data?.message || "Error in booking");
       }
-      const dbBooking = await res.json();
+      const dbBooking = data;
       console.log("db booking is", dbBooking);
 
       // update the tutor bookings for the calendar in order to update display to include the newly booked appointment
@@ -184,30 +184,28 @@ const TutorProfilePage = () => {
   };
 
   const handleCancelBooking = async (event) => {
-    if (!event.booking_id) return;
+    if (!event.booking_id) return false;
 
     const ok = window.confirm("Are you sure you wish to cancel this booking?");
-    if (!ok) return;
+    if (!ok) return false;
 
-    try {
-      const res = await fetch(
-        `http://localhost:3000/api/bookings/cancelBooking/${event.booking_id}`,
-        { method: "PATCH", credentials: "include" },
-      );
-      // again try new approach where response is json-ed before checking for !res.ok; this way, any backend-specific error message can be obtained
-      const data = await res.json();
+    const res = await fetch(
+      `http://localhost:3000/api/bookings/cancelBooking/${event.booking_id}`,
+      { method: "PATCH", credentials: "include" },
+    );
+    // again try new approach where response is json-ed before checking for !res.ok; this way, any backend-specific error message can be obtained
+    const data = await res.json();
 
-      if (!res.ok) {
-        throw new Error(data?.message || "Failed to csncel booking");
-      }
-
-      // reset tutorBookings to remvoe the cancelled booking-  the useEffect only fires if parsedTutorId changes so need to use setTutorBookings
-      setTutorBookings((current) =>
-        current.filter((booking) => booking.booking_id !== event.booking_id),
-      );
-    } catch (error) {
-      alert(error.message || "Cancellation failed");
+    if (!res.ok) {
+      throw new Error(data?.message || "Failed to csncel booking");
     }
+
+    // reset tutorBookings to remvoe the cancelled booking
+    setTutorBookings((current) =>
+      current.filter((booking) => booking.booking_id !== event.booking_id),
+    );
+
+    return true;
   };
 
   if (loading) return <p className="p-6">Loading tutor...</p>;
