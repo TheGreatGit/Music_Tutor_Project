@@ -4,7 +4,6 @@ import { adminRegistrationController, studentRegistrationController, tutorRegist
 
 const router = Router();
 
-// router.get('/check-email')
 router.post('/tutor', tutorRegistrationController);
 router.post('/student', studentRegistrationController);
 router.post('/admin', adminRegistrationController);

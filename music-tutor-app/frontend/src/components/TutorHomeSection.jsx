@@ -10,7 +10,8 @@ const TutorHomeSection = ({ user }) => {
 
   // fetch tutor profile data
   useEffect(() => {
-    if (!user?.tutor_id) {
+    // changed to user from user.tutor_id as the id is not being used anymore
+    if (!user) {
       setTutorProfile(null);
       return;
     }
@@ -21,25 +22,27 @@ const TutorHomeSection = ({ user }) => {
       setProfileError(null);
 
       try {
+        // changed to the new '/me' site so that the frontend data is not being used for ids; it will use the authenticated user via token
         const res = await fetch(
-          `http://localhost:3000/api/tutors/${user.tutor_id}`,
+          `http://localhost:3000/api/tutors/me`,
           {
             credentials: "include",
             signal: controller.signal,
           },
         );
 
-        if (!res.ok) {
-          throw new Error("Failed to fetch tutor profile");
-        }
         const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.message || "Failed to fetch tutor profile");
+        }
+      
         setTutorProfile(data);
       } catch (error) {
         if (error.name === "AbortError") {
           console.log("Tutor fetch aborted");
         } else {
           console.log("Tutor profile fetch error", error);
-          setProfileError(error.message || "Tutor profile fetch error");
+          setProfileError(error?.message);
           setTutorProfile(null);
         }
       } finally {
@@ -50,7 +53,7 @@ const TutorHomeSection = ({ user }) => {
     getTutorProfile();
 
     return () => controller.abort();
-  }, [user]);
+  }, [user?.user_id]);
 
   // selectively render depending on result of tutor fetch
   if (profileLoading) {

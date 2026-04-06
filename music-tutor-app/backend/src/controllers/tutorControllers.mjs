@@ -5,12 +5,21 @@ import { loadSql } from "../queries/loadSql.mjs";
 const listTutorsSql = loadSql("tutors/getTutors.sql");
 
 // individual queries for getting indidivual tutor details in rthe shape required by frontend
-const coreTutorDetailsQuery = loadSql("tutors/getTutorById/coreTutorDetails.sql");
-const tutorInstrumentsQuery = loadSql("tutors/getTutorById/tutorInstruments.sql");
-const tutorSkillLevelsQuery = loadSql("tutors/getTutorById/tutorSkillLevels.sql");
-const tutorTeachingFormatsQuery = loadSql("tutors/getTutorById/tutorTeachingFormats.sql");
-const tutorTeachingTypesQuery = loadSql("tutors/getTutorById/tutorTeachingTypes.sql");
-
+const coreTutorDetailsQuery = loadSql(
+  "tutors/getTutorById/coreTutorDetails.sql",
+);
+const tutorInstrumentsQuery = loadSql(
+  "tutors/getTutorById/tutorInstruments.sql",
+);
+const tutorSkillLevelsQuery = loadSql(
+  "tutors/getTutorById/tutorSkillLevels.sql",
+);
+const tutorTeachingFormatsQuery = loadSql(
+  "tutors/getTutorById/tutorTeachingFormats.sql",
+);
+const tutorTeachingTypesQuery = loadSql(
+  "tutors/getTutorById/tutorTeachingTypes.sql",
+);
 
 // create the actual controller
 // this controller also frabs any url params for city or instrument (if present) and adds them to SQL query as params
@@ -29,8 +38,8 @@ export const getTutors = async (req, res, next) => {
     return res.status(200).json(rows);
   } catch (error) {
     console.error("Database error (get tutors):", error);
-   // res.status(500).json({ message: "database error" });
-    return next(error) // use global error handler
+    // res.status(500).json({ message: "database error" });
+    return next(error); // use global error handler
   }
 };
 
@@ -43,14 +52,14 @@ export const getTutorByTutorId = async (req, res, next) => {
     // handles invalid input in url
     if (!Number.isInteger(tutorId) || tutorId <= 0) {
       res.status(400);
-      return next(new Error('Invalid tutor id'));
+      return next(new Error("Invalid tutor id"));
     }
 
     // gives user id, tutor id, full name, city, and email
     const coreTutorResult = await query(coreTutorDetailsQuery, [tutorId]);
-    if(coreTutorResult.rows.length === 0){
+    if (coreTutorResult.rows.length === 0) {
       res.status(404);
-      return next(new Error('Tutor not found'));
+      return next(new Error("Tutor not found"));
     }
     // console.log(coreTutorResult.rows[0]);
 
@@ -67,9 +76,8 @@ export const getTutorByTutorId = async (req, res, next) => {
       query(tutorInstrumentsQuery, [tutorId]),
       query(tutorTeachingFormatsQuery, [tutorId]),
       query(tutorTeachingTypesQuery, [tutorId]),
-      query(tutorSkillLevelsQuery, [tutorId])
-    ]
-    )
+      query(tutorSkillLevelsQuery, [tutorId]),
+    ]);
 
     // attach the result arrays as properties on the 'tutor' object
     tutor.instruments = tutorInstrumentsResult.rows;
@@ -77,10 +85,54 @@ export const getTutorByTutorId = async (req, res, next) => {
     tutor.teaching_types = tutorTeachingTypesResult.rows;
     tutor.skill_levels = tutorSkillLevelsResult.rows;
 
-    
-    return res.status(200).json(tutor)
+    return res.status(200).json(tutor);
   } catch (error) {
     console.error("Database error in getTutorById", error);
     return next(error); // use global error handler instead
+  }
+};
+
+// new handler added for getting tutor info in the logged in dashbaord
+// this one relies on the protect middleware running before it so accesses req.user for info rather than getting it from the URL like the handler above
+// This is to make things more secure.
+export const getMyTutorProfile = async (req, res, next) => {
+  try {
+    const tutorId = req.user?.tutor_id;
+    const role = req.user?.role;
+
+    if (role !== "tutor" || !tutorId) {
+      res.status(403);
+      return next(new Error("Tutor profile not found for this user"));
+    }
+
+    const coreTutorResult = await query(coreTutorDetailsQuery, [tutorId]);
+    if (coreTutorResult.rows.length === 0) {
+      res.status(404);
+      return next(new Error("Tutor not found"));
+    }
+
+    const tutor = coreTutorResult.rows[0];
+
+    const [
+      tutorInstrumentsResult,
+      tutorTeachingFormatsResult,
+      tutorTeachingTypesResult,
+      tutorSkillLevelsResult,
+    ] = await Promise.all([
+      query(tutorInstrumentsQuery, [tutorId]),
+      query(tutorTeachingFormatsQuery, [tutorId]),
+      query(tutorTeachingTypesQuery, [tutorId]),
+      query(tutorSkillLevelsQuery, [tutorId]),
+    ]);
+
+    tutor.instruments = tutorInstrumentsResult.rows;
+    tutor.teaching_formats = tutorTeachingFormatsResult.rows;
+    tutor.teaching_types = tutorTeachingTypesResult.rows;
+    tutor.skill_levels = tutorSkillLevelsResult.rows;
+
+    return res.status(200).json(tutor);
+  } catch (error) {
+    console.log("getMyTutorProfile handler error", error);
+    return next(error);
   }
 };

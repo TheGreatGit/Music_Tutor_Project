@@ -11,29 +11,17 @@ const changePasswordSql = loadSql("changePassword.sql");
 export const tutorCrudController = async (req, res, next) => {
   // get form data
   const formData = req.body || {};
+  const user = req.user;
 
-  // get token
-  const token = req.cookies?.token;
-  if (!token) {
+  if (!user?.user_id) {
     res.status(401);
     return next(new Error("Not authenticated"));
   }
 
-  // verify token
-  let decoded;
-  try {
-    decoded = verifyToken(token);
-  } catch (error) {
-    res.status(401);
-    return next(new Error("Invalid token"));
+  if (user?.role !== "tutor" || !user?.tutor_id) {
+    res.status(403);
+    return next(new Error("Tutor profile not found for this user"));
   }
-
-  const userId = decoded?.userId;
-  if (!userId) {
-    res.status(401);
-    return next(new Error("Invalid token"));
-  }
-
   // get frontend's form data and sanitise!!
   const city = String(formData?.city || "").trim();
   const instrument = String(formData?.instrument || "").trim();
@@ -71,25 +59,10 @@ export const tutorCrudController = async (req, res, next) => {
     res.status(400);
     return next(new Error("At least one skill level is required"));
   }
-
+  // tutor id is needed for updating all the tutor-x tables
+  const tutorId = user.tutor_id;
   // outer try block before transaction
   try {
-    // get tutor from DB
-    const userRow = await findUserByUserId(userId);
-
-    if (!userRow) {
-      res.status(401);
-      return next(new Error("User not found"));
-    }
-
-    if (userRow.role_name !== "tutor" || !userRow.tutor_id) {
-      res.status(403);
-      return next(new Error("Tutor profile not found for this user"));
-    }
-
-    // tutor id is needed for updating all the tutor-x tables
-    const tutorId = userRow.tutor_id;
-
     const client = await pool.connect();
     // inner try block for transaction
     try {
@@ -287,33 +260,28 @@ export const tutorCrudController = async (req, res, next) => {
   }
 };
 
-export const studentCrudController = async (req, res, next) => {};
+export const studentCrudController = async (req, res, next) => {
+  const user = req.user;
+
+  if (!user?.user_id) {
+    res.status(401);
+    return next(new Error("Not authenticated"));
+  }
+
+  if (user?.role !== "student" || !user?.student_id) {
+    res.status(403);
+    return next(new Error("Student profile not found for this user"));
+  }
+};
 
 export const passwordChangeController = async (req, res, next) => {
   try {
-    const token = req?.cookies?.token;
-    if (!token) {
+    const userId = req.user?.user_id;
+    if (!userId) {
       res.status(401);
       return next(new Error("Unauthorised"));
     }
 
-    let decoded;
-    try {
-      decoded = verifyToken(token);
-    } catch (tokenError) {
-      res.status(401);
-      return next(new Error("Invalid or expired token"));
-    }
-    const userId = decoded?.userId;
-    if (!userId) {
-      res.status(401);
-      return next(new Error("Invalid token"));
-    }
-    const userRow = await findUserByUserId(userId);
-    if (!userRow) {
-      res.status(401);
-      return next(new Error("Not authenticated"));
-    }
     // scrub frontend data
     const currentPassword = String(req.body?.currentPassword ?? "").trim();
     const newPassword = String(req.body?.newPassword ?? "").trim();
@@ -338,11 +306,18 @@ export const passwordChangeController = async (req, res, next) => {
       return next(new Error("New password and confirm password do not match "));
     }
 
+    // all basic checks have passed so now check frontend current password with DB's hashed password
+    const userRow = await findUserByUserId(userId);
+    if (!userRow) {
+      res.status(401);
+      return next(new Error("Not authenticated"));
+    }
     const dbPasswordHash = userRow?.password_hash;
     if (!dbPasswordHash) {
       res.status(500);
       return next(new Error("Password not found"));
     }
+
     if (!(await validatePassword(currentPassword, dbPasswordHash))) {
       res.status(400);
       return next(new Error("Current password is incorrect"));

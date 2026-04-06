@@ -23,6 +23,9 @@ export const validatePassword = async (plain, hashed) => {
   return bcrypt.compare(plain, hashed);
 };
 
+/* produces object of the shape { 
+user_id, role, first_name, last_name, email, display_name, tutor/student/admin_id}
+*/
 export const buildUserInfo = (user) => {
   // begin to acquire user details dependant on their role
   const { user_id } = user;

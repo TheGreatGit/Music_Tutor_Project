@@ -1,16 +1,26 @@
-import React from 'react'
+import React, { useEffect, useState } from 'react'
+import StudentCrudForm from './StudentCrudForm'
 
-const StudentHomeSection = (user) => {
+const StudentHomeSection = ({user}) => {
+  const [studentProfile, setStudentProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [profileError, setProfileError] = useState(null);
+
+  useEffect(()=>{
+    const controller = new AbortController();
+
+    getStudent = async()=>{
+      const res = await fetch()
+    }
+
+    return ()=>controller.abort()
+  },[])
   return (
-    <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-lg">
-        <h2 className="mb-2 text-lg font-semibold text-slate-800">
-            Student dashboard
-        </h2>
-        <p className="text-sm text-slate-600">
-            Hello, {user?.role} {user?.display_name}
-        </p>
-    </div>
+ 
+        <StudentCrudForm/>
+    
   )
 }
+
 
 export default StudentHomeSection

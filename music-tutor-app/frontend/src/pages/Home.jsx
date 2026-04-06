@@ -75,7 +75,7 @@ const Home = () => {
         </div>
       </div>
 
-      {/* lower section */}
+      {/* side section */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-[220px_1fr]">
         <div className="rounded-2xl bg-white p-3 shadow-lg">
           <nav className="flex flex-col gap-1">
@@ -105,6 +105,7 @@ const Home = () => {
           </nav>
         </div>
 
+      {/* presentation section */}
         <main className="rounded-2xl bg-white p-6 shadow-lg">
           {user?.role === "tutor" && renderTutorPanel()}
           {user?.role === "student" && renderStudentPanel()}

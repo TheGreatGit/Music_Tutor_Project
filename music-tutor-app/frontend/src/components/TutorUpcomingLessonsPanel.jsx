@@ -445,7 +445,7 @@ const TutorUpcomingLessonsPanel = ({ user }) => {
         min={MIN_TIME}
         max={MAX_TIME}
         step={15}
-        selectable
+        //selectable
         /* onSelectSlot={handleSelectSlot}
          */
         onSelectEvent={handleSelectEvent}
@@ -490,9 +490,9 @@ const TutorUpcomingLessonsPanel = ({ user }) => {
             <>
               <div className="space-y-1 text-sm">
                 <p>
-                  <span className="font-semibold text-slate-900">Tutor: </span>
+                  <span className="font-semibold text-slate-900">{user?.role ==="tutor" ? "Student": "Tutor"}: </span>
                   <span className="font-medium text-slate-500">
-                    {selectedBookingDetails?.tutor || "_"}
+                    {user?.role === "tutor" ? selectedBookingDetails?.student : selectedBookingDetails?.tutor}
                   </span>
                 </p>
                 {/* <p><span className="font-semibold text-slate-900">Student: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.student || "_"}</span></p> */}

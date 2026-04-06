@@ -3,7 +3,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { GlobalErrorHandler } from "./middleware/globalErrorHandler.mjs";
-import tutorRouter from "./routes/searchTutorRoutes.mjs";
+import tutorRouter from "./routes/tutorRoutes.mjs";
+import studentRouter from './routes/studentRoutes.mjs';
 import filterRouter from "./routes/filterRoutes.mjs";
 import registerRouter from "./routes/registerRoutes.mjs";
 import loginRouter from "./routes/loginRoute.mjs";
@@ -11,7 +12,8 @@ import logoutRouter from "./routes/logOutRoute.mjs";
 import bookingsRouter from "./routes/bookingsRoutes.mjs";
 import chatMessagesRouter from "./routes/chatMessageRoutes.mjs";
 import reAuthRouter from "./routes/reAuthRoute.mjs";
-import crudRouter from "./routes/crudRoutes.mjs"
+import crudRouter from "./routes/crudRoutes.mjs";
+
 import http from "http";
 import { Server } from "socket.io";
 import { verifyToken } from "./services/tokenService.mjs";
@@ -43,8 +45,11 @@ app.use(
 // ROUTES
 // by using app.use instead of e.g. app.post, this mounts the router (and handlers) from the router defined in routes/auth.mjs for all http request types
 
-// this route is simply for searching for tutors
+// route for frontend tutor searching but now also for authenticated tutor dashbaord routes for get and patch requests
 app.use("/api/tutors", tutorRouter);
+
+// router for authenticated student dashboard get and patch requests
+app.use("api/students", studentRouter);
 
 //routes for getting filter data for real-time inout filtering (currently for cities and instruments only)
 app.use("/api/filters", filterRouter);

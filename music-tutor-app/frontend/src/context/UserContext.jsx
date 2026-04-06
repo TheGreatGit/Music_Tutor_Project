@@ -30,6 +30,7 @@ export function UserProvider({ children }) {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
 
+  // a useEffect to carry out re-auth when browser is refreshed. It depends on the JWT stored in the browser from recent valid log in
   useEffect(() => {
     const reAuthUser = async () => {
         console.log('running re-auth from UserProvider useEffect ;)');
