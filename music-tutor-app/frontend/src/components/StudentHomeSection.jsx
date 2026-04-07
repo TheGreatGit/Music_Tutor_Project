@@ -1,26 +1,58 @@
-import React, { useEffect, useState } from 'react'
-import StudentCrudForm from './StudentCrudForm'
+import React, { useEffect, useState } from "react";
+import StudentCrudForm from "./StudentCrudForm";
 
-const StudentHomeSection = ({user}) => {
+const StudentHomeSection = ({ user }) => {
   const [studentProfile, setStudentProfile] = useState(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState(null);
 
-  useEffect(()=>{
+  useEffect(() => {
+    if (!user) {
+      setStudentProfile(null);
+      return;
+    }
     const controller = new AbortController();
 
-    getStudent = async()=>{
-      const res = await fetch()
-    }
+    const getStudentProfile = async () => {
+      setProfileLoading(true);
+      setProfileError(null);
 
-    return ()=>controller.abort()
-  },[])
-  return (
- 
-        <StudentCrudForm/>
-    
-  )
-}
+      try {
+        const res = await fetch("http://localhost:3000/api/students/me", {
+          credentials: "include",
+          signal: controller.signal,
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data?.message || "Student profile not fetched :(");
+        }
+        setStudentProfile(data);
+      } catch (error) {
+        if (error.name === "AbortError") {
+          console.log("Student profile fetch aborted");
+        } else {
+          setProfileError(error?.message || "Error in loading profile");
+          setStudentProfile(null);
+        }
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    getStudentProfile();
+    return () => controller.abort();
+  }, [user?.user_id]);
 
+  if(profileLoading){
+    return <p>Loading student profile... </p>
+  }
+  if(profileError){
+    return <p className="text-red-600">{profileError}</p>
+  }
 
-export default StudentHomeSection
+  if(!studentProfile){
+    <p>No student profile found</p>
+  }
+  return <StudentCrudForm studentProfile={studentProfile}/>;
+};
+
+export default StudentHomeSection;

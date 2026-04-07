@@ -22,4 +22,4 @@ join instruments as i on i.instrument_id = b.instrument_id
 join teaching_format as tf on tf.teaching_format_id = b.teaching_format_id
 join teaching_type as tt on tt.teaching_type_id = b.teaching_type_id
 join skill_levels as sl on sl.skill_level_id = b.skill_level_id
-where b.booking_id = $1 AND b.booking_status = 1;
+where b.booking_id = $1 AND b.booking_status IN(1,3);

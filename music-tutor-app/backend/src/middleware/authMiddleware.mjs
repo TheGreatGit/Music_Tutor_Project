@@ -29,7 +29,6 @@ export const protect = async (req, res, next) => {
 
     // add user details (id, name, email address as per findUSerByUserId) to req object and pass on to next middleware in chain
     req.user = buildUserInfo(user);
-    // console.log(req.user);
     return next();
   } catch (err) {
     // pass other errors out to error handler in express

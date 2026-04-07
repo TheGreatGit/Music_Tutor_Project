@@ -97,6 +97,7 @@ export const getTutorByTutorId = async (req, res, next) => {
 // This is to make things more secure.
 export const getMyTutorProfile = async (req, res, next) => {
   try {
+    // tutor id used instead of user id as the historic SQL queries for getting tutor info were written to use tutor id
     const tutorId = req.user?.tutor_id;
     const role = req.user?.role;
 

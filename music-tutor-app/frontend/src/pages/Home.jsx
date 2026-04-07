@@ -4,6 +4,7 @@ import TutorHomeSection from "../components/TutorHomeSection";
 import StudentHomeSection from "../components/StudentHomeSection";
 import ChangePasswordPanel from "../components/ChangePasswordPanel";
 import TutorUpcomingLessonsPanel from "../components/TutorUpcomingLessonsPanel";
+import StudentUpcomingLessonsPanel from "../components/StudentUpcomingLessonsPanel";
 
 const Home = () => {
   // grab user context and authLoading state
@@ -45,7 +46,7 @@ const Home = () => {
     }
 
     if (activeSection === "upcoming-lessons") {
-      return <p>Component to be added</p>;
+      return <StudentUpcomingLessonsPanel user={user}/>
     }
 
     return null;

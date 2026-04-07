@@ -49,7 +49,7 @@ app.use(
 app.use("/api/tutors", tutorRouter);
 
 // router for authenticated student dashboard get and patch requests
-app.use("api/students", studentRouter);
+app.use("/api/students", studentRouter);
 
 //routes for getting filter data for real-time inout filtering (currently for cities and instruments only)
 app.use("/api/filters", filterRouter);

@@ -1,5 +1,4 @@
 import { pool } from "../config/pool.mjs";
-import { verifyToken } from "../services/tokenService.mjs";
 import { findUserByUserId } from "../services/userService.mjs";
 import { validatePassword } from "../services/userService.mjs";
 import { loadSql } from "../queries/loadSql.mjs";
@@ -261,16 +260,49 @@ export const tutorCrudController = async (req, res, next) => {
 };
 
 export const studentCrudController = async (req, res, next) => {
-  const user = req.user;
+  try {
+    const userId = req.user?.user_id;
 
-  if (!user?.user_id) {
-    res.status(401);
-    return next(new Error("Not authenticated"));
-  }
+    if (!userId) {
+      res.status(401);
+      return next(new Error("Not authenticated"));
+    }
 
-  if (user?.role !== "student" || !user?.student_id) {
-    res.status(403);
-    return next(new Error("Student profile not found for this user"));
+    if (req.user?.role !== "student" || !req.user?.student_id) {
+      res.status(403);
+      return next(new Error("Student profile not found for this user"));
+    }
+
+    //scrub frontend data
+    const city = String(req.body?.city ?? "").trim();
+    if (!city) {
+      res.status(400);
+      return next(new Error("City is required"));
+    }
+
+    // get city_id relating to frontend data
+    const data = await query(
+      "select city_id from cities  where city_name = $1",
+      [city],
+    );
+    const cityId = data?.rows[0]?.city_id;
+    if (!cityId) {
+      res.status(400);
+      return next(new Error("No matching city found"));
+    }
+
+    // update DB
+    await query(
+      "UPDATE students set city_id = $1, updated_at = now()  where user_id = $2",
+      [cityId, userId],
+    );
+
+    return res.status(200).json({
+      message:'Student profile updated successfully'
+    })
+
+  } catch (error) {
+    return next(error);
   }
 };
 
