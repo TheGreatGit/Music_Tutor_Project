@@ -15,7 +15,7 @@ const LogOutButton = () => {
     } finally {
       // clear user details
       setUser(null);
-      navigate("/");
+      navigate("/about");
     }
   };
 

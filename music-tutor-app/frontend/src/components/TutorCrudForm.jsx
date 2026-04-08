@@ -275,7 +275,7 @@ const TutorCrudForm = ({ tutorProfile }) => {
               id="firstName"
               value={tutorProfile?.first_name || ""}
               readOnly
-              className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm"
+              className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
@@ -291,7 +291,7 @@ const TutorCrudForm = ({ tutorProfile }) => {
               id="lastName"
               value={tutorProfile?.last_name || ""}
               readOnly
-              className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm"
+              className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
@@ -307,7 +307,7 @@ const TutorCrudForm = ({ tutorProfile }) => {
               id="email"
               value={tutorProfile?.email || ""}
               readOnly
-              className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm"
+              className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
           </div>
 
@@ -361,7 +361,7 @@ const TutorCrudForm = ({ tutorProfile }) => {
               name="instrument"
               value={inputs.instrument}
               onChange={handleChange}
-              className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm"
+              className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
             {/* real-time dropdown */}
             {inputs.instrument.trim() && instrumentDropdown.length > 0 && (

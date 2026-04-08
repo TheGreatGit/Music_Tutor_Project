@@ -91,7 +91,7 @@ const LoginUserForm = () => {
             id="email"
             name="email"
             type="email"
-            className="w-full border rounded p-2"
+            className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             value={form.email}
             onChange={onChange}
             required
@@ -106,7 +106,7 @@ const LoginUserForm = () => {
             id="password"
             name="password"
             type="password"
-            className="w-full border rounded p-2"
+            className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             value={form.password}
             onChange={onChange}
             required

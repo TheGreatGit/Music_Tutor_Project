@@ -10,4 +10,4 @@ b.teaching_format_id,
 b.teaching_type_id,
 b.skill_level_id
 from bookings as b
-where b.student_id = $1;
+where b.student_id = $1 and b.booking_status =1;

@@ -60,30 +60,28 @@ export const logout = (req, res) => {
 
 // handler for getting current user. This will be used so frontend can rebuild user on full page reload
 // Currently, on full reload, the frotnend still has the auth cookie but does not rebuild user info so user is logged out
-export const getCurrentUser = async (req, res, next) => {
-  // current user should have been added to the request object by the 'protect' middleware
+export const getCurrentUser = async (req, res) => {
   try {
     const token = req?.cookies?.token;
 
-    if(!token){
+    // amended this code so that absence of a token does not throw an error
+    if (!token) {
       res.status(401);
-      return next(new Error('Not authenticated'));
+      return res.status(401).json({ user: null, message: "Not authenticated" });
     }
 
     const decoded = verifyToken(token);
     const user = await findUserByUserId(decoded.userId);
 
-    if(!user){
-      res.status(401);
-      return next(new Error('USer not found'));
+    if (!user) {
+      return res.status(401).json({ user: null, message: "User not found" });
     }
     const strippedUser = buildUserInfo(user);
-    return res.status(200).json({user: strippedUser});
+    return res.status(200).json({ user: strippedUser });
   } catch (error) {
-    console.log('error in \'getCurrentUser\' handler', error);
-    
-    res.status(401);
-    return next(new Error('Invalid or expired token'));
+    console.log("error in 'getCurrentUser' handler", error);
+    return res
+      .status(401)
+      .json({ user: null, message: "invalid or expored token" });
   }
-
 };

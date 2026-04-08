@@ -121,7 +121,7 @@ const ChangePasswordPanel = () => {
             name="currentPassword"
             value={inputs.currentPassword}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
@@ -138,7 +138,7 @@ const ChangePasswordPanel = () => {
             name="newPassword"
             value={inputs.newPassword}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
@@ -155,7 +155,7 @@ const ChangePasswordPanel = () => {
             name="confirmNewPassword"
             value={inputs.confirmNewPassword}
             onChange={handleChange}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 

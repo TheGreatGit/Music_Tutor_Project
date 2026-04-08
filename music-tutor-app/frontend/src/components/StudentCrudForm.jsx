@@ -149,7 +149,7 @@ const StudentCrudForm = ({ studentProfile }) => {
             id="firstName"
             readOnly
             defaultValue={studentProfile?.first_name}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
@@ -165,7 +165,7 @@ const StudentCrudForm = ({ studentProfile }) => {
             id="lastName"
             readOnly
             defaultValue={studentProfile?.last_name}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
@@ -181,7 +181,7 @@ const StudentCrudForm = ({ studentProfile }) => {
             id="email"
             readOnly
             defaultValue={studentProfile?.email}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
         </div>
 
@@ -198,7 +198,7 @@ const StudentCrudForm = ({ studentProfile }) => {
             name="city"
             value={inputs.city}
             onChange={onChange}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm"
+            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
           />
 
           {/* REALT-TIME DROPDOWN EFFECT */}

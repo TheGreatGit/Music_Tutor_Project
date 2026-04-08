@@ -14,16 +14,17 @@ const NavBar = () => {
   //const navigate = useNavigate()
 
   return (
-    <nav className='flex flex-row justify-between px-4 py-2'>
+    <nav className='flex flex-row justify-between px-4 py-2 items-center'>
       <div className="flex-shrink-0">
         <Logo className="w-6 h-6 "/>
       </div>
   
       <ul className='flex flex-row  rounded-3xl shadow-[0_0_30px_0_rgba(0,0,0,0.1)]'>
-        <li className='m-4'><NavLink to="/">Home</NavLink></li>
+        { user && <li className='m-4'><NavLink to="/">Home</NavLink></li>}
         <li className='m-4'><NavLink to="/about">About</NavLink></li>
-        <li className='m-4'><NavLink to="/contact">Contact</NavLink></li>
         <li className='m-4'><NavLink to="/findTutors">Find a tutor</NavLink></li>
+        <li className='m-4'><NavLink to="/contact">Contact</NavLink></li>
+        
       </ul>
       
       <div className=" flex items-center gap-3">
