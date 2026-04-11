@@ -213,9 +213,7 @@ const FindTutors = () => {
     <div className="p-6 space-y-6">
       <div className=" grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="flex flex-col relative">
-          <label htmlFor="instrument" className="text-sm text-slate-600 mb-1">
-            Instrument
-          </label>
+  
           <input
             type="text"
             id="instrument"
@@ -245,9 +243,7 @@ const FindTutors = () => {
         </div>
 
         <div className="flex flex-col relative">
-          <label htmlFor="city" className="text-sm text-slate-600 mb-1">
-            City
-          </label>
+
           <input
             type="text"
             id="city"

@@ -468,7 +468,7 @@ const TutorUpcomingLessonsPanel = ({ user }) => {
 
       <button
         onClick={clearSelection}
-        className="px-3 py-1 border rounded-md cursor-pointer hover:bg-slate-100"
+        className="px-3 py-1 border rounded-lg cursor-pointer bg-indigo-600 text-white hover:bg-indigo-700"
       >
         Clear selection
       </button>

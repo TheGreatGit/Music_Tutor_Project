@@ -5,7 +5,9 @@ const ChatMessagesIcon = ({ toggleInboxOpen }) => {
     <button
       type="button"
       onClick={toggleInboxOpen}
-      className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-lg hover:bg-slate-800 active:scale-[0.98] transition"
+      className="fixed bottom-4 right-4 z-40 inline-flex items-center gap-2 rounded-2xl bg-indigo-600 
+      px-4 py-3 text-sm font-semibold text-white shadow-lg 
+      hover:bg-indigo-800 hover:-translate-y-0.5 hover:scale-103 cursor-pointer active:scale-[0.98] transition"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"

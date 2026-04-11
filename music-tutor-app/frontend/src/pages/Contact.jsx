@@ -166,11 +166,13 @@ const Contact = () => {
                   className="mt-1 block w-full rounded-md border border-slate-300 bg-slate-100 px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 ></textarea>
               </div>
-              {confirmMessage && (
-                <div className="rounded-md border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700 text-center">
-                  {confirmMessage}
-                </div>
-              )}
+
+              <div
+                className={` h-10 rounded-md px-3 py-2 text-sm  text-center ${confirmMessage ? " border border-green-200 bg-green-50 text-green-700" : ""}`}
+              >
+                {confirmMessage}
+              </div>
+
               <div className="pt-2">
                 <button
                   type="submit"

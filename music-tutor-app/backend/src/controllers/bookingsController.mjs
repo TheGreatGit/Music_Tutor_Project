@@ -168,14 +168,20 @@ export const getBookingByBookingId = async(req, res, next) =>{
 
 export const cancelBookingById = async(req, res, next) =>{
   try {
-    const bookingId = Number(req.params.bookingId);
+    const bookingId = Number(req?.params?.bookingId);
+    const userId = Number(req?.user?.user_id);
+
     if(!Number.isInteger(bookingId) || bookingId <=0){
       res.status(400);
       return next(new Error('Invalid booking id'));
     }
+    if(!Number.isInteger(userId) || userId <=0){
+      res.status(401);
+      return next(new Error('You must be logged in to cancel a booking'));
+    }
 
     // cancel SQL query looks for given booking id where current booking status is 1(confirmed) and the start time is >24 hours away and returns booking id and status
-    const cancelResult = await query(cancelBookingByIdQuery, [bookingId]);
+    const cancelResult = await query(cancelBookingByIdQuery, [bookingId, userId]);
     if(cancelResult.rows.length >0){
       // send message for frontend to display
       // also send the result from the query (the booking id and status) in case I want frontend to use that info later
@@ -188,7 +194,9 @@ export const cancelBookingById = async(req, res, next) =>{
     // 1st, just check to see if any bookings match the booking id at all
     // didn't want to create another separate sql file for this right now!
     const checkResult = await query(`
-      select 
+      select
+        tutor_id,
+        student_id,
         booking_status, 
         booking_start_time, 
         booking_start_time <= NOW() as started_or_passed,
@@ -204,10 +212,17 @@ export const cancelBookingById = async(req, res, next) =>{
 
     // here means that a booking whose id matches with that contained in the cancel request from frontend has been found but it doesn't meet cancel criteria
     const booking = checkResult.rows[0];
+
     // booking status of 1 means confirmed, 2 means pending( not used yet) and 3 means cancelled
     if(booking.booking_status !==1){// assume that if not equal to 1, it is equal to 3
       res.status(409);
       return next(new Error('Booking is not confirmedd and cannot be cancelled'));
+    }
+
+    //NEW CHECK
+    if(!(booking.tutor_id === userId || booking.student_id === userId)){
+      res.status(403);
+      return next(new Error('Only participants can cancel a booking'));
     }
 
     // booking exists and has not been cancelled, but does not fit other crtieria of initial cancel SQL clauses i.e. is not > 24 hours away

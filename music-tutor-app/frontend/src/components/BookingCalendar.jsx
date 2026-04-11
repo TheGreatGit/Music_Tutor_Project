@@ -134,6 +134,7 @@ const BookingCalendar = ({
   // PRE-BOOKING CHECKS HAVE BEEN REFACTORED IN TO THIS SEPARATE FUNCTION THAT WILL RUN PRIOR TO ATTEMPTING TO BOOK VIA BACKEND ROUTE
   const preBookingChecks = (draftEvent) => {
     if (!draftEvent) {
+      //setBookingDetailsError("Please select a valid timeslot");
       alert("Please select a valid timeslot");
       return false;
     }
@@ -143,15 +144,18 @@ const BookingCalendar = ({
     const duration = draftEvent?.booking_end_time - draftEvent?.booking_start_time;
 
     if (draftEvent.booking_start_time < now) {
+      //setBookingDetailsError("You cannot book appointments in the past");
       alert("You cannot book appointments in the past");
       return false;
     }
     // maybe refactor to comply with DRY principle
     if (duration > oneHourAsMilliseconds) {
+      //setBookingDetailsError("Lessons can only be booked for a maximum of one hour");
       alert("Lessons can only be booked for a maximum of one hour");
       return false;
     }
     if (!canDisplayDraft) {
+      //setBookingDetailsError("Please select a valid timeslot.");
       alert("Please select a valid timeslot.");
       return false;
     }
@@ -169,19 +173,22 @@ const BookingCalendar = ({
     });
 
     if (hasOverlap) {
+      //setBookingDetailsError("This timeslot overlaps an existing booking. Choose another time");
       alert("This timeslot overlaps an existing booking. Choose another time");
       return false;
     }
-
+   
     return true;
   };
 
   const confirmDraftBooking = async () => {
+    //setBookingDetailsError(null);
     if (!preBookingChecks(draftBooking)) return;
 
     try {
       await handleConfirmBooking(draftBooking);
       clearSelection();
+      alert('Booking confirmed')
     } catch (bookingError) {
       alert(bookingError.message || "Booking failed");
     }
