@@ -14,10 +14,11 @@ import TutorRegisterForm from "../components/TutorRegisterForm";
 import StudentRegisterForm from "../components/StudentRegisterForm";
 import LoginUserForm from "../pages/LoginUserForm";
 import TutorProfilePage from "../pages/TutorProfilePage";
+import ErrorPage from "../components/ErrorPage";
 
 const router = createBrowserRouter(
   createRoutesFromElements(
-    <Route path="/" element={<RootLayout />}>
+    <Route path="/" element={<RootLayout />} errorElement ={<ErrorPage/>}>
       <Route index element={<Home />} />
       <Route path="about" element={<About />} />
       <Route path="contact" element={<ContactLayout />} />

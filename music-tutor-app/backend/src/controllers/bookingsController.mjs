@@ -249,7 +249,7 @@ export const cancelBookingById = async (req, res, next) => {
       return next(new Error("You must be logged in to cancel a booking"));
     }
 
-    // cancel SQL query looks for given booking id where current booking status is 1(confirmed) 
+    // cancel SQL query looks for given booking id where current booking status is 1(confirmed)
     // and the start time is >24 hours away and
     // and if the cancellation request sender is a participant in the booking
     // then  returns booking id and status and updatedAt
@@ -294,15 +294,6 @@ export const cancelBookingById = async (req, res, next) => {
     // here means that a booking whose id matches with that contained in the cancel request from frontend has been found but it doesn't meet cancel criteria
     const booking = checkResult.rows[0];
 
-    // booking status of 1 means confirmed, 2 means pending( not used yet) and 3 means cancelled
-    if (booking.booking_status !== 1) {
-      // assume that if not equal to 1, it is equal to 3
-      res.status(409);
-      return next(
-        new Error("Booking is not confirmedd and cannot be cancelled"),
-      );
-    }
-
     //NEW CHECK
     const isParticipant =
       (participantRole === "tutor" && participantId === booking.tutor_id) ||
@@ -310,6 +301,15 @@ export const cancelBookingById = async (req, res, next) => {
     if (!isParticipant) {
       res.status(403);
       return next(new Error("Only participants can cancel a booking"));
+    }
+
+    // booking status of 1 means confirmed, 2 means pending( not used yet) and 3 means cancelled
+    if (booking.booking_status !== 1) {
+      // assume that if not equal to 1, it is equal to 3
+      res.status(409);
+      return next(
+        new Error("Booking is not confirmedd and cannot be cancelled"),
+      );
     }
 
     // booking exists and has not been cancelled, but does not fit other crtieria of initial cancel SQL clauses i.e. is not > 24 hours away
