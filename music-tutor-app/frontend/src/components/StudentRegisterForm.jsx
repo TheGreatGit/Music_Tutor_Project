@@ -100,6 +100,25 @@ const StudentRegisterForm = () => {
         body: JSON.stringify(formData),
       });
       const data = await res.json();
+      
+      // NEW CODE TO GET BACKEND ERROR INFO
+      if (!res.ok) {
+        // backend sends array called errors attached to data.
+        if (Array.isArray(data?.errors)) {
+          data.errors.forEach((error) => {
+            // each error in the errors array is an object with 2 properties: a path property that has the field name in an array,
+            // and has a message property with error message
+            const field = error?.path?.[0];
+            if (field) {
+              setError(field, {
+                message: error?.message || "unoknown field error",
+              });
+            }
+          });
+        }
+        return;
+      }
+      
       if (data?.userId) {
         window.alert("Student registered ok ;)");
       }

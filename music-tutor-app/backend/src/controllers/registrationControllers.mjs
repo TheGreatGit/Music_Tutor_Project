@@ -1,10 +1,11 @@
 import { pool } from "../config/pool.mjs";
-import { validateTutorRegistrationFormData } from "../validation/validateTutorRegistrationForm.mjs";
-import { validateStudentRegistrationFormData } from "../validation/validateStudentRegistrationForm.mjs";
+//import { validateTutorRegistrationFormData } from "../validation/validateTutorRegistrationForm.mjs";
+import { zodTutorRegistrationSchema } from "../validation/zodTutorRegistrationSchema.mjs";
+import { zodStudentRegistrationSchema } from "../validation/zodStudentRegistrationSchema.mjs";
+import { zodAdminRegistrationSchema } from "../validation/zodAdminRegistrationSchema.mjs";
+//import { validateStudentRegistrationFormData } from "../validation/validateStudentRegistrationForm.mjs";
 import { findUserByEmail } from "../services/userService.mjs";
 import bcrypt from "bcrypt";
-import { validateAdminRegistration } from "../validation/validateAdminRegistration.mjs";
-
 
 // this handler is for actual tutor registration attempt; it will also check email availability
 // requests go to http://localhost:3000/api/register/tutor  (post request)
@@ -13,19 +14,16 @@ export const tutorRegistrationController = async (req, res, next) => {
   const formData = req.body || {};
   // console.log(formData);
 
-  // validate form data- TO BE REPLACED WITH ZOD LATER
-  // the validation function returns an object of either {ok: false, errors} or {ok:true, data:cleaned}
-  const validationResult = validateTutorRegistrationFormData(formData);
-  console.log(
-    "validation result in tutorRegisterController ",
-    validationResult
-  );
-
-  if (!validationResult.ok) {
-    return res.status(400).json({ errors: validationResult.errors }); // this style is kept in order to provide granular info on validation fails rather than a generic error message
+  const zodValidationCheck = zodTutorRegistrationSchema.safeParse(formData);
+  if (!zodValidationCheck.success) {
+    console.log(
+      "Backend zod validation issue: ",
+      zodValidationCheck.error.issues,
+    );
+    return res.status(400).json({ errors: zodValidationCheck.error.issues });
   }
 
-  // destructure the cleaned data returned in validateTutorRegistrationFormData.data
+  // destructure the cleaned data returned in zodValidationCheck.data
   const {
     instrument,
     teachingFormats,
@@ -37,7 +35,7 @@ export const tutorRegistrationController = async (req, res, next) => {
     email,
     phoneNumber,
     password,
-  } = validationResult.data;
+  } = zodValidationCheck.data;
 
   const lowerCasedEmail = email.toLowerCase().trim();
   // create outer try block
@@ -46,8 +44,14 @@ export const tutorRegistrationController = async (req, res, next) => {
     const isEmailRegistered = await findUserByEmail(lowerCasedEmail);
     if (isEmailRegistered) {
       console.log(isEmailRegistered.email + " is not available");
-      res.status(409);
-      return next(new Error("Email already registered"));
+      return res.status(409).json({
+        errors: [
+          {
+            path: ["email"],
+            message: "Email already registered",
+          },
+        ],
+      });
     }
 
     // use the 'client' method from the pool object rather than the 'query' method because the sql will use a transaction
@@ -64,7 +68,7 @@ export const tutorRegistrationController = async (req, res, next) => {
       // get role id for tutor
       const roleResult = await client.query(
         `select role_id from roles where role_name = $1`,
-        ["tutor"]
+        ["tutor"],
       );
       const roleId = roleResult.rows[0].role_id;
 
@@ -72,7 +76,7 @@ export const tutorRegistrationController = async (req, res, next) => {
       const appUserResult = await client.query(
         `insert into app_users (email, password_hash, role_id) 
       values ($1, $2, $3) returning user_id`,
-        [lowerCasedEmail, passwordHash, roleId]
+        [lowerCasedEmail, passwordHash, roleId],
       );
       // get  user Id from appUserResult
       const userId = appUserResult.rows[0].user_id;
@@ -80,16 +84,16 @@ export const tutorRegistrationController = async (req, res, next) => {
       // get city id from city table
       const cityResult = await client.query(
         `select city_id from cities where city_name = $1`,
-        [city]
+        [city],
       );
       const cityId = cityResult.rows[0].city_id;
 
       // insert in to tutors
       const tutorResult = await client.query(
         `insert into tutors (first_name, last_name, city_id, user_id) values ($1, $2, $3, $4) returning tutor_id`,
-        [firstName, lastName, cityId, userId]
+        [firstName, lastName, cityId, userId],
       );
-      // get returned tutor_id
+
       const tutorId = tutorResult.rows[0].tutor_id;
 
       //get contact type for 'mobile' and add phoen number to user_contact_details
@@ -98,7 +102,7 @@ export const tutorRegistrationController = async (req, res, next) => {
       select contact_type_id
       from contact_type
       where contact_type = $1`,
-        ["mobile"]
+        ["mobile"],
       );
 
       const phoneTypeId = contactTypeResult.rows[0].contact_type_id;
@@ -106,19 +110,19 @@ export const tutorRegistrationController = async (req, res, next) => {
       // insert into USER_contact_details
       await client.query(
         `insert into user_contact_details (user_id, contact_type_id, contact_info) values ($1, $2, $3)`,
-        [userId, phoneTypeId, phoneNumber]
+        [userId, phoneTypeId, phoneNumber],
       );
 
       // get instrument details
       const instrumentResult = await client.query(
         `select instrument_id from instruments where instrument_name = $1`,
-        [instrument]
+        [instrument],
       );
       const instrumentId = instrumentResult.rows[0].instrument_id;
       // insert in to instrument table
       await client.query(
         `insert into tutor_instruments (tutor_id, instrument_id) values ($1, $2)`,
-        [tutorId, instrumentId]
+        [tutorId, instrumentId],
       );
 
       //teaching formats (an array)
@@ -130,10 +134,10 @@ export const tutorRegistrationController = async (req, res, next) => {
       if (teachingFormats && teachingFormats.length > 0) {
         const formatsResult = await client.query(
           `select teaching_format_id, teaching_format_name from teaching_format where teaching_format_name = ANY($1::text[])`,
-          [teachingFormats]
+          [teachingFormats],
         ); // querry becomnes equivalent to ...where teaching_format_name = ANY(ARRAY['in_person'])
         // formatsResult would return, for each submitted format, row of teaching format id and name where submitted format name matches DB format name
-        
+
         const values = [];
         const params = [tutorId]; // always add tutorId as the first param in the params array
 
@@ -145,7 +149,7 @@ export const tutorRegistrationController = async (req, res, next) => {
         await client.query(
           `insert into tutor_teaching_formats (tutor_id, teaching_format_id)
         values ${values.join(",")}`, // becomes e.g. "($1,$2), ($1,$3), ($1, $4)" i.e. it turns the array in to an actual string with ',' between elements
-          params // params will be e.g. [tutorId, 1, 2,3,...] =
+          params, // params will be e.g. [tutorId, 1, 2,3,...] =
         );
         /*
           The code above creates bulk inserts where you insert numerous sets of values in a single query 
@@ -170,7 +174,7 @@ export const tutorRegistrationController = async (req, res, next) => {
       if (teachingTypes && teachingTypes.length > 0) {
         const typesResult = await client.query(
           `select teaching_type_id, teaching_type_name from teaching_type where teaching_type_name = ANY($1::text[])`,
-          [teachingTypes]
+          [teachingTypes],
         );
 
         const values = [];
@@ -183,9 +187,9 @@ export const tutorRegistrationController = async (req, res, next) => {
 
         await client.query(
           `insert into tutor_teaching_types (tutor_id, teaching_type_id) values ${values.join(
-            ","
+            ",",
           )}`,
-          params
+          params,
         );
       }
 
@@ -193,7 +197,7 @@ export const tutorRegistrationController = async (req, res, next) => {
       if (skillLevels && skillLevels.length > 0) {
         const skillsResult = await client.query(
           `select skill_level_id, skill_level_name from skill_levels where skill_level_name = ANY($1::TEXT[])`,
-          [skillLevels]
+          [skillLevels],
         );
 
         const values = [];
@@ -207,7 +211,7 @@ export const tutorRegistrationController = async (req, res, next) => {
         await client.query(
           `insert into tutor_teaching_levels (tutor_id, skill_level_id)
         values ${values.join(",")}`,
-          params
+          params,
         );
       }
 
@@ -225,13 +229,19 @@ export const tutorRegistrationController = async (req, res, next) => {
       } catch (rollbackErr) {
         console.error(
           "Error rolling back transaction in tutorRegistrationController: ",
-          rollbackErr
+          rollbackErr,
         );
       }
       // error for email being already registered. postgreSQL has the error code 23505 for a unique_violation error i.e. email breachers the app_user table's constraint of having unique email
       if (err.code === "23505") {
-        res.status(409);
-        return next(new Error("Email already registered"));
+        return res.status(409).json({
+          errors: [
+            {
+              path: ["email"],
+              message: "Email already registered",
+            },
+          ],
+        });
       }
 
       console.error("Error in tutorRegistrationController: ", err);
@@ -244,7 +254,7 @@ export const tutorRegistrationController = async (req, res, next) => {
     // catches errors from e.g. findUSerByEmail or pool.connect()
     console.error(
       "Outer error before transaction begins in registering tutor: ",
-      outerError
+      outerError,
     );
     return next(outerError);
   }
@@ -255,17 +265,15 @@ export const studentRegistrationController = async (req, res, next) => {
   const formData = req.body || {};
   // console.log(formData);
 
-  // validate form data- TO BE REPLACED WITH ZOD LATER
-  // the validation function returns an object of either {ok: false, errors} or {ok:true, data:cleaned}
-  const validationResult = validateStudentRegistrationFormData(formData);
+  const zodValidationResult = zodStudentRegistrationSchema.safeParse(formData);
 
-  if (!validationResult.ok) {
-    return res.status(400).json({ errors: validationResult.errors }); // keep this format for now so info on validation errors is preserved
+  if (!zodValidationResult.success) {
+    return res.status(400).json({ errors: zodValidationResult.error.issues });
   }
 
-  // destructure the cleaned data returned in validateStudentRegistrationFormData.data
+  // destructure the cleaned data returned in zodValidationResult.data
   const { firstName, lastName, city, email, phoneNumber, password } =
-    validationResult.data;
+    zodValidationResult.data;
 
   const lowerCasedEmail = email.toLowerCase();
 
@@ -275,8 +283,14 @@ export const studentRegistrationController = async (req, res, next) => {
     const isEmailRegistered = await findUserByEmail(lowerCasedEmail);
     if (isEmailRegistered) {
       console.log(isEmailRegistered.email + " is not available");
-      res.status(409);
-      return next(new Error("Email already registered"));
+      return res.status(409).json({
+        errors: [
+          {
+            path: ["email"],
+            message: "Email already registered",
+          },
+        ],
+      });
     }
 
     // use the 'client' method from the pool object rather than the 'query' method because the sql will use a transaction
@@ -293,7 +307,7 @@ export const studentRegistrationController = async (req, res, next) => {
       // get role id for STUDENT
       const roleResult = await client.query(
         `select role_id from roles where role_name = $1`,
-        ["student"]
+        ["student"],
       );
       const roleId = roleResult.rows[0].role_id;
 
@@ -301,7 +315,7 @@ export const studentRegistrationController = async (req, res, next) => {
       const appUserResult = await client.query(
         `insert into app_users (email, password_hash, role_id) 
       values ($1, $2, $3) returning user_id`,
-        [lowerCasedEmail, passwordHash, roleId]
+        [lowerCasedEmail, passwordHash, roleId],
       );
       // get  user Id from appUserResult
       const userId = appUserResult.rows[0].user_id;
@@ -309,17 +323,15 @@ export const studentRegistrationController = async (req, res, next) => {
       // get city id from city table
       const cityResult = await client.query(
         `select city_id from cities where city_name = $1`,
-        [city]
+        [city],
       );
       const cityId = cityResult.rows[0].city_id;
 
       // insert in to STUDENTS
       const studentResult = await client.query(
-        `insert into students (first_name, last_name, city_id, user_id) values ($1, $2, $3, $4) returning student_id`,
-        [firstName, lastName, cityId, userId]
+        `insert into students (first_name, last_name, city_id, user_id) values ($1, $2, $3, $4)`,
+        [firstName, lastName, cityId, userId],
       );
-      // get returned tutor_id
-      const studentId = studentResult.rows[0].student_id;
 
       //get contact type for 'mobile' and add phoen number to tutor_contact_details
       const contactTypeResult = await client.query(
@@ -327,7 +339,7 @@ export const studentRegistrationController = async (req, res, next) => {
       select contact_type_id
       from contact_type
       where contact_type = $1`,
-        ["mobile"]
+        ["mobile"],
       );
 
       const contactTypeId = contactTypeResult.rows[0].contact_type_id;
@@ -335,7 +347,7 @@ export const studentRegistrationController = async (req, res, next) => {
       // insert into USER_contact_details
       await client.query(
         `insert into user_contact_details (user_id, contact_type_id, contact_info) values ($1, $2, $3)`,
-        [userId, contactTypeId, phoneNumber]
+        [userId, contactTypeId, phoneNumber],
       );
 
       // COMMIT TRANSACTION
@@ -352,13 +364,19 @@ export const studentRegistrationController = async (req, res, next) => {
       } catch (rollbackErr) {
         console.error(
           "Error rolling back transaction in studentRegistrationController: ",
-          rollbackErr
+          rollbackErr,
         );
       }
       // error for email being already registered. postgreSQL has the error code 23505 for a unique_violation error i.e. email breachers the app_user table's constraint of having unique email
       if (err.code === "23505") {
-        res.status(409);
-        return next(new Error("Email already registered"));
+        return res.status(409).json({
+          errors: [
+            {
+              path: ["email"],
+              message: "Email already registered",
+            },
+          ],
+        });
       }
 
       console.error("Error in studentRegistrationController: ", err);
@@ -371,7 +389,7 @@ export const studentRegistrationController = async (req, res, next) => {
     // catches errors from e.g. findUSerByEmail or pool.connect()
     console.error(
       "Outer error before transaction begins in registering student: ",
-      outerError
+      outerError,
     );
     return next(outerError);
   }
@@ -381,17 +399,14 @@ export const adminRegistrationController = async (req, res, next) => {
   // check form data in req.body
   const formData = req.body || {};
 
-  // validate form data- TO BE REPLACED WITH ZOD LATER
-  // the validation function returns an object of either {ok: false, errors} or {ok:true, data:cleaned}
-  const validationResult = validateAdminRegistration(formData);
+  const zodValidationResult = zodAdminRegistrationSchema.safeParse(formData);
 
-  if (!validationResult.ok) {
-    return res.status(400).json({ errors: validationResult.errors }); // keep this format for now so info on validation errors is preserved
+  if (!zodValidationResult.success) {
+    return res.status(400).json({ errors: zodValidationResult.error.issues });
   }
 
   // destructure the cleaned data returned in validateStudentRegistrationFormData.data
-  const { firstName, lastName,email, password } =
-    validationResult.data;
+  const { firstName, lastName, email, password } = zodValidationResult.data;
 
   const lowerCasedEmail = email.toLowerCase();
 
@@ -401,8 +416,14 @@ export const adminRegistrationController = async (req, res, next) => {
     const isEmailRegistered = await findUserByEmail(lowerCasedEmail);
     if (isEmailRegistered) {
       console.log(isEmailRegistered.email + " is not available");
-      res.status(409);
-      return next(new Error("Email already registered"));
+      return res.status(409).json({
+        errors: [
+          {
+            path: ["email"],
+            message: "Email already registered",
+          },
+        ],
+      });
     }
 
     // use the 'client' method from the pool object rather than the 'query' method because the sql will use a transaction
@@ -419,7 +440,7 @@ export const adminRegistrationController = async (req, res, next) => {
       // get role id for ADMIN
       const roleResult = await client.query(
         `select role_id from roles where role_name = $1`,
-        ["admin"]
+        ["admin"],
       );
       const roleId = roleResult.rows[0].role_id;
 
@@ -427,18 +448,16 @@ export const adminRegistrationController = async (req, res, next) => {
       const appUserResult = await client.query(
         `insert into app_users (email, password_hash, role_id) 
       values ($1, $2, $3) returning user_id`,
-        [lowerCasedEmail, passwordHash, roleId]
+        [lowerCasedEmail, passwordHash, roleId],
       );
       // get  user Id from appUserResult
       const userId = appUserResult.rows[0].user_id;
 
       // insert in to ADMINS
-      const adminResult = await client.query(
-        `insert into admins (first_name, last_name, user_id) values ($1, $2, $3) returning admin_id`,
-        [firstName, lastName, userId]
+      await client.query(
+        `insert into admins (first_name, last_name, user_id) values ($1, $2, $3)`,
+        [firstName, lastName, userId],
       );
-      // get returned admin_id
-      const adminId = adminResult.rows[0].admin_id;
 
       // COMMIT TRANSACTION
       await client.query("COMMIT");
@@ -453,14 +472,20 @@ export const adminRegistrationController = async (req, res, next) => {
         await client.query("ROLLBACK");
       } catch (rollbackErr) {
         console.error(
-          "Error rolling back transaction in studentRegistrationController: ",
-          rollbackErr
+          "Error rolling back transaction in adminRegistrationController: ",
+          rollbackErr,
         );
       }
       // error for email being already registered. postgreSQL has the error code 23505 for a unique_violation error i.e. email breachers the app_user table's constraint of having unique email
       if (err.code === "23505") {
-        res.status(409);
-        return next(new Error("Email already registered"));
+       return res.status(409).json({
+        errors: [
+          {
+            path: ['email'],
+            message: 'Email already registered'
+          }
+        ]
+       });
       }
 
       console.error("Error in adminRegistrationController: ", err);
@@ -473,7 +498,7 @@ export const adminRegistrationController = async (req, res, next) => {
     // catches errors from e.g. findUSerByEmail or pool.connect()
     console.error(
       "Outer error before transaction begins in registering admin: ",
-      outerError
+      outerError,
     );
     return next(outerError);
   }

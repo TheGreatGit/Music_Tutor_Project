@@ -96,12 +96,13 @@ function TutorRegistrationForm() {
     return () => controller.abort();
   }, []);
 
-  // set up form input structure, validation modes, and validation schema
+  // THIS IS THE HEART OF REACT-HOOK-FORM
+  // useForm is used to set up expected form input structure, the validation modes, and the validation schema (if supplied externally)
   const form = useForm({
     defaultValues: {
       // form data for 1st page of form
       instrument: "",
-      teachingFormats: [],
+      teachingFormats: [], // RHF will turn these grouped chekcboxes in to arrays.
       teachingTypes: [],
       skillLevels: [],
 
@@ -122,6 +123,7 @@ function TutorRegistrationForm() {
     resolver: zodResolver(tutorRegistrationFormSchema), // links zod schema to form validation by using zodResolver
   });
 
+  // gather useful RHF methods from the 'form' const created above from const form = useForm();
   const {
     register,
     handleSubmit,
@@ -150,6 +152,32 @@ function TutorRegistrationForm() {
       const data = await res.json();
       //reset()
       console.log("server response to form data: ", data);
+
+      // NEW CODE TO GET BACKEND ERROR INFO
+      if (!res.ok) {
+        // backend sends array called errors attached to data.
+        if (Array.isArray(data?.errors)) {
+          data.errors.forEach((error) => {
+            // each error in the errors array is an object with 2 properties: a path property that has the field name in an array,
+            // and has a message property with error message
+            const field = error?.path?.[0];
+            if (field) {
+              setError(field, {
+                message: error?.message || "unoknown field error",
+              });
+            }
+          });
+          // ensure errors from backend  for step 1 form fields are shown
+          const hasStepOneError = data.errors.some((error) =>
+            ["instrument","teachingFormats","teachingTypes","skillLevels"].includes(error?.path?.[0]),
+          );
+          if (hasStepOneError) {
+            setStep(1);
+          }
+        }
+
+        return;
+      }
       if (data?.userId) {
         window.alert("Tutor registered ok ;)");
       }
@@ -184,7 +212,7 @@ function TutorRegistrationForm() {
   const handleBack = () => setStep(1);
 
   // as RHF is managing inputs via useRef() hook, use RHF's 'watch()' function to access input values.
-  const instrumentInput = (watch("instrument") || "").trim(); // dom't convert to lower case here because the form value will be lower case
+  const instrumentInput = (watch("instrument") || "").trim();
   const cityInput = (watch("city") || "").trim();
 
   const userInstrumentInput = instrumentInput.toLowerCase();
