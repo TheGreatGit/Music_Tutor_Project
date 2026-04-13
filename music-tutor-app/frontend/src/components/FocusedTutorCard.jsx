@@ -12,7 +12,7 @@ const FocusedTutorCard = ({ tutor, draftBookingBundle, canMessage, onMessageClic
         {/* tutor silhouette placeholder insode of banner */}
         <div className="absolute left-4 top-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-4 border-white bg-white overflow-hidden shadow-sm">
           <img
-            src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+            src={`/${tutor.first_name.toLowerCase()}_avatar.webp`}
             className="w-full h-full object-cover"
           />
         </div>

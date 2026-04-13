@@ -1,6 +1,7 @@
 
 const TutorCard = ({ tutor }) => {
   if (!tutor) return <p>No tutor passed in as prop</p>;
+  console.log(`avatar source ${tutor.first_name.toLowerCase()}_avatar.webp `);
   
   return (
     // card container div
@@ -10,7 +11,7 @@ const TutorCard = ({ tutor }) => {
         {/* tutor silhouette placeholder insode of banner */}
         <div className="absolute left-4 top-1/2 -translate-y-1/2 w-24 h-24 rounded-full border-4 border-white bg-white overflow-hidden shadow-sm">
           <img
-            src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
+            src={`/${tutor.first_name.toLowerCase()}_avatar.webp`}
             className="w-full h-full object-cover"
           />
         </div>
@@ -22,7 +23,7 @@ const TutorCard = ({ tutor }) => {
           <h3 className="text-lg font-semibold text-slate-900 leading-tight">
             {tutor.first_name}
           </h3>
-          <p className="mt-0.5 text-slate-600 text-md leading_snug">
+          <p className="mt-0.5 text-slate-600 text-md leading-snug">
             <span className="font-medium block">{tutor.city_name}</span>
             <span className="text-slate-400">{tutor.teaching_formats}</span>
           </p>
