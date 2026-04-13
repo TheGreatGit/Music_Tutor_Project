@@ -1,18 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { DevTool } from "@hookform/devtools";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { studentRegistrationFormSchema } from "../validationSchemas/studentRegistrationFormSchema.mjs";
-import checkIfUser from "../utils/checkIfUser.mjs";
 import { Navigate } from "react-router-dom";
+import { UserContext } from "../context/UserContext";
 
 const StudentRegisterForm = () => {
   // new redirect mechanism for legged-in users
-  const {user} = checkIfUser();
-  if(user){
-    return <Navigate to="/" />
+  const { user } = useContext(UserContext);
+  if (user) {
+    return <Navigate to="/" />;
   }
-  
+
   //fetch city info for real-time search dropdowns
   const [dbCities, setDBCities] = useState([]);
 
@@ -121,8 +121,12 @@ const StudentRegisterForm = () => {
   const cityInput = (watch("city") || "").trim();
   const userCityInput = cityInput.toLowerCase();
 
-  const hasExactCityMatch = userCityInput && dbCities.some((cityRow) => (cityRow.city_name || "").toLowerCase() === userCityInput);
-  
+  const hasExactCityMatch =
+    userCityInput &&
+    dbCities.some(
+      (cityRow) => (cityRow.city_name || "").toLowerCase() === userCityInput,
+    );
+
   // crucial bug fix is to use the !hasExactMatch; otherwise, when clicking on piano, classical piano and jazz piano would still show in a dropdown
   const cityDropdown =
     userCityInput && !hasExactCityMatch
@@ -188,7 +192,7 @@ const StudentRegisterForm = () => {
                 <div className="absolute left-0 right-0 mt-1 max-h-40 overflow-y-auto rounded-md border border-slate-200 bg-white shadow-lg z-10">
                   {cityDropdown.map((cityRow) => (
                     <div
-                      key={cityRow.city_id} 
+                      key={cityRow.city_id}
                       onClick={() =>
                         setValue("city", cityRow.city_name, {
                           shouldValidate: true,
