@@ -176,7 +176,7 @@ const ChangePasswordPanel = () => {
             disabled={isSaving}
             className="w-full rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
           >
-            {isSaving ? "Saving..." : "Save"}
+            {isSaving ? "Saving..." : "Save change"}
           </button>
 
           <p className="text-sm text-slate-500"></p>
