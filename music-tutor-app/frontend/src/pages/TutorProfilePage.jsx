@@ -236,7 +236,7 @@ const TutorProfilePage = () => {
             />
           </div>
 
-          <section className="w-full max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <section className=" text-center w-full max-w-3xl mx-auto rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-slate-900 mb-2">
               Availability and booking
             </h2>
@@ -244,7 +244,7 @@ const TutorProfilePage = () => {
             {user?.role === "student" ? (
               <>
                 <button
-                  className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg p-2"
+                  className="bg-indigo-600 font-medium hover:bg-indigo-700 cursor-pointer text-white rounded-lg p-2"
                   onClick={() => setShowCalendar((current) => !current)}
                 >
                   {showCalendar ? "Close calendar" : "Show calendar"}

@@ -468,13 +468,13 @@ const StudentUpcomingLessonsPanel = ({ user }) => {
 
       <button
         onClick={clearSelection}
-        className="px-3 py-1 border rounded-lg cursor-pointer bg-indigo-600 text-white hover:bg-indigo-700"
+        className="px-3 py-1 border rounded-lg  font-medium cursor-pointer bg-indigo-600 text-white hover:bg-indigo-700"
       >
         Clear selection
       </button>
 
       {/* event details panel */}
-      <div className="mt-6">
+      <div className="mt-6 text-center">
         <div className="border rounded-xl p-4 bg-white shadow-sm text-sm text-slate-700">
           <h2 className="text-xl font-medium mb-2">Lesson details</h2>
 
@@ -554,18 +554,18 @@ const StudentUpcomingLessonsPanel = ({ user }) => {
                   <button
                     onClick={confirmCancelBooking}
                     disabled={withinTwentyFourHours(selectedEvent)}
-                    className={`mt-3 px-3 py-1 border rounded-md text-xs
+                    className={`mt-3 px-3 py-1 border rounded-md bg-red-700 text-white font-medium
                 ${
                   withinTwentyFourHours(selectedEvent)
-                    ? "cursor-not-allowed  border-red-300 text-red-700"
-                    : "cursor-pointer hover:bg-red-50 text-red-700 border-red-300"
+                    ? "cursor-not-allowed  border-red-300"
+                    : "cursor-pointer  border-red-300"
                 }`}
                   >
                     Cancel booking
                   </button>
 
                   {withinTwentyFourHours(selectedEvent) && (
-                    <p className="text-xs text-red-500 mt-1">
+                    <p className=" text-red-500 mt-1">
                       Bookings cannot be cancelled within 24 hours of start time
                     </p>
                   )}

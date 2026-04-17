@@ -5,19 +5,20 @@ import StudentHomeSection from "../components/StudentHomeSection";
 import ChangePasswordPanel from "../components/ChangePasswordPanel";
 import TutorUpcomingLessonsPanel from "../components/TutorUpcomingLessonsPanel";
 import StudentUpcomingLessonsPanel from "../components/StudentUpcomingLessonsPanel";
+import { useNavigate } from "react-router-dom";
 
 const Home = () => {
   // grab user context and authLoading state
   // user has  user_id, tutor/student_id, role, first_name. last_name, display_name and email
   const { user, authLoading } = useContext(UserContext);
   const [activeSection, setActiveSection] = useState("edit-details");
+  const navigate = useNavigate();
 
   if (authLoading) {
     return <p>Loading user...</p>;
   }
   if (!user) {
-    // maybe put another component in here later to give a basic landing page on first visit?
-    return <p>Not logged in</p>;
+    navigate('/about');
   }
 
   const renderTutorPanel = () => {

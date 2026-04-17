@@ -22,6 +22,7 @@ const LoginUserForm = () => {
   const onChange = (e) => {
     const { name, value } = e.target;
     setForm((currentFormData) => ({ ...currentFormData, [name]: value }));
+    setError('');
   };
 
   const onSubmit = async (e) => {
@@ -77,7 +78,7 @@ const LoginUserForm = () => {
       <h1 className="text-2xl font-semibold mb-4">Log in</h1>
 
       {error && (
-        <div className="mb-3 rounded p-2 border border-red-400 text-red-700">
+        <div className="mb-3 p-1.5 rounded  border border-red-400   text-red-700 text-center">
           {error}
         </div>
       )}
@@ -117,9 +118,9 @@ const LoginUserForm = () => {
         <button
           type="submit"
           disabled={pending}
-          className="w-full rounded-xl p-2 border disabled:opacity-60"
+          className="w-full rounded-xl font-medium text-white p-2 border bg-indigo-600 hover:bg-indigo-700 cursor-pointer disabled:opacity-60"
         >
-          {pending ? "Attempting login" : "Login"}
+          {pending ? "Attempting login" : "Log in"}
         </button>
       </form>
     </div>

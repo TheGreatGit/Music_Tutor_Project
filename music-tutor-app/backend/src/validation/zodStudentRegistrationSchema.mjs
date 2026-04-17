@@ -6,7 +6,7 @@ const removeBlanks = (message) => {
   return z.string().trim().min(1,{ error: message });
 };
 
-export const studentRegistrationFormSchema = z
+export const zodStudentRegistrationSchema = z
   .object({
     firstName: removeBlanks("First name required"),
     lastName: removeBlanks("Last name required"),
