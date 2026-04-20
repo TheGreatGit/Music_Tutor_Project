@@ -1,11 +1,9 @@
 import React, { useContext } from "react";
 import { UserContext } from "../context/UserContext";
-import { useNavigate } from "react-router-dom";
 
 // added new onLogout prop in order to supply the logout button a prop to close the mobile menu after logout
 const LogOutButton = ({onLogout}) => {
   const { setUser } = useContext(UserContext);
-  const navigate = useNavigate();
 
   const logout = async () => {
     try {
@@ -20,7 +18,7 @@ const LogOutButton = ({onLogout}) => {
         // closes the hamburger menue on small screens post-logout rather than user having to do it manually
         onLogout();
       }
-      navigate("/about");
+      
     }
   };
 

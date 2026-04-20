@@ -8,6 +8,6 @@ const router = Router();
 // for UPDATING user profiles
 //router.patch('/tutors/me',protect, tutorCrudController );
 // router.patch('/students/me', protect, studentCrudController);
-router.patch('/user/changePassword',protect, passwordChangeController );
+router.patch("/user/changePassword", protect, passwordChangeController);
 
 export default router;

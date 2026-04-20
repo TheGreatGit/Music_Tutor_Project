@@ -1,7 +1,10 @@
 import React, { useState } from "react";
-
+import { UserContext } from "../context/UserContext";
+import { useContext } from "react";
 
 const ChangePasswordPanel = () => {
+  const { setUser } = useContext(UserContext);
+
   // not using react hook form as too complicated for this simple form
   const [inputs, setInputs] = useState({
     currentPassword: "",
@@ -21,12 +24,12 @@ const ChangePasswordPanel = () => {
     showConfirmNewPassword: false,
   });
 
-  const toggleShowPasswords = (fieldName) =>{
-    setShowPassword((current) =>({
+  const toggleShowPasswords = (fieldName) => {
+    setShowPassword((current) => ({
       ...current,
-      [fieldName] : !current[fieldName]
+      [fieldName]: !current[fieldName],
     }));
-  }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -55,7 +58,7 @@ const ChangePasswordPanel = () => {
       return false;
     }
 
-    if(newPassword === currentPassword){
+    if (newPassword === currentPassword) {
       setSaveError("New password must be different from old password");
       return false;
     }
@@ -97,12 +100,17 @@ const ChangePasswordPanel = () => {
         throw new Error(data?.message || "Failed to change password");
       }
 
+      /*
       setSaveSuccess(data?.message || "Password changed successfully");
       setInputs({
         currentPassword: "",
         newPassword: "",
         confirmNewPassword: "",
       });
+      */
+
+      // clear login details after password change
+      setUser(null);
     } catch (error) {
       console.log("passowrd change error", error);
       setSaveError(error?.message || "Failed to change password");
@@ -133,7 +141,7 @@ const ChangePasswordPanel = () => {
 
           <div className="relative">
             <input
-              type={showPassword.showCurrentPassword ? 'text' : 'password'}
+              type={showPassword.showCurrentPassword ? "text" : "password"}
               id="currentPassword"
               name="currentPassword"
               value={inputs.currentPassword}
@@ -144,12 +152,16 @@ const ChangePasswordPanel = () => {
 
             <button
               type="button"
-              onClick={()=>toggleShowPasswords("showCurrentPassword")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6">
-                { showPassword.showCurrentPassword ? <img src="/show.png" /> : <img src="/hide.png"/>}
-          </button>
+              onClick={() => toggleShowPasswords("showCurrentPassword")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6"
+            >
+              {showPassword.showCurrentPassword ? (
+                <img src="/show.png" />
+              ) : (
+                <img src="/hide.png" />
+              )}
+            </button>
           </div>
-
         </div>
 
         <div>
@@ -160,10 +172,9 @@ const ChangePasswordPanel = () => {
             New password
           </label>
 
-
           <div className="relative">
             <input
-              type={showPassword.showNewPassword ? 'text' : 'password'}
+              type={showPassword.showNewPassword ? "text" : "password"}
               id="newPassword"
               name="newPassword"
               value={inputs.newPassword}
@@ -172,16 +183,18 @@ const ChangePasswordPanel = () => {
               className="pr-12 mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
 
-          <button
-            type="button"
-            onClick={()=>toggleShowPasswords("showNewPassword")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6">
-              { showPassword.showNewPassword? <img src="/show.png" /> : <img src="/hide.png"/>}
-          </button>
+            <button
+              type="button"
+              onClick={() => toggleShowPasswords("showNewPassword")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6"
+            >
+              {showPassword.showNewPassword ? (
+                <img src="/show.png" />
+              ) : (
+                <img src="/hide.png" />
+              )}
+            </button>
           </div>
-
-
-
         </div>
 
         <div>
@@ -194,7 +207,7 @@ const ChangePasswordPanel = () => {
 
           <div className="relative">
             <input
-              type={showPassword.showConfirmNewPassword ? 'text' : 'password'}
+              type={showPassword.showConfirmNewPassword ? "text" : "password"}
               id="confirmNewPassword"
               name="confirmNewPassword"
               value={inputs.confirmNewPassword}
@@ -203,15 +216,18 @@ const ChangePasswordPanel = () => {
               className="pr-12 mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
             />
 
-          <button
-            type="button"
-            onClick={()=>toggleShowPasswords("showConfirmNewPassword")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6">
-              { showPassword.showConfirmNewPassword ? <img src="/show.png" /> : <img src="/hide.png"/>}
-          </button>
-
+            <button
+              type="button"
+              onClick={() => toggleShowPasswords("showConfirmNewPassword")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6"
+            >
+              {showPassword.showConfirmNewPassword ? (
+                <img src="/show.png" />
+              ) : (
+                <img src="/hide.png" />
+              )}
+            </button>
           </div>
-
         </div>
 
         {saveError && (
