@@ -14,7 +14,7 @@ const FocusedTutorCard = ({tutor,draftBookingBundle,canMessage,onMessageClick,})
         {/* tutor silhouette placeholder insode of banner */}
         <div className="absolute left-5 top-1/2 -translate-y-1/2 w-32 h-32 rounded-full border-4 border-white bg-white overflow-hidden shadow-sm">
           <img
-            src={`/${tutor.first_name.toLowerCase()}_avatar.webp`}
+            src={`/${tutor.first_name.toLowerCase()}_${tutor.last_name.toLowerCase()}.webp`}
             className="w-full h-full object-cover"
           />
         </div>

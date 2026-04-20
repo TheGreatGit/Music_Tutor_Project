@@ -61,8 +61,8 @@ const Home = () => {
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
           <div className="flex h-24 w-24 items-center justify-center rounded-full bg-slate-100 text-3xl text-slate-400">
             <img
-              src="https://cdn-icons-png.flaticon.com/512/847/847969.png"
-              className="w-full h-full object-cover"
+              src={`/${user.first_name.toLowerCase()}_${user.last_name.toLowerCase()}.webp`}
+              className="w-full h-full object-cover rounded-full"
             />
           </div>
 

@@ -75,7 +75,7 @@ const LoginUserForm = () => {
     }
   };
   return (
-    <div className=" max-w-md mx-auto p-6 rounded-2xl shadow">
+    <div className=" max-w-md mx-auto p-6 rounded-2xl shadow  ">
       <div className="flex flex-col items-center">
         <img src="/player.png" className="h-24 w-24" alt="" />
         <h1 className="text-2xl font-semibold mb-4">Welcome back</h1>
