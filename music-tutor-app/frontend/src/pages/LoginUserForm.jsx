@@ -12,6 +12,7 @@ const LoginUserForm = () => {
   const [form, setForm] = useState({email: "", password: ""});
   const [error, setError] = useState("");
   const [pending, setPending] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
 
 // // set up a useEffect to check user login status and redirect if logged in
@@ -74,8 +75,11 @@ const LoginUserForm = () => {
     }
   };
   return (
-    <div className="max-w-md mx-auto p-6 rounded-2xl shadow">
-      <h1 className="text-2xl font-semibold mb-4">Log in</h1>
+    <div className=" max-w-md mx-auto p-6 rounded-2xl shadow">
+      <div className="flex flex-col items-center">
+        <img src="/player.png" className="h-24 w-24" alt="" />
+        <h1 className="text-2xl font-semibold mb-4">Welcome back</h1>
+      </div>
 
       {error && (
         <div className="mb-3 p-1.5 rounded  border border-red-400   text-red-700 text-center">
@@ -85,34 +89,54 @@ const LoginUserForm = () => {
 
       <form onSubmit={onSubmit} noValidate className="space-y-4">
         <div>
-          <label className="block mb-1" htmlFor="email">
+
+          <label className="block mb-1 text-sm font-medium" htmlFor="email">
             Email
           </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            value={form.email}
-            onChange={onChange}
-            required
-          />
+
+          <div className="relative">
+            <img src="/mail.png" className="absolute left-2 top-1/2 -translate-y-1/2  h-5 w-5" />
+            <input
+              id="email"
+              name="email"
+              type="email"
+              className="w-full pl-11 border rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              value={form.email}
+              onChange={onChange}
+              required
+            />
+          </div>
+
         </div>
 
         <div>
-          <label className="block mb-1" htmlFor="password">
+          <label className="block mb-1 text-sm font-medium" htmlFor="password">
             Password
           </label>
-          <input
-            id="password"
-            name="password"
-            type="password"
-            className="w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            value={form.password}
-            onChange={onChange}
-            required
-            minLength={6}
-          />
+
+          <div className="relative ">
+            <img src="/locked-computer.png" className="absolute h-6 w-6 left-2 top-1/2 -translate-y-1/2 " />
+            <input
+              id="password"
+              name="password"
+              type={showPassword ? 'text': 'password'}
+              className="pl-11 w-full border rounded p-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+              value={form.password}
+              onChange={onChange}
+              required
+              maxLength={16}
+            />   
+            
+          <button
+            type="button"
+            onClick={()=>setShowPassword((current)=> !current)}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6">
+              { showPassword ? <img src="/show.png" /> : <img src="/hide.png"/>}
+          </button>
+          </div>
+
+       
+
         </div>
 
         <button

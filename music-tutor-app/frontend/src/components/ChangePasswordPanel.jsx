@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 
+
 const ChangePasswordPanel = () => {
   // not using react hook form as too complicated for this simple form
   const [inputs, setInputs] = useState({
@@ -12,6 +13,20 @@ const ChangePasswordPanel = () => {
   const [saveError, setSaveError] = useState("");
   const [saveSuccess, setSaveSuccess] = useState("");
   const [isSaving, setIsSaving] = useState(false);
+
+  // new state for password icon toggling
+  const [showPassword, setShowPassword] = useState({
+    showCurrentPassword: false,
+    showNewPassword: false,
+    showConfirmNewPassword: false,
+  });
+
+  const toggleShowPasswords = (fieldName) =>{
+    setShowPassword((current) =>({
+      ...current,
+      [fieldName] : !current[fieldName]
+    }));
+  }
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,7 +46,7 @@ const ChangePasswordPanel = () => {
     }
 
     if (newPassword.length < 8 || newPassword.length > 16) {
-      setSaveError("Password must be at between 8 and 16 characters");
+      setSaveError("Password must be  between 8 and 16 characters");
       return false;
     }
 
@@ -115,14 +130,26 @@ const ChangePasswordPanel = () => {
           >
             Current password
           </label>
-          <input
-            type="password"
-            id="currentPassword"
-            name="currentPassword"
-            value={inputs.currentPassword}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
+
+          <div className="relative">
+            <input
+              type={showPassword.showCurrentPassword ? 'text' : 'password'}
+              id="currentPassword"
+              name="currentPassword"
+              value={inputs.currentPassword}
+              onChange={handleChange}
+              maxLength={16}
+              className="pr-12 mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+
+            <button
+              type="button"
+              onClick={()=>toggleShowPasswords("showCurrentPassword")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6">
+                { showPassword.showCurrentPassword ? <img src="/show.png" /> : <img src="/hide.png"/>}
+          </button>
+          </div>
+
         </div>
 
         <div>
@@ -132,14 +159,29 @@ const ChangePasswordPanel = () => {
           >
             New password
           </label>
-          <input
-            type="password"
-            id="newPassword"
-            name="newPassword"
-            value={inputs.newPassword}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
+
+
+          <div className="relative">
+            <input
+              type={showPassword.showNewPassword ? 'text' : 'password'}
+              id="newPassword"
+              name="newPassword"
+              value={inputs.newPassword}
+              onChange={handleChange}
+              maxLength={16}
+              className="pr-12 mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+
+          <button
+            type="button"
+            onClick={()=>toggleShowPasswords("showNewPassword")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6">
+              { showPassword.showNewPassword? <img src="/show.png" /> : <img src="/hide.png"/>}
+          </button>
+          </div>
+
+
+
         </div>
 
         <div>
@@ -149,14 +191,27 @@ const ChangePasswordPanel = () => {
           >
             Confirm new password
           </label>
-          <input
-            type="password"
-            id="confirmNewPassword"
-            name="confirmNewPassword"
-            value={inputs.confirmNewPassword}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-          />
+
+          <div className="relative">
+            <input
+              type={showPassword.showConfirmNewPassword ? 'text' : 'password'}
+              id="confirmNewPassword"
+              name="confirmNewPassword"
+              value={inputs.confirmNewPassword}
+              onChange={handleChange}
+              maxLength={16}
+              className="pr-12 mt-1 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+
+          <button
+            type="button"
+            onClick={()=>toggleShowPasswords("showConfirmNewPassword")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 w-6 h-6">
+              { showPassword.showConfirmNewPassword ? <img src="/show.png" /> : <img src="/hide.png"/>}
+          </button>
+
+          </div>
+
         </div>
 
         {saveError && (

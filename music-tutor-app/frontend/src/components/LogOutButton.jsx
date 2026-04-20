@@ -17,6 +17,7 @@ const LogOutButton = ({onLogout}) => {
       // clear user details
       setUser(null);
       if(typeof onLogout === 'function'){
+        // closes the hamburger menue on small screens post-logout rather than user having to do it manually
         onLogout();
       }
       navigate("/about");

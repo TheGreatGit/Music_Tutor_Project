@@ -27,7 +27,7 @@ const Logo = () => {
         className=" w-14 h-14 object-contain drop-shadow-sm  rounded-full"
       />
       <div className="leading-tight">
-        <span className="text-base font-semibold text-slate-900 tracking-tight">
+        <span className="italic text-xl font-semibold text-slate-900 tracking-tight">
           Music tutor app
         </span>
       </div>
