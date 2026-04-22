@@ -18,7 +18,7 @@ const TutorCard = ({ tutor }) => {
       </div>
 
       {/* div wrapper for main card content */}
-      <div className="p-5 flex flex-col flex-1">
+      <div className="p-5 flex flex-col flex-1 ">
         <header className="mb-2">
           <h3 className="text-lg font-semibold text-slate-900 leading-tight">
             {tutor.first_name}
@@ -35,7 +35,7 @@ const TutorCard = ({ tutor }) => {
           <p className="text-sm text-slate-700 mb-1">
             <strong>Teaching types:</strong> {tutor.teaching_types}
           </p>
-          <p className="text-sm text-slate-700 mb-2">
+          <p className="text-sm text-slate-700 mb-2 wrap-anywhere">
             <strong>Levels:</strong> {tutor.skill_levels}
           </p>
         </div>
@@ -45,7 +45,8 @@ const TutorCard = ({ tutor }) => {
           illo. Voluptatem, accusamus iste!
         </p>
         {/* card footer */}
-        <div className="mt-auto pt-2 flex items-center justify-between border-t border-slate-100">
+        <div className="mt-auto pt-2 flex items-center justify-between border-t border-slate-100 
+        max-[440px]:flex-col max-[440px]:items-center max-[440px]:justify-start max-[440px]:gap-2">
           <div className="text-sm text-slate-500 flex gap-1 items-center">
                   <svg
         xmlns="http://www.w3.org/2000/svg"

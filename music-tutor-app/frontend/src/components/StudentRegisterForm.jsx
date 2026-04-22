@@ -72,7 +72,7 @@ const StudentRegisterForm = () => {
     reValidateMode: "onBlur", // after initial validation, sets subsequent revalidation to onblur also.  Form will still revalidate on submit
     // the default setting is mode: "onSubmit" reValidateMode: "onChange"
 
-    resolver: zodResolver(studentRegistrationFormSchema), // links zod schema to form validation by using zodResolver
+    //resolver: zodResolver(studentRegistrationFormSchema), // links zod schema to form validation by using zodResolver
   });
 
   const {

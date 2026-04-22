@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router";
 
 const About = () => {
   return (
@@ -24,7 +25,7 @@ const About = () => {
               </p>
 
               <p className=" mb-4">
-                You can search for tutors by instrument and location, message
+                You can <Link to='/findTutors' className="font-semibold text-slate-900 transition hover:text-sky-700 hover:text-sky-800">search for tutors</Link> by instrument and location, message
                 them directly, and book lessons easily through the app.
               </p>
 
@@ -34,7 +35,7 @@ const About = () => {
               </p>
 
               <p className="mb-4">
-                If you are a tutor, you can quickly register and specify your
+                If you are a tutor, you can quickly <Link to='/register/tutor' className="font-semibold text-slate-900 transition hover:text-sky-700 hover:text-sky-800">register</Link> and specify your
                 instrument, location, and teaching levels so you can be found by
                 students in your area.
               </p>

@@ -222,7 +222,7 @@ const FindTutors = () => {
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="search instrument"
-            className="placeholder:text-slate-400 text-slate-900 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="bg-white placeholder:text-slate-400 text-slate-900 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
           {/* /* approach adapted from https://www.youtube.com/watch?v=Jd7s7egjt30 */}
           {inputs.instrument.trim() && instrumentDropdown.length > 0 && (
@@ -252,7 +252,7 @@ const FindTutors = () => {
             onChange={handleChange}
             onKeyDown={handleKeyDown}
             placeholder="search city"
-            className="placeholder:text-slate-400 text-slate-900 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+            className="bg-white placeholder:text-slate-400 text-slate-900 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
           {inputs.city.trim() && cityDropdown.length > 0 && (
             <div className="absolute top-full left-0 mt-1 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
@@ -292,7 +292,7 @@ const FindTutors = () => {
 
       {/* if no results */}
       {!loading && tutors.length === 0 && !err && (
-        <p className="text-slate-500">
+        <p className="text-slate-500 text-center">
           No tutors found; adjust search and press enter
         </p>
       )}
