@@ -6,6 +6,7 @@ const StudentHomeSection = ({ user }) => {
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState(null);
 
+  //use effect to get all the user's profile info as the user object is not detailed enough
   useEffect(() => {
     if (!user) {
       setStudentProfile(null);

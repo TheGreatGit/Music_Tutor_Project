@@ -113,7 +113,7 @@ const ChatNotifier = () => {
           <div className="mt-3 flex gap-2">
             <button
               type="button"
-              className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-medium text-white cursor-pointer"
+              className="rounded-xl bg-indigo-600 px-4 py-2 text-sm font-medium text-white cursor-pointer"
               onClick={() => {
                 //  for opening active chat window and closing the notification window, get sender details and in to activeChat's state object and then set Pending to null
                 setActiveChat({

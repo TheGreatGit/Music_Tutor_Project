@@ -4,6 +4,7 @@ import { validatePassword } from "../services/userService.mjs";
 import { loadSql } from "../queries/loadSql.mjs";
 import { query } from "../config/pool.mjs";
 import bcrypt from "bcrypt";
+import { cookieOptions } from "../utils/cookie.mjs";
 
 const changePasswordSql = loadSql("changePassword.sql");
 
@@ -356,6 +357,7 @@ export const passwordChangeController = async (req, res, next) => {
     }
     const newPasswordHash = await bcrypt.hash(newPassword, 10);
     await query(changePasswordSql, [newPasswordHash, userId]);
+    res.clearCookie("token", cookieOptions) // remove cooke from the browser as well!!!
     return res.status(200).json({ message: "Password changed successfully" });
   } catch (error) {
     console.log("error im passwordChangeController", error);
