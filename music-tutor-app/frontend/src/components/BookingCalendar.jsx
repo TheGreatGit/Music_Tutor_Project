@@ -9,7 +9,7 @@ import getDay from "date-fns/getDay";
 import enGB from "date-fns/locale/en-GB";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 // import "react-datepicker/dist/react-datepicker.css";
-import { useState, } from "react";
+import { useState } from "react";
 
 // set the date presentation to UK format rather then US
 const locales = {
@@ -55,6 +55,15 @@ const BookingCalendar = ({
   const [bookingDetailsLoading, setBookingDetailsLoading] = useState(false);
   const [bookingDetailsError, setBookingDetailsError] = useState(null);
 
+  // NEW STATE FOR RENDERING BOOKING ERROR AND SUCCESS MESSAGES RATHER THAN SHOWING AS WINDOW ALERTS
+  const [notice, setNotice] = useState(null);
+  const showNotice = (message, type='info')=>{
+    setNotice({message, type});
+  };
+  const clearNotice = ()=> {
+    setNotice(null);
+  }
+
   // check draft validity for rendering it in calandar
   const canDisplayDraft =
     draftBooking?.isDraft &&
@@ -69,10 +78,12 @@ const BookingCalendar = ({
     draftBooking?.teaching_format_id &&
     draftBooking?.teaching_type_id &&
     draftBooking?.skill_level_id &&
-    draftBooking?.title
+    draftBooking?.title;
 
   // combine calendar events plus draft event so the draft event is displayed on the calendar
-  const displayEvents = canDisplayDraft ? [...calendarEvents, draftBooking] : calendarEvents;
+  const displayEvents = canDisplayDraft
+    ? [...calendarEvents, draftBooking]
+    : calendarEvents;
 
   // first, you add 'selectable' as a prop to the Calendar component which allows user to click and drag on Calendar; this info can be used to create draft event
   // then, you can get access to the 'onSelectSlot' event and create a handler like this:
@@ -80,7 +91,7 @@ const BookingCalendar = ({
     updateDraftBooking({
       booking_start_time: slotInfo.start,
       booking_end_time: slotInfo.end,
-      isDraft: true
+      isDraft: true,
     });
     // clear selected event to remove previous/current selection so you can create a new event/lesson after confirming this one
     setSelectedEvent(null);
@@ -91,42 +102,44 @@ const BookingCalendar = ({
   };
 
   // fires when a  confirmed Calendar event is clicked. It receives the event object as it is defined in the calendar (different to normal event handler event i.e. doesn't have .target property etc.)
-  const handleSelectEvent = async(clickedEvent) => {
-    console.log('clciked event in handleSelectEvent is', clickedEvent);
-    if(clickedEvent.isDraft) return; // i.e. don't attempt fetch for draft event
-    if(!clickedEvent?.booking_id) return;
+  const handleSelectEvent = async (clickedEvent) => {
+    console.log("clciked event in handleSelectEvent is", clickedEvent);
+    if (clickedEvent.isDraft) return; // i.e. don't attempt fetch for draft event
+    if (!clickedEvent?.booking_id) return;
 
     // this checks whether the event the handleSelectEvent receives is the same as the event held in 'selectedEvent' state; if it is, it clears selectedEvent state i.e. de-deselects the event
     // this code section basically allows users to 'toggle' an event on consecutive clicks
-    if(isSameEvent(clickedEvent, selectedEvent)){
+    if (isSameEvent(clickedEvent, selectedEvent)) {
       setSelectedEvent(null); // for differnetial rendering in calendar
-      setSelectedBookingDetails(null); 
+      setSelectedBookingDetails(null);
       setBookingDetailsError(null);
       setBookingDetailsLoading(false);
       return;
     }
 
     setSelectedEvent(clickedEvent); // for diffeential rendering in calendar
-    setBookingDetailsLoading(true); 
+    setBookingDetailsLoading(true);
     setBookingDetailsError(null);
     setSelectedBookingDetails(null);
 
     // fetch booking/event details from DB
     try {
-      const res = await fetch(`http://localhost:3000/api/bookings/getBookings/${clickedEvent.booking_id}`, {credentials: "include"});
+      const res = await fetch(
+        `http://localhost:3000/api/bookings/getBookings/${clickedEvent.booking_id}`,
+        { credentials: "include" },
+      );
       // trialling new codee pattern after fetches where the resposne is processed with .json() and, if it was a backend error response (!res.ok), the backend error message is accessed via data.message
       const data = await res.json();
 
-      if(!res.ok){
-        throw new Error(data?.message || 'Failed to fetch lesson details');
+      if (!res.ok) {
+        throw new Error(data?.message || "Failed to fetch lesson details");
       }
 
       setSelectedBookingDetails(data);
-      console.log('handleSelectEvent event details from DB are:', data);
-      
+      console.log("handleSelectEvent event details from DB are:", data);
     } catch (error) {
-      setBookingDetailsError(error.message || 'Unknown error');
-    }finally{
+      setBookingDetailsError(error.message || "Unknown error");
+    } finally {
       setBookingDetailsLoading(false);
     }
   };
@@ -135,34 +148,43 @@ const BookingCalendar = ({
   const preBookingChecks = (draftEvent) => {
     if (!draftEvent) {
       //setBookingDetailsError("Please select a valid timeslot");
-      alert("Please select a valid timeslot");
+      //alert("Please select a valid timeslot");
+      showNotice("Please select a valid timeslot", "error");
       return false;
     }
 
     const now = new Date();
     const oneHourAsMilliseconds = 60 * 60 * 1000;
-    const duration = draftEvent?.booking_end_time - draftEvent?.booking_start_time;
+    const duration =
+      draftEvent?.booking_end_time - draftEvent?.booking_start_time;
 
     if (draftEvent.booking_start_time < now) {
       //setBookingDetailsError("You cannot book appointments in the past");
-      alert("You cannot book appointments in the past");
+      //alert("You cannot book appointments in the past");
+      showNotice("You cannot book appointments in the past", "error");
       return false;
     }
     // maybe refactor to comply with DRY principle
     if (duration > oneHourAsMilliseconds) {
       //setBookingDetailsError("Lessons can only be booked for a maximum of one hour");
-      alert("Lessons can only be booked for a maximum of one hour");
+      //alert("Lessons can only be booked for a maximum of one hour");
+      showNotice(
+        "Lessons can only be booked for a maximum of one hour",
+        "error",
+      );
       return false;
     }
     if (!canDisplayDraft) {
       //setBookingDetailsError("Please select a valid timeslot.");
-      alert("Please select a valid timeslot.");
+      //alert("Please select a valid timeslot.");
+      showNotice("Please select a valid timeslot", "error");
       return false;
     }
 
     // only works with Date objects
     if (draftEvent.booking_end_time < draftEvent.booking_start_time) {
-      alert("End date cannot be before start date.");
+      //alert("End date cannot be before start date.");
+      showNotice("End date cannot be before start date", "error");
       return false;
     }
     // hasOverlap() refactored to use calendarEvents (which only contains confirmed events) rather than displayEvents which will contain a draft event
@@ -174,10 +196,14 @@ const BookingCalendar = ({
 
     if (hasOverlap) {
       //setBookingDetailsError("This timeslot overlaps an existing booking. Choose another time");
-      alert("This timeslot overlaps an existing booking. Choose another time");
+      //alert("This timeslot overlaps an existing booking. Choose another time");
+      showNotice(
+        "This timeslot overlaps an existing booking. Choose another time",
+        "error",
+      );
       return false;
     }
-   
+
     return true;
   };
 
@@ -188,44 +214,50 @@ const BookingCalendar = ({
     try {
       await handleConfirmBooking(draftBooking);
       clearSelection();
-      alert('Booking confirmed')
+      // alert('Booking confirmed')
+      showNotice("Booking confirmed", "success");
     } catch (bookingError) {
-      alert(bookingError.message || "Booking failed");
+      // alert(bookingError?.message || "Booking failed");
+      showNotice(bookingError?.message || "Booking failed", "error");
     }
   };
 
- const confirmCancelBooking = async () => {
+  const confirmCancelBooking = async () => {
     if (!selectedEvent || selectedEvent?.isDraft) return;
 
     try {
-      const cancelled = await handleCancelBooking(selectedEvent);
-      if(!cancelled) return;
-      // reset relevant state so that the event profile panel and info don't continue to show the cancelled booking's data
+      const message = await handleCancelBooking(selectedEvent); // can return false, 'Lesson cancelled', or throw an error
+      if (!message) return;
+      // if cancellation successfull, reset relevant state so that the event profile panel and info don't continue to show the cancelled booking's data
       setSelectedEvent(null);
       setSelectedBookingDetails(null);
       setBookingDetailsError(null);
       setBookingDetailsLoading(false);
+      showNotice(message, 'success');
     } catch (error) {
-      setBookingDetailsError(error.message || "Cancellation failed");
+      const message = error?.message || 'Cancellation failed'
+      setBookingDetailsError(message);
     }
   };
 
   const clearSelection = () => {
     updateDraftBooking({
-    instrument_id: null, 
-    booking_start_time: null,
-    booking_end_time: null,
-    title: "Lesson",
-    teaching_format_id: null,
-    teaching_type_id: null,
-    skill_level_id: null,
-    isDraft: true
+      instrument_id: null,
+      booking_start_time: null,
+      booking_end_time: null,
+      title: "Lesson",
+      teaching_format_id: null,
+      teaching_type_id: null,
+      skill_level_id: null,
+      isDraft: true,
     });
     setSelectedEvent(null);
     // clear new state too
     setSelectedBookingDetails(null);
     setBookingDetailsError(null);
     setBookingDetailsLoading(false);
+    // clear new error rendering state
+    clearNotice();
   };
 
   const isSameEvent = (a, b) => {
@@ -241,7 +273,10 @@ const BookingCalendar = ({
 
   const isOverlapping = (a, b) => {
     if (!a || !b) return false;
-    return a.booking_start_time < b.booking_end_time && a.booking_end_time > b.booking_start_time;
+    return (
+      a.booking_start_time < b.booking_end_time &&
+      a.booking_end_time > b.booking_start_time
+    );
   };
 
   // used to create different style for lessons and non-lessons
@@ -251,13 +286,13 @@ const BookingCalendar = ({
     const eventIsDraft = event.isDraft;
     const isSelected = isSameEvent(selectedEvent, event);
     // added to style bookings that cannot be cancelled
-    const preventCancel = !eventIsDraft && withinTwentyFourHours(event)
+    const preventCancel = !eventIsDraft && withinTwentyFourHours(event);
 
     let backgroundColor;
     let border;
     let boxShadow = "none";
     let opacity = 1;
-    let cursor = 'pointer';
+    let cursor = "pointer";
 
     if (eventIsDraft) {
       backgroundColor = "#bfdbfe";
@@ -270,8 +305,8 @@ const BookingCalendar = ({
       border = "none";
     }
 
-    if(preventCancel){
-      opacity= 0.55;
+    if (preventCancel) {
+      opacity = 0.55;
       cursor;
     }
 
@@ -279,7 +314,7 @@ const BookingCalendar = ({
       boxShadow = "0 0 0 2px rgba(15,23,42,0.4)";
       backgroundColor = "#23197cff";
       opacity = 1;
-      cursor = 'pointer';
+      cursor = "pointer";
     }
 
     // return CSS
@@ -291,7 +326,7 @@ const BookingCalendar = ({
         padding: "2px 4px",
         boxShadow,
         opacity,
-        cursor
+        cursor,
       },
     };
   };
@@ -299,7 +334,7 @@ const BookingCalendar = ({
   const formatDate = (value) => {
     // convert paramter to date
     const date = value instanceof Date ? value : new Date(value);
-    if(Number.isNaN(date.getTime())) return '_';
+    if (Number.isNaN(date.getTime())) return "_";
 
     return date.toLocaleDateString("en-GB", {
       weekday: "short",
@@ -312,7 +347,7 @@ const BookingCalendar = ({
   const formatTime = (value) => {
     // convert paramter to date
     const date = value instanceof Date ? value : new Date(value);
-    if(Number.isNaN(date.getTime())) return '_';
+    if (Number.isNaN(date.getTime())) return "_";
 
     return date.toLocaleTimeString("en-GB", {
       hour: "2-digit",
@@ -359,14 +394,14 @@ const BookingCalendar = ({
     return {};
   };
 
-  const withinTwentyFourHours = (booking) =>{
-    const dayAsMilliseconds = 1000 * 60*60*24;
+  const withinTwentyFourHours = (booking) => {
+    const dayAsMilliseconds = 1000 * 60 * 60 * 24;
     const now = Date.now(); // gives current time in ms since 1970...
     const bookingStart = booking.booking_start_time.getTime();
     const diff = bookingStart - now;
     // return the answer to if selected booking's start time is LESS than 24 hours away
     return diff < dayAsMilliseconds;
-  }
+  };
   return (
     <>
       <Calendar
@@ -408,6 +443,13 @@ const BookingCalendar = ({
         Clear selection
       </button>
 
+      {/* render booking messages */}
+      <p
+        className={`mb-2 min-h-10 rounded-lg px-4 py-2 font-medium ${notice?.type === "error" ? "text-red-700" : notice?.type === "success" ? "text-green-700" : "text-slate-700"}`}
+      >
+        {notice?.message}
+      </p>
+
       {/* event details panel */}
       <div className="mt-6 text-center">
         <div className="border rounded-xl p-4 bg-white shadow-sm text-sm text-slate-700">
@@ -424,45 +466,98 @@ const BookingCalendar = ({
           {selectedBookingDetails ? (
             <>
               <div className="space-y-1 text-sm">
-                <p><span className="font-semibold text-slate-900">Tutor: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.tutor || ""}</span></p>
-                { /* <p><span className="font-semibold text-slate-900">Student: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.student || "_"}</span></p> */}
-                <p><span className="font-semibold text-slate-900">Instrument: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.instrument_name || ""}</span></p>
-                <p><span className="font-semibold text-slate-900">Teaching format: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_format_name || ""}</span></p>
-                <p><span className="font-semibold text-slate-900">Teaching type: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_type_name || ""}</span></p>
-                <p><span className="font-semibold text-slate-900">Skill level: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.skill_level_name || ""}</span></p>
-                <p><span className="font-semibold text-slate-900">Date: </span><span className="font-medium text-slate-500">{formatDate(selectedBookingDetails?.booking_start_time)}</span></p>
-                <p><span className="font-semibold text-slate-900">Start: </span><span className="font-medium text-slate-500">{formatTime(selectedBookingDetails?.booking_start_time)}</span></p>
-                <p><span className="font-semibold text-slate-900">End: </span><span className="font-medium text-slate-500">{formatTime(selectedBookingDetails?.booking_end_time)}</span></p>
+                <p>
+                  <span className="font-semibold text-slate-900">Tutor: </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.tutor || ""}
+                  </span>
+                </p>
+                {/* <p><span className="font-semibold text-slate-900">Student: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.student || "_"}</span></p> */}
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Instrument:{" "}
+                  </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.instrument_name || ""}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Teaching format:{" "}
+                  </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.teaching_format_name || ""}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Teaching type:{" "}
+                  </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.teaching_type_name || ""}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">
+                    Skill level:{" "}
+                  </span>
+                  <span className="font-medium text-slate-500">
+                    {selectedBookingDetails?.skill_level_name || ""}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">Date: </span>
+                  <span className="font-medium text-slate-500">
+                    {formatDate(selectedBookingDetails?.booking_start_time)}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">Start: </span>
+                  <span className="font-medium text-slate-500">
+                    {formatTime(selectedBookingDetails?.booking_start_time)}
+                  </span>
+                </p>
+                <p>
+                  <span className="font-semibold text-slate-900">End: </span>
+                  <span className="font-medium text-slate-500">
+                    {formatTime(selectedBookingDetails?.booking_end_time)}
+                  </span>
+                </p>
               </div>
-                {withinTwentyFourHours(selectedEvent) && (
-                  <p className=" text-red-500 mt-2">
-                    Bookings cannot be cancelled within 24 hours of start time
-                  </p>
-                )}
+              {withinTwentyFourHours(selectedEvent) && (
+                <p className=" text-red-500 mt-2">
+                  Bookings cannot be cancelled within 24 hours of start time
+                </p>
+              )}
               {/* render cancel button only if event selected and isn't draft */}
               {selectedEvent && !selectedEvent.isDraft && (
-              <>
-                <div className="mt-1 flex flex-col items-center gap-2">
-                  <button onClick={confirmCancelBooking} disabled= {withinTwentyFourHours(selectedEvent)}
-                  className={`min-w-32 max-w-48 mt-3 px-3 py-1 border rounded-lg font-medium bg-red-700 text-white
-                  ${withinTwentyFourHours(selectedEvent)
-                    ? "cursor-not-allowed border-red-300 "
-                    : "cursor-pointer  border-red-300"}`}
+                <>
+                  <div className="mt-1 flex flex-col items-center gap-2">
+                    <button
+                      onClick={confirmCancelBooking}
+                      disabled={withinTwentyFourHours(selectedEvent)}
+                      className={`min-w-32 max-w-48 mt-3 px-3 py-1 border rounded-lg font-medium bg-red-700 text-white
+                  ${
+                    withinTwentyFourHours(selectedEvent)
+                      ? "cursor-not-allowed border-red-300 "
+                      : "cursor-pointer  border-red-300"
+                  }`}
                     >
-                    Cancel booking
-                  </button>
-                  <button className=" min-w-32 max-w-40 bg-indigo-600 hover:bg-indigo-700 cursor-pointer px-3 py-1 rounded-lg text-white font-medium "
-                  onClick={clearSelection}>
-                    Close panel
-                  </button>
-                </div>
-                
-
-              </>
+                      Cancel booking
+                    </button>
+                    <button
+                      className=" min-w-32 max-w-40 bg-indigo-600 hover:bg-indigo-700 cursor-pointer px-3 py-1 rounded-lg text-white font-medium "
+                      onClick={clearSelection}
+                    >
+                      Close panel
+                    </button>
+                  </div>
+                </>
               )}
             </>
-          ):(
-            !bookingDetailsLoading && !bookingDetailsError && (
+          ) : (
+            !bookingDetailsLoading &&
+            !bookingDetailsError && (
               <p className="text-sm text-slate-500">
                 Click an event in the calendar to see its details here
               </p>

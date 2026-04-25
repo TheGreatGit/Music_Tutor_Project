@@ -262,7 +262,7 @@ export const cancelBookingById = async (req, res, next) => {
       // send message for frontend to display
       // also send the result from the query (the booking id and status) in case I want frontend to use that info later
       return res.status(200).json({
-        message: "Appointment cancelled",
+        message: "Lesson cancelled",
         booking: cancelResult.rows[0],
       });
     }

@@ -205,7 +205,7 @@ const TutorProfilePage = () => {
       current.filter((booking) => booking.booking_id !== event.booking_id),
     );
 
-    return true;
+    return data?.message || 'Lesson cancelled';
   };
 
   if (loading) return <p className="p-6">Loading tutor...</p>;
@@ -240,6 +240,7 @@ const TutorProfilePage = () => {
             <h2 className="text-lg font-semibold text-slate-900 mb-2">
               Availability and booking
             </h2>
+
 
             {user?.role === "student" ? (
               <>
