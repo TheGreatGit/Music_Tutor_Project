@@ -424,34 +424,40 @@ const BookingCalendar = ({
           {selectedBookingDetails ? (
             <>
               <div className="space-y-1 text-sm">
-                <p><span className="font-semibold text-slate-900">Tutor: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.tutor || "_"}</span></p>
+                <p><span className="font-semibold text-slate-900">Tutor: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.tutor || ""}</span></p>
                 { /* <p><span className="font-semibold text-slate-900">Student: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.student || "_"}</span></p> */}
-                <p><span className="font-semibold text-slate-900">Instrument: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.instrument_name || "_"}</span></p>
-                <p><span className="font-semibold text-slate-900">Teaching format: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_format_name || "_"}</span></p>
+                <p><span className="font-semibold text-slate-900">Instrument: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.instrument_name || ""}</span></p>
+                <p><span className="font-semibold text-slate-900">Teaching format: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_format_name || ""}</span></p>
                 <p><span className="font-semibold text-slate-900">Teaching type: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.teaching_type_name || ""}</span></p>
-                <p><span className="font-semibold text-slate-900">Skill level: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.skill_level_name || "_"}</span></p>
+                <p><span className="font-semibold text-slate-900">Skill level: </span><span className="font-medium text-slate-500">{selectedBookingDetails?.skill_level_name || ""}</span></p>
                 <p><span className="font-semibold text-slate-900">Date: </span><span className="font-medium text-slate-500">{formatDate(selectedBookingDetails?.booking_start_time)}</span></p>
                 <p><span className="font-semibold text-slate-900">Start: </span><span className="font-medium text-slate-500">{formatTime(selectedBookingDetails?.booking_start_time)}</span></p>
                 <p><span className="font-semibold text-slate-900">End: </span><span className="font-medium text-slate-500">{formatTime(selectedBookingDetails?.booking_end_time)}</span></p>
               </div>
-
-              {/* render cancel button only if event selected and isn't draft */}
-              {selectedEvent && !selectedEvent.isDraft && (
-              <>
-                <button onClick={confirmCancelBooking} disabled= {withinTwentyFourHours(selectedEvent)}
-                className={`mt-3 px-3 py-1 border rounded-md font-medium bg-red-700 text-white
-                ${withinTwentyFourHours(selectedEvent) 
-                  ? "cursor-not-allowed border-red-300 "
-                  : "cursor-pointer  border-red-300"}`}
-                  >
-                  Cancel booking
-                </button>
-                
                 {withinTwentyFourHours(selectedEvent) && (
-                  <p className=" text-red-500 mt-1">
+                  <p className=" text-red-500 mt-2">
                     Bookings cannot be cancelled within 24 hours of start time
                   </p>
                 )}
+              {/* render cancel button only if event selected and isn't draft */}
+              {selectedEvent && !selectedEvent.isDraft && (
+              <>
+                <div className="mt-1 flex flex-col items-center gap-2">
+                  <button onClick={confirmCancelBooking} disabled= {withinTwentyFourHours(selectedEvent)}
+                  className={`min-w-32 max-w-48 mt-3 px-3 py-1 border rounded-lg font-medium bg-red-700 text-white
+                  ${withinTwentyFourHours(selectedEvent)
+                    ? "cursor-not-allowed border-red-300 "
+                    : "cursor-pointer  border-red-300"}`}
+                    >
+                    Cancel booking
+                  </button>
+                  <button className=" min-w-32 max-w-40 bg-indigo-600 hover:bg-indigo-700 cursor-pointer px-3 py-1 rounded-lg text-white font-medium "
+                  onClick={clearSelection}>
+                    Close panel
+                  </button>
+                </div>
+                
+
               </>
               )}
             </>
