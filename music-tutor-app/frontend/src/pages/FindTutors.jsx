@@ -226,7 +226,7 @@ const FindTutors = () => {
           />
           {/* /* approach adapted from https://www.youtube.com/watch?v=Jd7s7egjt30 */}
           {inputs.instrument.trim() && instrumentDropdown.length > 0 && (
-            <div className="absolute top-full left-0 mt-1 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
+            <div className="absolute top-full left-0 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
               {instrumentDropdown.map((instrumentRow) => (
                 <div
                   onClick={() =>
@@ -255,7 +255,7 @@ const FindTutors = () => {
             className="bg-white placeholder:text-slate-400 text-slate-900 rounded-2xl border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
           />
           {inputs.city.trim() && cityDropdown.length > 0 && (
-            <div className="absolute top-full left-0 mt-1 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
+            <div className="absolute top-full left-0 w-full z-50 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-auto">
               {cityDropdown.map((cityRow) => (
                 <div
                   onClick={() => handleClick(cityRow.city_name, "city")}
