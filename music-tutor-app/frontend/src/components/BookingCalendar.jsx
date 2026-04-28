@@ -404,26 +404,30 @@ const BookingCalendar = ({
   };
   return (
     <>
-      <Calendar
-        localizer={localizer}
-        events={displayEvents}
-        startAccessor="booking_start_time"
-        endAccessor="booking_end_time"
-        view={view}
-        onView={(nextView) => setView(nextView)}
-        date={currentDate}
-        onNavigate={(nextDate) => setCurrentDate(nextDate)}
-        style={{ height: 600 }}
-        min={MIN_TIME}
-        max={MAX_TIME}
-        step={15}
-        selectable
-        onSelectSlot={handleSelectSlot}
-        onSelectEvent={handleSelectEvent}
-        eventPropGetter={eventStyler}
-        dayPropGetter={dayStyler}
-        slotPropGetter={slotStyler}
-      />
+    <div className="w-full overflow-x-auto rounded-xl bg-white p-2">
+        <div className="min-w-[700px]">
+          <Calendar
+            localizer={localizer}
+            events={displayEvents}
+            startAccessor="booking_start_time"
+            endAccessor="booking_end_time"
+            view={view}
+            onView={(nextView) => setView(nextView)}
+            date={currentDate}
+            onNavigate={(nextDate) => setCurrentDate(nextDate)}
+            style={{ height: 600 }}
+            min={MIN_TIME}
+            max={MAX_TIME}
+            step={15}
+            selectable
+            onSelectSlot={handleSelectSlot}
+            onSelectEvent={handleSelectEvent}
+            eventPropGetter={eventStyler}
+            dayPropGetter={dayStyler}
+            slotPropGetter={slotStyler}
+          />
+        </div>
+    </div>
       <button
         onClick={confirmDraftBooking}
         disabled={!canConfirmDraft}
