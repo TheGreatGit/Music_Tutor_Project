@@ -25,7 +25,7 @@ const NavBar = () => {
         <div className="flex-shrink-0">
           <Logo />
         </div>
-
+        {/* navbar for size medium and above screens */}
         <ul className="hidden md:flex items-center gap-2  rounded-full border border-slate-200 bg-white px-2 py-2 shadow-sm">
           {user && (
             <li className="m-2">
@@ -99,7 +99,7 @@ const NavBar = () => {
       </div>
 
       {mobileMenuOpen && (
-        <div className=" border-t border-slate-200 bg-white px-4 py-4 md:hidden">
+        <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 ">
           <div className="flex flex-col gap-2">
             {user && (
               <NavLink
@@ -140,7 +140,7 @@ const NavBar = () => {
                 <>
                   <NavLink
                     to="/register"
-                    className=" text-center rounded-xl bg-indigo-500 px-4 py-2 font-medium text-white transition hover:bg-indigo-600 shadow-sm"
+                    className=" text-center rounded-xl bg-slate-100 px-4 py-2 font-medium text-slate-700 transition hover:bg-slate-200 shadow-sm"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     Register
