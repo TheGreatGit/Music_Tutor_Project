@@ -12,6 +12,7 @@ export const findUserByEmail = async (email) => {
   return rows[0] || null;
 };
 
+// the result of this function will get fed in to the buildUserInfo function  below
 export const findUserByUserId = async (userId) => {
   const queryString = loadSql("findUserByUserId.sql");
 

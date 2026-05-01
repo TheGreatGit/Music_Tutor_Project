@@ -58,8 +58,7 @@ export const logout = (req, res) => {
   return res.status(200).json({ message: "Logged out successfully" });
 };
 
-// handler for getting current user. This will be used so frontend can rebuild user on full page reload
-// Currently, on full reload, the frotnend still has the auth cookie but does not rebuild user info so user is logged out
+// handler for getting current user. This is used so frontend can rebuild user after the app's state is reset to defaults on full page reload
 export const getCurrentUser = async (req, res) => {
   try {
     const token = req?.cookies?.token;

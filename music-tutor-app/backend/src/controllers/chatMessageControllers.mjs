@@ -15,16 +15,12 @@ export const getMessagesFromDB = async (req, res, next) => {
 
     // gwt other user id from params
     const otherUserId = Number(req.params?.otherUserId);
-    if (
-      !Number.isInteger(otherUserId) ||
-      otherUserId <= 0 ||
-      otherUserId === myUserId
-    ) {
+    if ( !Number.isInteger(otherUserId) || otherUserId <= 0 || otherUserId === myUserId) {
       res.status(400);
       return next(new Error("Invalid otherUserId"));
     }
 
-    // arrange userIds in ascending order as per DB schema
+    // arrange userIds in ascending order to build chatroom ID as per DB schema
     const userA = Math.min(myUserId, otherUserId);
     const userB = Math.max(myUserId, otherUserId);
 

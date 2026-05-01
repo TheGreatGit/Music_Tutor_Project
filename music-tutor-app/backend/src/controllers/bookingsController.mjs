@@ -24,7 +24,7 @@ export const getBookingsByTutorId = async (req, res, next) => {
 
     //attempt query
     const { rows } = await query(tutorBookingsQuery, [tutorId]);
-    console.log(rows);
+    //console.log(rows);
     return res.status(200).json(rows);
   } catch (error) {
     return next(error);
@@ -33,7 +33,7 @@ export const getBookingsByTutorId = async (req, res, next) => {
 
 export const getBookingsByStudentId = async (req, res, next) => {
   try {
-    // grab tutor id from url and cast as number as it will be in string format in url
+    // grab student id from url and cast as number as it will be in string format in url
     const studentId = Number(req.params.studentId);
 
     if (!Number.isInteger(studentId) || studentId <= 0) {
@@ -52,7 +52,8 @@ export const getBookingsByStudentId = async (req, res, next) => {
 
 export const makeBooking = async (req, res, next) => {
   try {
-    const draftBooking = req.body;
+    // add safety check on final code review prior to project submission
+    const draftBooking = req.body || {};
     // set default value to be inserted upon booking
     const booking_status = 1;
 
@@ -98,7 +99,7 @@ export const makeBooking = async (req, res, next) => {
 
     // empty object to be used to create validated IDArray key-value pairs for DB insertion
     const parsedIds = {};
-    // rememebr the {} for key, value as you nmeed to destructure each of IdArray's objects in the for-of loop
+    // rememebr the {} for {key, value} as you nmeed to destructure each of IdArray's objects in the for-of loop
     for (const { key, value } of IdArray) {
       const parsed = Number(value);
       if (!Number.isInteger(parsed) || parsed <= 0) {
@@ -113,7 +114,7 @@ export const makeBooking = async (req, res, next) => {
       parsedIds[key] = parsed;
     }
 
-    //* convert booking start and end times in to date objects for comparison checks
+    // convert booking start and end times in to date objects for comparison checks
     const startTimeAsDate = new Date(booking_start_time);
     const endTimeAsDate = new Date(booking_end_time);
 
@@ -188,7 +189,7 @@ export const makeBooking = async (req, res, next) => {
       parsedIds.teaching_format_id,
       parsedIds.teaching_type_id,
       parsedIds.skill_level_id,
-    ]);
+    ]); // returns full booking details
     if (!rows || rows.length === 0) {
       res.status(500);
       return next(new Error("Booking insert failed"));
@@ -202,14 +203,14 @@ export const makeBooking = async (req, res, next) => {
 export const getBookingByBookingId = async (req, res, next) => {
   try {
     // booking ID will be received as string so it needs to be cast to an integer
-    const bookingId = Number(req.params.bookingId);
+    const bookingId = Number(req?.params?.bookingId);
     if (!Number.isInteger(bookingId) || bookingId <= 0) {
       res.status(400);
       return next(new Error("Invalid booking Id"));
     }
-    console.log("get booking by id sql query is", getBookingByIdQuery);
+   // console.log("get booking by id sql query is", getBookingByIdQuery);
 
-    console.log("booking id requested is:", bookingId);
+   // console.log("booking id requested is:", bookingId);
 
     const { rows } = await query(getBookingByIdQuery, [bookingId]);
     if (rows.length === 0) {

@@ -19,4 +19,4 @@ export function loadSql(fileName){
     return readFileSync(filePath, "utf8");
 }
 
- //console.log('cwd is: ', process.cwd());
+ // console.log('cwd is: ', process.cwd());
