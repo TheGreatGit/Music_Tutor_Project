@@ -3,7 +3,8 @@ import {resolve} from 'path';
 
 /*
     The resolve function creates filepaths on a relative basis from the Current Working Directory (CWD)
-    The CWD will be where you run the node runtime process ('npm run dev') from (music_tutor_app/backend) - not necessarily the server.mjs file location
+    The CWD will be where you run the node runtime process ('npm run dev') from (music_tutor_app/backend) 
+    - not necessarily the server.mjs file location
 
     It does not matter that within the .json file  the 'npm run dev' command runs the server.mjs file
      by the relative path to it from the json file i.e. './src/server.mjs.

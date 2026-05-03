@@ -85,6 +85,7 @@ CREATE TABLE IF NOT EXISTS tutor_teaching_types (
   CONSTRAINT uniq_tutor_type UNIQUE (tutor_id, teaching_type_id)
 );
 
+
 -- 1) Countries table
 CREATE TABLE IF NOT EXISTS countries (
   country_id SERIAL PRIMARY KEY,
