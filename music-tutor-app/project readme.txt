@@ -1,11 +1,14 @@
 # MUSIC TUTOR APP readme
 
+The project github repo is at
+https://github.com/TheGreatGit/Music_Tutor_Project
+
 ## PREREQUISITES:
 Before running the project locally, make sure to have installed
 -Node js
 - npm
 - PostgreSQL installed and running
-- install the local Postgres database for the app (a databse backup file is in the github repo)
+- install the local Postgres database for the app (a databse backup file is in the github repo as final_year_project_db_FINAL_BACKUP.backup)
 
 ## .ENV FILE SETUP
 Create .env in the backend folder with the following variables for PostgreSQL and express:
