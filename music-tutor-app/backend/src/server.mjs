@@ -26,6 +26,7 @@ import { query } from "./config/pool.mjs";
 dotenv.config();
 
 const PORT = process.env.PORT || 3000;
+const CLIENT_URLS = ["http://localhost:5173", "http://localhost:4173"];
 const app = express();
 
 // basic middleware
@@ -36,7 +37,7 @@ app.use(express.urlencoded({ extended: true }));
 // Allow CORS between express server and React fontend
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:5173", // the specific site that cross-origin requests are to be allowed for
+    origin: CLIENT_URLS, // the specific sites that cross-origin requests are to be allowed for
     credentials: true, // the server tells rthe browser that the browser is allowed to expose the response to broswer JS if the browser request sent credentials.
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"], // http request methods the server will accept from the browser
   }),
@@ -95,7 +96,7 @@ const httpServer = http.createServer(app);
 // even though socket.io mostly uses websockets, it starts off with http requests (e.g. the socket's handshake) so it needs CORS configuration
 const io = new Server(httpServer, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    origin: CLIENT_URLS,
     credentials: true,
     methods: ["GET", "POST"],
   },
